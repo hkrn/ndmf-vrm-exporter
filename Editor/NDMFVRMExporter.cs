@@ -410,6 +410,7 @@ namespace com.github.hkrn
                     {
                         component.contactInformation = result.ContactInformation;
                     }
+
                     component.version = result.Version;
                     if (!string.IsNullOrEmpty(result.OriginThumbnailPath))
                     {
@@ -598,8 +599,10 @@ namespace com.github.hkrn
                 _retrieveAvatarTask = RetrieveAvatarTask(pipelineManager.blueprintId, _cancellationTokenSource.Token);
                 Debug.Log("Start to retrieve metadata via VRChat API");
             }
+
             EditorGUILayout.Space();
-            DrawToggleLeft(Translator._("component.metadata.information.vrchat.enable-contact-information"), _enableContactInformationOnVRChatAutofillProp);
+            DrawToggleLeft(Translator._("component.metadata.information.vrchat.enable-contact-information"),
+                _enableContactInformationOnVRChatAutofillProp);
 
             if (!string.IsNullOrEmpty(_retrieveAvatarTaskErrorMessage))
             {
@@ -1180,6 +1183,7 @@ namespace com.github.hkrn
             {
                 return null;
             }
+
             var newTexture = new Texture2D(texture.width, texture.height, texture.format, true);
             Graphics.CopyTexture(texture, newTexture);
             return newTexture;
@@ -2671,7 +2675,17 @@ namespace com.github.hkrn
                         }
 
                         var constraintSource = vrcAimConstraint.Sources.First();
-                        sourceID = _transformNodeIDs[constraintSource.SourceTransform];
+                        var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
+                        if (nodeID.HasValue)
+                        {
+                            sourceID = nodeID.Value;
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                        }
+
                         weight = vrcAimConstraint.GlobalWeight * constraintSource.Weight;
                     }
                     else
@@ -2703,7 +2717,17 @@ namespace com.github.hkrn
                         }
 
                         var constraintSource = aimConstraint.GetSource(0);
-                        sourceID = _transformNodeIDs[constraintSource.sourceTransform];
+                        var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
+                        if (nodeID.HasValue)
+                        {
+                            sourceID = nodeID.Value;
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                        }
+
                         weight = aimConstraint.weight * constraintSource.weight;
                     }
                     else
@@ -2736,7 +2760,17 @@ namespace com.github.hkrn
                         }
 
                         var constraintSource = vrcRotationConstraint.Sources.First();
-                        sourceID = _transformNodeIDs[constraintSource.SourceTransform];
+                        var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
+                        if (nodeID.HasValue)
+                        {
+                            sourceID = nodeID.Value;
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                        }
+
                         weight = vrcRotationConstraint.GlobalWeight * constraintSource.Weight;
                     }
                     else
@@ -2768,7 +2802,17 @@ namespace com.github.hkrn
                         }
 
                         var constraintSource = rotationConstraint.GetSource(0);
-                        sourceID = _transformNodeIDs[constraintSource.sourceTransform];
+                        var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
+                        if (nodeID.HasValue)
+                        {
+                            sourceID = nodeID.Value;
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                        }
+
                         weight = rotationConstraint.weight * constraintSource.weight;
                     }
                     else
@@ -3408,7 +3452,10 @@ namespace com.github.hkrn
                 var left = descriptor.customEyeLookSettings.eyesLookingLeft;
                 var right = descriptor.customEyeLookSettings.eyesLookingRight;
                 if (left == null || right == null)
+                {
                     return;
+                }
+
                 var leftLeftAngles = left.left.eulerAngles;
                 var leftRightAngles = left.right.eulerAngles;
                 var rightLeftAngles = right.left.eulerAngles;
@@ -3429,17 +3476,26 @@ namespace com.github.hkrn
                 VRC_AvatarDescriptor.Viseme viseme)
             {
                 if (descriptor.lipSync != VRC_AvatarDescriptor.LipSyncStyle.VisemeBlendShape)
+                {
                     return null;
+                }
+
+                var nodeID = FindTransformNodeID(descriptor.VisemeSkinnedMesh.transform);
+                if (!nodeID.HasValue)
+                {
+                    Debug.LogWarning($"Viseme skinned mesh {descriptor.VisemeSkinnedMesh} not found due to inactive");
+                    return null;
+                }
+
                 var blendShapeName = descriptor.VisemeBlendShapes[(int)viseme];
                 var offset = descriptor.VisemeSkinnedMesh.sharedMesh.GetBlendShapeIndex(blendShapeName);
-                var nodeID = _transformNodeIDs[descriptor.VisemeSkinnedMesh.transform];
                 var item = new vrm.core.ExpressionItem
                 {
                     MorphTargetBinds = new List<vrm.core.MorphTargetBind>
                     {
                         new()
                         {
-                            Node = nodeID,
+                            Node = nodeID.Value,
                             Index = new gltf.ObjectID((uint)offset),
                             Weight = 1.0f,
                         }
@@ -3451,21 +3507,33 @@ namespace com.github.hkrn
             private vrm.core.ExpressionItem? ExportExpressionEyelids(VRCAvatarDescriptor descriptor, int offset)
             {
                 if (!descriptor.enableEyeLook)
+                {
                     return null;
+                }
+
                 var settings = descriptor.customEyeLookSettings;
                 if (settings.eyelidType != VRCAvatarDescriptor.EyelidType.Blendshapes)
+                {
                     return null;
+                }
+
+                var nodeID = FindTransformNodeID(descriptor.VisemeSkinnedMesh.transform);
+                if (!nodeID.HasValue)
+                {
+                    Debug.LogWarning($"Viseme skinned mesh {descriptor.VisemeSkinnedMesh} not found due to inactive");
+                    return null;
+                }
+
                 var blendShapeIndex = settings.eyelidsBlendshapes[offset];
                 if (blendShapeIndex == -1)
                     return null;
-                var nodeID = _transformNodeIDs[settings.eyelidsSkinnedMesh.transform];
                 var item = new vrm.core.ExpressionItem
                 {
                     MorphTargetBinds = new List<vrm.core.MorphTargetBind>
                     {
                         new()
                         {
-                            Node = nodeID,
+                            Node = nodeID.Value,
                             Index = new gltf.ObjectID((uint)blendShapeIndex),
                             Weight = 1.0f,
                         }
@@ -3557,7 +3625,13 @@ namespace com.github.hkrn
                 ref IList<vrm.sb.Collider> colliders)
             {
                 var rootTransform = collider.GetRootTransform();
-                var node = _transformNodeIDs[rootTransform];
+                var nodeID = FindTransformNodeID(rootTransform);
+                if (!nodeID.HasValue)
+                {
+                    Debug.LogWarning($"Collider root transform {rootTransform} not found due to inactive");
+                    return;
+                }
+
                 switch (collider.shapeType)
                 {
                     case VRCPhysBoneColliderBase.ShapeType.Capsule:
@@ -3569,7 +3643,7 @@ namespace com.github.hkrn
                         var tail = position + collider.rotation * new Vector3(0.0f, height, 0.0f);
                         var capsuleCollider = new vrm.sb.Collider
                         {
-                            Node = node,
+                            Node = nodeID.Value,
                             Shape = new vrm.sb.Shape
                             {
                                 Capsule = new vrm.sb.Capsule
@@ -3626,7 +3700,7 @@ namespace com.github.hkrn
                         };
                         var planeCollider = new vrm.sb.Collider
                         {
-                            Node = node,
+                            Node = nodeID.Value,
                             Shape = new vrm.sb.Shape
                             {
                                 Sphere = new vrm.sb.Sphere
@@ -3650,7 +3724,7 @@ namespace com.github.hkrn
                         var radius = collider.radius;
                         var sphereCollider = new vrm.sb.Collider
                         {
-                            Node = node,
+                            Node = nodeID.Value,
                             Shape = new vrm.sb.Shape
                             {
                                 Sphere = new vrm.sb.Sphere
@@ -3758,6 +3832,13 @@ namespace com.github.hkrn
                 RetrieveTransforms(pb.GetRootTransform(), ref transforms);
                 var joints = transforms.Select(transform =>
                     {
+                        var nodeID = FindTransformNodeID(transform);
+                        if (!nodeID.HasValue)
+                        {
+                            Debug.LogWarning($"Joint transform {transform} not found due to inactive");
+                            return null;
+                        }
+
                         var (upperDepth, lowerDepth) = FindTransformDepth(transform, pb.GetRootTransform());
                         var depthRatio = upperDepth / (float)(upperDepth + lowerDepth);
                         var evaluate = new Func<float, AnimationCurve, float>(
@@ -3785,7 +3866,7 @@ namespace com.github.hkrn
 
                         return new vrm.sb.Joint
                         {
-                            Node = _transformNodeIDs[transform],
+                            Node = nodeID.Value,
                             HitRadius = hitRadius,
                             Stiffness = immobile + stiffness * stiffnessFactor,
                             GravityPower = gravity,
@@ -3817,7 +3898,7 @@ namespace com.github.hkrn
                     Name = new gltf.UnicodeString(pb.name),
                     Center = null,
                     ColliderGroups = newColliderGroups.Count > 0 ? newColliderGroups.ToList() : null,
-                    Joints = joints,
+                    Joints = joints.Where(joint => joint != null).Select(joint => joint!).ToList(),
                 };
                 springs.Add(spring);
             }
@@ -3840,8 +3921,12 @@ namespace com.github.hkrn
 
             private gltf.ObjectID? GetOptionalHumanBoneNodeID(Animator animator, HumanBodyBones bone)
             {
-                var transform = animator.GetBoneTransform(bone);
-                return transform ? _transformNodeIDs[transform] : null;
+                return FindTransformNodeID(animator.GetBoneTransform(bone));
+            }
+
+            private gltf.ObjectID? FindTransformNodeID(Transform transform)
+            {
+                return transform && _transformNodeIDs.TryGetValue(transform, out var nodeID) ? nodeID : null;
             }
 
             private readonly GameObject _gameObject;
