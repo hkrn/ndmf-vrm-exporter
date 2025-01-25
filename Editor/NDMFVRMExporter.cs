@@ -1906,8 +1906,8 @@ namespace com.github.hkrn
         public string Export(Stream stream)
         {
             var rootTransform = _gameObject.transform;
-            var translation = rootTransform.localPosition.ToVector3WithCoordinateSpace();
-            var rotation = rootTransform.localRotation.ToQuaternionWithCoordinateSpace();
+            var translation = System.Numerics.Vector3.Zero;
+            var rotation = System.Numerics.Quaternion.Identity;
             var scale = rootTransform.localScale.ToVector3();
             var rootNode = new gltf.node.Node
             {
