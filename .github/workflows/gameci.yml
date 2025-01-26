@@ -19,19 +19,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        path: ndmf-vrm-exporter
       - name: Moves packages
         run: |
-          mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
-          mv Editor* Localization* package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
+          mkdir -p ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv ndmf-vrm-exporter/Editor*
+             ndmf-vrm-exporter/Localization*
+             ndmf-vrm-exporter/package.json*
+             ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
       - name: Install VRChat Avatar SDK via vrc-get
         run: vrc-get install -y com.vrchat.avatars
+        working-directory: ndmf-vrm-exporter
       - name: Retrieve cache
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: Library
-          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Library-${{ hashFiles('ndmf-vrm-exporter/**') }}
           restore-keys: |
             Library-
       - name: Run all tests
@@ -41,6 +46,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          projectPath: ndmf-vrm-exporter
           testMode: EditMode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2022.3.22f1
