@@ -23,7 +23,6 @@ jobs:
         run: |
           mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
           mv Editor* Packages/com.github.hkrn.ndmf-vrm-exporter
-          mv Localization* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
