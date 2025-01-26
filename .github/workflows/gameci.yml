@@ -27,6 +27,11 @@ jobs:
           mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
+      - name: Adds VPM registry
+        uses: anatawa12/sh-actions/resolve-vpm-packages@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
+        with:
+          repos:
+            - https://vpm.nadena.dev/vpm.json
       - name: Install VRChat Avatar SDK and NDMF via vrc-get
         run: |
           vrc-get install -y com.vrchat.avatars
