@@ -24,10 +24,9 @@ jobs:
       - name: Moves packages
         run: |
           mkdir -p ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
-          mv ndmf-vrm-exporter/Editor*
-             ndmf-vrm-exporter/Localization*
-             ndmf-vrm-exporter/package.json*
-             ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv ndmf-vrm-exporter/Editor* ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv ndmf-vrm-exporter/Localization* ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv ndmf-vrm-exporter/package.json* ndmf-vrm-exporter/Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
       - name: Install VRChat Avatar SDK via vrc-get
