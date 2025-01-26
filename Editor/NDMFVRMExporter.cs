@@ -2501,6 +2501,7 @@ namespace com.github.hkrn
                             config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
                         }
 
+                        config.CullMode = (int) m.GetFloat(GltfMaterialExporter.PropertyCullMode);
                         config.EnableEmission = Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f);
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
                         _bakedMaterialMainTextures.Add(m, config.MainTexture);
@@ -3857,6 +3858,7 @@ namespace com.github.hkrn
             {
                 public Texture? MainTexture { get; set; }
                 public gltf.material.AlphaMode? AlphaMode { get; set; }
+                public int? CullMode { get; set; }
                 public bool EnableEmission { get; set; }
                 public bool EnableNormalMap { get; set; } = true;
             }
@@ -4050,7 +4052,11 @@ namespace com.github.hkrn
                     material.AlphaCutoff = Mathf.Max(source.GetFloat(PropertyCutoff), 0.0f);
                 }
 
-                if (source.HasProperty(PropertyCullMode))
+                if (overrides.CullMode != null)
+                {
+                    material.DoubleSided = overrides.CullMode == 0;
+                }
+                else if (source.HasProperty(PropertyCullMode))
                 {
                     material.DoubleSided = source.GetInt(PropertyCullMode) == 0;
                 }
@@ -4157,6 +4163,7 @@ namespace com.github.hkrn
                 _extensionsUsed.Add(gltf.extensions.KhrTextureTransform.Name);
             }
 
+            internal static readonly int PropertyCullMode = Shader.PropertyToID("_CullMode");
             private static readonly int PropertyColor = Shader.PropertyToID("_Color");
             private static readonly int PropertyMainTex = Shader.PropertyToID("_MainTex");
             private static readonly int PropertyEmissionColor = Shader.PropertyToID("_EmissionColor");
@@ -4169,7 +4176,6 @@ namespace com.github.hkrn
             private static readonly int PropertyOcclusionStrength = Shader.PropertyToID("_OcclusionStrength");
             private static readonly int PropertyOcclusionMap = Shader.PropertyToID("_OcclusionMap");
             private static readonly int PropertyCutoff = Shader.PropertyToID("_Cutoff");
-            private static readonly int PropertyCullMode = Shader.PropertyToID("_CullMode");
 
             public IDictionary<gltf.ObjectID, TextureItemMetadata> TextureMetadata { get; }
             private readonly gltf.Root _root;
