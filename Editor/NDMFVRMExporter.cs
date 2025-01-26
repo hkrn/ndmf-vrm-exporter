@@ -2505,7 +2505,7 @@ namespace com.github.hkrn
                             config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
                         }
 
-                        config.CullMode = (int) m.GetFloat(GltfMaterialExporter.PropertyCullMode);
+                        config.CullMode = (int)m.GetFloat(GltfMaterialExporter.PropertyCullMode);
                         config.EnableEmission = Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f);
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
                         _bakedMaterialMainTextures.Add(m, config.MainTexture);
@@ -2667,171 +2667,237 @@ namespace com.github.hkrn
                 float weight;
                 if (node.TryGetComponent<VRCAimConstraint>(out var vrcAimConstraint))
                 {
-                    var numSources = vrcAimConstraint.Sources.Count;
-                    if (numSources >= 1)
+                    if (vrcAimConstraint.IsActive)
                     {
-                        if (numSources > 1)
+                        var numSources = vrcAimConstraint.Sources.Count;
+                        if (numSources >= 1)
                         {
-                            Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
-                        }
+                            if (numSources > 1)
+                            {
+                                Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
+                            }
 
-                        var constraintSource = vrcAimConstraint.Sources.First();
-                        var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
-                        if (nodeID.HasValue)
-                        {
-                            sourceID = nodeID.Value;
+                            var constraintSource = vrcAimConstraint.Sources.First();
+                            var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
+                            if (nodeID.HasValue)
+                            {
+                                sourceID = nodeID.Value;
+                            }
+                            else
+                            {
+                                Debug.LogWarning(
+                                    $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                            }
+
+                            weight = vrcAimConstraint.GlobalWeight * constraintSource.Weight;
                         }
                         else
                         {
-                            Debug.LogWarning(
-                                $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                            sourceID = immobileNodeID;
+                            weight = vrcAimConstraint.GlobalWeight;
                         }
 
-                        weight = vrcAimConstraint.GlobalWeight * constraintSource.Weight;
+                        if (sourceID.IsNull)
+                        {
+                            return null;
+                        }
+
+                        if (TryParseAimAxis(vrcAimConstraint.AimAxis, out var aimAxis))
+                        {
+                            vrmNodeConstraint = new vrm.constraint.NodeConstraint
+                            {
+                                Constraint = new vrm.constraint.Constraint
+                                {
+                                    Aim = new vrm.constraint.AimConstraint
+                                    {
+                                        AimAxis = aimAxis,
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                }
+                            };
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Aim axis cannot be exported due to unsupported axis: {node.name}");
+                        }
                     }
                     else
                     {
-                        sourceID = immobileNodeID;
-                        weight = vrcAimConstraint.GlobalWeight;
+                        Debug.Log($"VRCAimConstraint {node.name} is not active");
                     }
-
-                    vrmNodeConstraint = new vrm.constraint.NodeConstraint
-                    {
-                        Constraint = new vrm.constraint.Constraint
-                        {
-                            Aim = new vrm.constraint.AimConstraint
-                            {
-                                Source = sourceID,
-                                Weight = weight,
-                            }
-                        }
-                    };
                 }
-                else if (node.TryGetComponent<AimConstraint>(out var aimConstraint))
+                else if (node.TryGetComponent<AimConstraint>(out var aimConstraint) && aimConstraint.constraintActive)
                 {
-                    var numSources = aimConstraint.sourceCount;
-                    if (numSources >= 1)
+                    if (aimConstraint.constraintActive)
                     {
-                        if (numSources > 1)
+                        var numSources = aimConstraint.sourceCount;
+                        if (numSources >= 1)
                         {
-                            Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
-                        }
+                            if (numSources > 1)
+                            {
+                                Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
+                            }
 
-                        var constraintSource = aimConstraint.GetSource(0);
-                        var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
-                        if (nodeID.HasValue)
-                        {
-                            sourceID = nodeID.Value;
+                            var constraintSource = aimConstraint.GetSource(0);
+                            var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
+                            if (nodeID.HasValue)
+                            {
+                                sourceID = nodeID.Value;
+                            }
+                            else
+                            {
+                                Debug.LogWarning(
+                                    $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                                return null;
+                            }
+
+                            weight = aimConstraint.weight * constraintSource.weight;
                         }
                         else
                         {
-                            Debug.LogWarning(
-                                $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                            sourceID = immobileNodeID;
+                            weight = aimConstraint.weight;
                         }
 
-                        weight = aimConstraint.weight * constraintSource.weight;
+                        if (sourceID.IsNull)
+                        {
+                            return null;
+                        }
+
+                        if (TryParseAimAxis(aimConstraint.aimVector, out var aimAxis))
+                        {
+                            vrmNodeConstraint = new vrm.constraint.NodeConstraint
+                            {
+                                Constraint = new vrm.constraint.Constraint
+                                {
+                                    Aim = new vrm.constraint.AimConstraint
+                                    {
+                                        AimAxis = aimAxis,
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                }
+                            };
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Aim axis cannot be exported due to unsupported axis: {node.name}");
+                        }
                     }
                     else
                     {
-                        sourceID = immobileNodeID;
-                        weight = aimConstraint.weight;
+                        Debug.Log($"AimConstraint {node.name} is not active");
                     }
-
-                    vrmNodeConstraint = new vrm.constraint.NodeConstraint
-                    {
-                        Constraint = new vrm.constraint.Constraint
-                        {
-                            Aim = new vrm.constraint.AimConstraint
-                            {
-                                Source = sourceID,
-                                Weight = weight,
-                            }
-                        }
-                    };
                 }
 #if NVE_HAS_VRCHAT_AVATAR_SDK
                 else if (node.TryGetComponent<VRCRotationConstraint>(out var vrcRotationConstraint))
                 {
-                    var numSources = vrcRotationConstraint.Sources.Count;
-                    if (numSources >= 1)
+                    if (vrcRotationConstraint.IsActive)
                     {
-                        if (numSources > 1)
+                        var numSources = vrcRotationConstraint.Sources.Count;
+                        if (numSources >= 1)
                         {
-                            Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
-                        }
+                            if (numSources > 1)
+                            {
+                                Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
+                            }
 
-                        var constraintSource = vrcRotationConstraint.Sources.First();
-                        var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
-                        if (nodeID.HasValue)
-                        {
-                            sourceID = nodeID.Value;
+                            var constraintSource = vrcRotationConstraint.Sources.First();
+                            var nodeID = FindTransformNodeID(constraintSource.SourceTransform);
+                            if (nodeID.HasValue)
+                            {
+                                sourceID = nodeID.Value;
+                            }
+                            else
+                            {
+                                Debug.LogWarning(
+                                    $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                            }
+
+                            weight = vrcRotationConstraint.GlobalWeight * constraintSource.Weight;
                         }
                         else
                         {
-                            Debug.LogWarning(
-                                $"Constraint source {constraintSource.SourceTransform} not found due to inactive");
+                            weight = vrcRotationConstraint.GlobalWeight;
                         }
 
-                        weight = vrcRotationConstraint.GlobalWeight * constraintSource.Weight;
+                        if (sourceID.IsNull)
+                        {
+                            return null;
+                        }
+
+                        vrmNodeConstraint = new vrm.constraint.NodeConstraint
+                        {
+                            Constraint = new vrm.constraint.Constraint
+                            {
+                                Rotation = new vrm.constraint.RotationConstraint
+                                {
+                                    Source = sourceID,
+                                    Weight = weight,
+                                }
+                            }
+                        };
                     }
                     else
                     {
-                        weight = vrcRotationConstraint.GlobalWeight;
+                        Debug.Log($"VRCRotationConstraint {node.name} is not active");
                     }
-
-                    vrmNodeConstraint = new vrm.constraint.NodeConstraint
-                    {
-                        Constraint = new vrm.constraint.Constraint
-                        {
-                            Rotation = new vrm.constraint.RotationConstraint
-                            {
-                                Source = sourceID,
-                                Weight = weight,
-                            }
-                        }
-                    };
                 }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
-                else if (node.TryGetComponent<RotationConstraint>(out var rotationConstraint))
+                else if (node.TryGetComponent<RotationConstraint>(out var rotationConstraint) &&
+                         rotationConstraint.constraintActive)
                 {
-                    var numSources = rotationConstraint.sourceCount;
-                    if (numSources >= 1)
+                    if (rotationConstraint.constraintActive)
                     {
-                        if (numSources > 1)
+                        var numSources = rotationConstraint.sourceCount;
+                        if (numSources >= 1)
                         {
-                            Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
-                        }
+                            if (numSources > 1)
+                            {
+                                Debug.LogWarning($"Constraint with multiple sources is not supported in {node.name}");
+                            }
 
-                        var constraintSource = rotationConstraint.GetSource(0);
-                        var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
-                        if (nodeID.HasValue)
-                        {
-                            sourceID = nodeID.Value;
+                            var constraintSource = rotationConstraint.GetSource(0);
+                            var nodeID = FindTransformNodeID(constraintSource.sourceTransform);
+                            if (nodeID.HasValue)
+                            {
+                                sourceID = nodeID.Value;
+                            }
+                            else
+                            {
+                                Debug.LogWarning(
+                                    $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                            }
+
+                            weight = rotationConstraint.weight * constraintSource.weight;
                         }
                         else
                         {
-                            Debug.LogWarning(
-                                $"Constraint source {constraintSource.sourceTransform} not found due to inactive");
+                            weight = rotationConstraint.weight;
                         }
 
-                        weight = rotationConstraint.weight * constraintSource.weight;
+                        if (sourceID.IsNull)
+                        {
+                            return null;
+                        }
+
+                        vrmNodeConstraint = new vrm.constraint.NodeConstraint
+                        {
+                            Constraint = new vrm.constraint.Constraint
+                            {
+                                Rotation = new vrm.constraint.RotationConstraint
+                                {
+                                    Source = sourceID,
+                                    Weight = weight,
+                                }
+                            }
+                        };
                     }
                     else
                     {
-                        weight = rotationConstraint.weight;
+                        Debug.Log($"RotationConstraint {node.name} is not active");
                     }
-
-                    vrmNodeConstraint = new vrm.constraint.NodeConstraint
-                    {
-                        Constraint = new vrm.constraint.Constraint
-                        {
-                            Rotation = new vrm.constraint.RotationConstraint
-                            {
-                                Source = sourceID,
-                                Weight = weight,
-                            }
-                        }
-                    };
                 }
 #if NVE_HAS_VRCHAT_AVATAR_SDK
                 else if ((node.TryGetComponent<VRCParentConstraint>(out var vrcParentConstraint) &&
@@ -3324,6 +3390,40 @@ namespace com.github.hkrn
                 {
                     hb.RightLittleDistal = new vrm.core.HumanBone { Node = rightLittleDistal.Value };
                 }
+            }
+
+            private static bool TryParseAimAxis(Vector3 axis, out string value)
+            {
+                if (axis == Vector3.left)
+                {
+                    value = "PositiveX";
+                }
+                else if (axis == Vector3.right)
+                {
+                    value = "NegativeX";
+                }
+                else if (axis == Vector3.up)
+                {
+                    value = "PositiveY";
+                }
+                else if (axis == Vector3.down)
+                {
+                    value = "NegativeY";
+                }
+                else if (axis == Vector3.forward)
+                {
+                    value = "PositiveZ";
+                }
+                else if (axis == Vector3.back)
+                {
+                    value = "NegativeZ";
+                }
+                else
+                {
+                    value = "";
+                }
+
+                return !string.IsNullOrEmpty(value);
             }
 
             private void ExportExpression(ref vrm.core.Core core)

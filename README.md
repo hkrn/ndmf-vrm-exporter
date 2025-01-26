@@ -255,11 +255,15 @@ VRC PhysBone のコライダーは以下の三種類に対応しています。
 Constraint または VRM Constraint が使われている場合は VRM Constraint に変換されます。またその場合は以下の三種類に対応しています。[^9]
 
 * `AimConstraint`
+  * VRM の仕様上 X/Y/Z の単一方向ベクトルのみに制約されるため、例えば斜め方向の場合変換できません
+  * またアップベクトル設定の変換に対応していません
 * `RotationConstraint`
 * `ParentConstraint`
   * ソースノードが存在しない場合のみ
 
 いずれも複数ソースノードを持つものについては VRM Constraint の仕様上対応できないため、最初のソースノードのみ利用されます。またソースノードが存在しない Constraint がひとつ以上ある場合は VRM Constraint の仕様の整合性のため専用のノードが追加され、それを参照先として利用します。
+
+Unity Constraint での `Constraint Settings` および VRC Constraint での `Constraint Settings` と `Advanced Settings` の設定の変換は VRM に仕様に対応する機能が存在しないため対応していません。
 
 スプリングボーンと同様に VRM Constraint と Unity/VRC Constraint は計算方法が異なるため結果は同一になりません。
 
