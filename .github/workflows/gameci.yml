@@ -22,7 +22,6 @@ jobs:
       - name: Moves packages
         run: |
           mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
-          mv Assets* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv Editor* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv Localization* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
