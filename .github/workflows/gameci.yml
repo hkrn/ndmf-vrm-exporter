@@ -19,6 +19,8 @@ jobs:
           path: Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
+      - name: Install VRChat Avatar SDK via vrc-get
+        run: vrc-get install -y com.vrchat.avatars
       - name: Retrieve cache
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
@@ -26,8 +28,6 @@ jobs:
           key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
             Library-
-      - name: Install VRChat Avatar SDK via vrc-get
-        run: vrc-get install -y com.vrchat.avatars
       - name: Run all tests
         uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
