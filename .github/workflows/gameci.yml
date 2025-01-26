@@ -12,14 +12,17 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Moves packages
-        run:
-          shell: |
-            mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
-            mv Editor* Locations* package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
+        run: |
+          mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv Editor* Locations* package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Install vrc-get
         uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
       - name: Install VRChat Avatar SDK via vrc-get
