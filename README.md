@@ -18,7 +18,7 @@ NDMF VRM Exporter には以下の特徴を持っています。
 
 ## 導入方法
 
-まず [VRChat Creator Companion](https://vcc.docs.vrchat.com) または [ALCOM](https://vrc-get.anatawa12.com/alcom/) を事前にインストールします。その後 [`レポジトリ追加のリンク`](vcc://vpm/addRepo?url=https%3A%2F%2Fhkrn.github.io%2Fvpm.json) をクリックしてレポジトリを導入します。手動で登録する場合は `https://hkrn.github.io/vpm.json` を指定します。
+まず [VRChat Creator Companion](https://vcc.docs.vrchat.com) または [ALCOM](https://vrc-get.anatawa12.com/alcom/) を事前にインストールします。その後 [レポジトリ追加のリンク](vcc://vpm/addRepo?url=https%3A%2F%2Fhkrn.github.io%2Fvpm.json) をクリックしてレポジトリを導入します。手動で登録する場合は `https://hkrn.github.io/vpm.json` を指定します。
 
 レポジトリ導入後は `NDMF VRM Exporter` を検索してインストールすることで利用可能になります。
 
