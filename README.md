@@ -16,14 +16,24 @@ NDMF VRM Exporter には以下の特徴を持っています。
 * [lilToon](https://lilxyzw.github.io/lilToon/ja_JP/) の設定を MToon の互換設定に自動的に変換
   * テクスチャの焼き込みも自動的に行います
 
+## 導入方法
+
+まず [VRChat Creator Companion](https://vcc.docs.vrchat.com) または [ALCOM](https://vrc-get.anatawa12.com/alcom/) を事前にインストールします。その後 [`レポジトリ追加のリンク`](vcc://vpm/addRepo?url=https%3A%2F%2Fhkrn.github.io%2Fvpm.json) をクリックしてレポジトリを導入します。手動で登録する場合は `https://hkrn.github.io/vpm.json` を指定します。
+
+レポジトリ導入後は `NDMF VRM Exporter` を検索してインストールすることで利用可能になります。
+
 ## 使い方
 
 1. インスペクタ画面から `VRC Avatar Descriptor` があるところで `Add Component` から `VRM Export Description` コンポーネントを検索し設定
 2. `VRM Export Description` コンポーネント内にある `Retrieve Metadata via VRChat API` で自動設定
   * アバターが未アップロードなどの理由で手動設定する場合は `Authors` の左横の ▶️ をクリックして 🔽 にしたのち、➕ ボタンで作者名を設定
 3. 再生開始
-4. `Assets/NDMF VRM Exporter/${シーン名}` 内にアバター名のついた VRM ファイルを確認
+4. `Assets/NDMF VRM Exporter/${シーン名}` 内にアバター名のついた VRM ファイルが出力されていることを確認
   * シーンが未保存の状態で実行した場合はシーン名が `Untitled` になります
+
+NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っていません。そのため出力された VRM ファイルを手元環境で確認する場合は [VRMファイルが使えるアプリケーションは？](https://vrm.dev/showcase) から「ビューワー」を選択して適宜アプリケーションを導入して読み込んでください。その際は必ず VRM 1.0 対応のものを利用してください（VRM 0.x のみ対応の場合は読み込めません）。
+
+アップロードして確認する場合は [VRoid Hub](https://hub.vroid.com) の利用を推奨します。
 
 ## コンポーネントの説明
 
