@@ -52,6 +52,10 @@ jobs:
           echo "unityPackage=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.unitypackage" >> $GITHUB_ENV
           echo "version=${{ steps.version.outputs.value }}" >> $GITHUB_ENV
 
+      - name: Removes Directories before Archiving
+        run: |
+          rm -rf Assets* Packages* ProjectSettings* Tests*
+
       # Zip the Package for release
       - name: Archive Release
         uses: thedoctor0/zip-release@b57d897cb5d60cb78b51a507f63fa184cfe35554
@@ -59,6 +63,9 @@ jobs:
           type: 'zip'
           filename: '${{ env.zipFile }}'
           exclusions: '*.git* .editorconfig'
+
+      - name: Prints SHA256 checksum
+        run: sha256sum ${{ env.zipFile }}
 
       # Build a list of .meta files for future use
       - name: Track Package Meta Files
