@@ -2158,13 +2158,13 @@ namespace com.github.hkrn.gltf
                         ? $"{name.Value}_{indexBufferViewSuffix}"
                         : indexBufferViewSuffix),
                 };
-                var componentType = builder.BaseAccessorCount switch
+                var (indices, values) = builder.Build();
+                var componentType = indices.Max() switch
                 {
                     > ushort.MaxValue => accessor.ComponentType.UnsignedInt,
                     > byte.MaxValue => accessor.ComponentType.UnsignedShort,
                     _ => accessor.ComponentType.UnsignedByte
                 };
-                var (indices, values) = builder.Build();
                 {
                     using MemoryStream memoryStream = new();
                     using BinaryWriter byteArray = new(memoryStream);
@@ -2174,7 +2174,7 @@ namespace com.github.hkrn.gltf
                         {
                             case accessor.ComponentType.UnsignedByte:
                             {
-                                byteArray.Write(BitConverter.GetBytes((byte)index));
+                                byteArray.Write((byte)index);
                                 break;
                             }
                             case accessor.ComponentType.UnsignedShort:
