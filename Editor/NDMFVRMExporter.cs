@@ -39,6 +39,7 @@ using Anatawa12.AvatarOptimizer.API;
 
 #if NVE_HAS_LILTOON
 using lilToon;
+using UnityEngine.Rendering;
 #endif // NVE_HAS_LILTOON
 
 #if NVE_HAS_NDMF
@@ -1812,6 +1813,7 @@ namespace com.github.hkrn
         private static readonly string VrmcSpringBoneExtendedCollider = "VRMC_springBone_extended_collider";
         private static readonly string VrmcNodeConstraint = "VRMC_node_constraint";
         private static readonly string VrmcMaterialsMtoon = "VRMC_materials_mtoon";
+        private static readonly int PropertyCull = Shader.PropertyToID("_Cull");
         private static readonly int PropertyUseEmission = Shader.PropertyToID("_UseEmission");
         private static readonly int PropertyUseBumpMap = Shader.PropertyToID("_UseBumpMap");
         private static readonly int PropertyAlphaMaskMode = Shader.PropertyToID("_AlphaMaskMode");
@@ -2505,7 +2507,9 @@ namespace com.github.hkrn
                             config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
                         }
 
-                        config.CullMode = (int)m.GetFloat(GltfMaterialExporter.PropertyCullMode);
+                        config.CullMode = m.HasProperty(PropertyCull)
+                            ? (int)m.GetFloat(PropertyCull)
+                            : (int)CullMode.Back;
                         config.EnableEmission = Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f);
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
                         _bakedMaterialMainTextures.Add(m, config.MainTexture);
@@ -4348,7 +4352,7 @@ namespace com.github.hkrn
                 _extensionsUsed.Add(gltf.extensions.KhrTextureTransform.Name);
             }
 
-            internal static readonly int PropertyCullMode = Shader.PropertyToID("_CullMode");
+            private static readonly int PropertyCullMode = Shader.PropertyToID("_CullMode");
             private static readonly int PropertyColor = Shader.PropertyToID("_Color");
             private static readonly int PropertyMainTex = Shader.PropertyToID("_MainTex");
             private static readonly int PropertyEmissionColor = Shader.PropertyToID("_EmissionColor");
