@@ -81,7 +81,10 @@ namespace com.github.hkrn.gltf
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            return new ObjectID((uint)reader.ReadAsInt32().GetValueOrDefault());
+            if (reader.TokenType != JsonToken.Integer)
+                return null;
+            var id = ((long?)reader.Value).GetValueOrDefault();
+            return new ObjectID((uint)id);
         }
     }
 
@@ -137,9 +140,9 @@ namespace com.github.hkrn.gltf
             UnicodeString? existingValue, bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            var value = reader.ReadAsString();
+            var value = (string?)reader.Value;
             return new UnicodeString(value ?? "");
         }
     }
@@ -162,14 +165,15 @@ namespace com.github.hkrn.gltf
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.StartArray)
                 return null;
             var value = new Vector3
             {
-                X = (float)reader.ReadAsDouble().GetValueOrDefault(),
-                Y = (float)reader.ReadAsDouble().GetValueOrDefault(),
-                Z = (float)reader.ReadAsDouble().GetValueOrDefault(),
+                X = (float)reader.ReadAsDouble().GetValueOrDefault(3.0),
+                Y = (float)reader.ReadAsDouble().GetValueOrDefault(3.0),
+                Z = (float)reader.ReadAsDouble().GetValueOrDefault(3.0),
             };
+            reader.Read();
             return value;
         }
     }
@@ -193,7 +197,7 @@ namespace com.github.hkrn.gltf
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.StartArray)
                 return null;
             var value = new Vector4
             {
@@ -202,6 +206,7 @@ namespace com.github.hkrn.gltf
                 Z = (float)reader.ReadAsDouble().GetValueOrDefault(),
                 W = (float)reader.ReadAsDouble().GetValueOrDefault(),
             };
+            reader.Read();
             return value;
         }
     }
@@ -225,7 +230,7 @@ namespace com.github.hkrn.gltf
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.StartArray)
                 return null;
             var value = new Quaternion
             {
@@ -234,6 +239,7 @@ namespace com.github.hkrn.gltf
                 Z = (float)reader.ReadAsDouble().GetValueOrDefault(),
                 W = (float)reader.ReadAsDouble().GetValueOrDefault(1.0),
             };
+            reader.Read();
             return value;
         }
     }
@@ -269,7 +275,7 @@ namespace com.github.hkrn.gltf
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.StartArray)
                 return null;
             var value = new Matrix4x4
             {
@@ -290,6 +296,7 @@ namespace com.github.hkrn.gltf
                 M34 = (float)reader.ReadAsDouble().GetValueOrDefault(),
                 M44 = (float)reader.ReadAsDouble().GetValueOrDefault()
             };
+            reader.Read();
             return value;
         }
     }
@@ -414,16 +421,16 @@ namespace com.github.hkrn.gltf
                 ComponentType? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.Integer)
                     return null;
-                return reader.ReadAsInt32().GetValueOrDefault() switch
+                return reader.Value switch
                 {
-                    5120 => ComponentType.Byte,
-                    5121 => ComponentType.UnsignedByte,
-                    5122 => ComponentType.Short,
-                    5123 => ComponentType.UnsignedShort,
-                    5125 => ComponentType.UnsignedInt,
-                    5126 => ComponentType.Float,
+                    5120L => ComponentType.Byte,
+                    5121L => ComponentType.UnsignedByte,
+                    5122L => ComponentType.Short,
+                    5123L => ComponentType.UnsignedShort,
+                    5125L => ComponentType.UnsignedInt,
+                    5126L => ComponentType.Float,
                     _ => throw new JsonException(),
                 };
             }
@@ -465,9 +472,9 @@ namespace com.github.hkrn.gltf
             public override Type? ReadJson(JsonReader reader, System.Type objectType, Type? existingValue,
                 bool hasExistingValue, JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.String)
                     return null;
-                return reader.ReadAsString() switch
+                return reader.Value switch
                 {
                     "SCALAR" => Type.Scalar,
                     "VEC2" => Type.Vec2,
@@ -547,9 +554,9 @@ namespace com.github.hkrn.gltf
                 Interpolation? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.String)
                     return null;
-                return reader.ReadAsString() switch
+                return reader.Value switch
                 {
                     "CUBICSPLINE" => Interpolation.CubicSpline,
                     "LINEAR" => Interpolation.Linear,
@@ -591,9 +598,9 @@ namespace com.github.hkrn.gltf
                 bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.String)
                     return null;
-                return reader.ReadAsString() switch
+                return reader.Value switch
                 {
                     "rotation" => Path.Rotation,
                     "scale" => Path.Scale,
@@ -714,12 +721,12 @@ namespace com.github.hkrn.gltf
                 bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.Integer)
                     return null;
-                return reader.ReadAsInt32().GetValueOrDefault() switch
+                return reader.Value switch
                 {
-                    34962 => Target.ArrayBuffer,
-                    34963 => Target.ElementArrayBuffer,
+                    34962L => Target.ArrayBuffer,
+                    34963L => Target.ElementArrayBuffer,
                     _ => throw new JsonException(),
                 };
             }
@@ -927,9 +934,9 @@ namespace com.github.hkrn.gltf
                 AlphaMode? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.String)
                     return null;
-                return reader.ReadAsString() switch
+                return reader.Value switch
                 {
                     "BLEND" => AlphaMode.Blend,
                     "MASK" => AlphaMode.Mask,
@@ -973,16 +980,16 @@ namespace com.github.hkrn.gltf
                 TextureFilterMode? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.Integer)
                     return null;
-                return reader.ReadAsInt32().GetValueOrDefault() switch
+                return reader.Value switch
                 {
-                    9728 => TextureFilterMode.Nearest,
-                    9729 => TextureFilterMode.Linear,
-                    9984 => TextureFilterMode.NearestMipmapNearest,
-                    9985 => TextureFilterMode.LinearMipmapNearest,
-                    9986 => TextureFilterMode.NearestMipmapLinear,
-                    9987 => TextureFilterMode.LinearMipmapLinear,
+                    9728L => TextureFilterMode.Nearest,
+                    9729L => TextureFilterMode.Linear,
+                    9984L => TextureFilterMode.NearestMipmapNearest,
+                    9985L => TextureFilterMode.LinearMipmapNearest,
+                    9986L => TextureFilterMode.NearestMipmapLinear,
+                    9987L => TextureFilterMode.LinearMipmapLinear,
                     _ => throw new JsonException(),
                 };
             }
@@ -1016,13 +1023,13 @@ namespace com.github.hkrn.gltf
                 TextureWrapMode? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.Integer)
                     return null;
-                return reader.ReadAsInt32().GetValueOrDefault() switch
+                return reader.Value switch
                 {
-                    33071 => TextureWrapMode.ClampToEdge,
-                    33648 => TextureWrapMode.MirroredRepeat,
-                    10497 => TextureWrapMode.Repeat,
+                    33071L => TextureWrapMode.ClampToEdge,
+                    33648L => TextureWrapMode.MirroredRepeat,
+                    10497L => TextureWrapMode.Repeat,
                     _ => throw new JsonException(),
                 };
             }
@@ -1234,17 +1241,17 @@ namespace com.github.hkrn.gltf
                 PrimitiveMode? existingValue, bool hasExistingValue,
                 JsonSerializer serializer)
             {
-                if (reader.TokenType == JsonToken.Null)
+                if (reader.TokenType != JsonToken.Integer)
                     return null;
-                return reader.ReadAsInt32().GetValueOrDefault() switch
+                return reader.Value switch
                 {
-                    0 => PrimitiveMode.Point,
-                    1 => PrimitiveMode.Lines,
-                    2 => PrimitiveMode.LineLoop,
-                    3 => PrimitiveMode.LineStrip,
-                    4 => PrimitiveMode.Triangles,
-                    5 => PrimitiveMode.TriangleStrip,
-                    6 => PrimitiveMode.TriangleFan,
+                    0L => PrimitiveMode.Point,
+                    1L => PrimitiveMode.Lines,
+                    2L => PrimitiveMode.LineLoop,
+                    3L => PrimitiveMode.LineStrip,
+                    4L => PrimitiveMode.Triangles,
+                    5L => PrimitiveMode.TriangleStrip,
+                    6L => PrimitiveMode.TriangleFan,
                     _ => throw new JsonException(),
                 };
             }
@@ -2221,6 +2228,7 @@ namespace com.github.hkrn.gltf
                     min = Vector3.Min(min, Vector3.Zero);
                     max = Vector3.Max(max, Vector3.Zero);
                 }
+
                 var accessorNameSuffix = $"Accessor{accessorObjectID.ID}";
                 var accessorObject = new accessor.Accessor
                 {
@@ -2727,9 +2735,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "onlyAuthor" => AvatarPermission.OnlyAuthor,
                 "onlySeparatelyLicensedPerson" => AvatarPermission.OnlySeparatelyLicensedPerson,
@@ -2766,9 +2774,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "personalNonProfit" => CommercialUsage.PersonalNonProfit,
                 "personalProfit" => CommercialUsage.PersonalProfit,
@@ -2805,9 +2813,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "prohibited" => Modification.Prohibited,
                 "allowModification" => Modification.AllowModification,
@@ -2842,9 +2850,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "required" => CreditNotation.Required,
                 "unnecessary" => CreditNotation.Unnecessary,
@@ -2883,9 +2891,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "auto" => FirstPersonType.Auto,
                 "both" => FirstPersonType.Both,
@@ -2923,9 +2931,9 @@ namespace com.github.hkrn.vrm.core
             ExpressionOverrideType? existingValue,
             bool hasExistingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "none" => ExpressionOverrideType.None,
                 "block" => ExpressionOverrideType.Block,
@@ -2967,9 +2975,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "color" => MaterialColorType.Color,
                 "emissionColor" => MaterialColorType.EmissionColor,
@@ -3007,9 +3015,9 @@ namespace com.github.hkrn.vrm.core
             bool hasExistingValue,
             JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null)
+            if (reader.TokenType != JsonToken.String)
                 return null;
-            return reader.ReadAsString() switch
+            return reader.Value switch
             {
                 "bone" => LookAtType.Bone,
                 "expression" => LookAtType.Expression,
