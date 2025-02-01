@@ -1870,7 +1870,7 @@ namespace com.github.hkrn
             _gameObject = gameObject;
             _assetSaver = assetSaver;
             _materialIDs = new Dictionary<Material, gltf.ObjectID>();
-            _bakedMaterialMainTextures = new Dictionary<Material, Texture?>();
+            _bakedMaterialMainTextures = new Dictionary<Material, (Texture, gltf.material.TextureInfo)>();
             _transformNodeIDs = new Dictionary<Transform, gltf.ObjectID>();
             _transformNodeNames = new HashSet<string>();
             _exporter = new gltf.exporter.Exporter();
@@ -2138,9 +2138,10 @@ namespace com.github.hkrn
             foreach (var gltfMaterial in _root.Materials!)
             {
                 var material = materialIDs[materialID];
-                if (_bakedMaterialMainTextures.TryGetValue(material, out var texture))
+                if (_bakedMaterialMainTextures.TryGetValue(material, out var item))
                 {
-                    var mtoon = vrmExporter.ExportMToon(material, texture, _materialExporter);
+                    var (texture, textureInfo) = item;
+                    var mtoon = vrmExporter.ExportMToon(material, texture, textureInfo, _materialExporter);
                     gltfMaterial.Extensions ??= new Dictionary<string, JToken>();
                     gltfMaterial.Extensions.Add(gltf.extensions.KhrMaterialsUnlit.Name, new JObject());
                     gltfMaterial.Extensions.Add(VrmcMaterialsMtoon, vrm.Document.SaveAsNode(mtoon));
@@ -2486,6 +2487,7 @@ namespace com.github.hkrn
                     var shaderName = m.shader.name;
                     var config = new GltfMaterialExporter.ExportOverrides();
 #if NVE_HAS_LILTOON
+                    var isShaderLiltoon = false;
                     if (shaderName == "lilToon" || shaderName.StartsWith("Hidden/lilToon"))
                     {
                         if (shaderName.Contains("Cutout"))
@@ -2512,7 +2514,6 @@ namespace com.github.hkrn
                             : (int)CullMode.Back;
                         config.EnableEmission = Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f);
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
-                        _bakedMaterialMainTextures.Add(m, config.MainTexture);
 
                         if (component.disableVertexColorOnLiltoon)
                         {
@@ -2525,12 +2526,27 @@ namespace com.github.hkrn
                                 }
                             }
                         }
+
+                        isShaderLiltoon = true;
                     }
 #endif // NVE_HAS_LILTOON
                     materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
                     var material = _materialExporter.Export(m, config);
                     _root.Materials!.Add(material);
                     _materialIDs.Add(m, materialID);
+
+#if NVE_HAS_LILTOON
+                    if (isShaderLiltoon)
+                    {
+                        var bakedMainTexture =
+                            _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
+                        if (bakedMainTexture)
+                        {
+                            _bakedMaterialMainTextures.Add(m,
+                                (bakedMainTexture!, material.PbrMetallicRoughness!.BaseColorTexture!));
+                        }
+                    }
+#endif // NVE_HAS_LILTOON
                 }
 
                 var primitiveUnit = new gltf.exporter.PrimitiveUnit
@@ -2933,7 +2949,8 @@ namespace com.github.hkrn
                 return vrmNodeConstraint;
             }
 
-            public vrm.mtoon.MToon ExportMToon(Material material, Texture? sourceMainTexture,
+            public vrm.mtoon.MToon ExportMToon(Material material, Texture mainTexture,
+                gltf.material.TextureInfo mainTextureInfo,
                 GltfMaterialExporter exporter)
             {
                 var mtoon = new vrm.mtoon.MToon
@@ -2949,8 +2966,6 @@ namespace com.github.hkrn
                 var floats = MaterialBaker.GetProps(props.FindPropertyRelative("m_Floats"));
                 var colors = MaterialBaker.GetProps(props.FindPropertyRelative("m_Colors"));
                 var scrollRotate = colors["_MainTex_ScrollRotate"].colorValue;
-                var mainTexture = exporter.ExportTextureInfoMToon(material, sourceMainTexture,
-                    ColorSpace.Gamma, enableAlphaChannel: false, blit: false);
 
                 Texture2D? LocalRetrieveTexture2D(string name)
                 {
@@ -2969,11 +2984,11 @@ namespace com.github.hkrn
                         !Mathf.Approximately(floats["_ShadowMainStrength"].floatValue, 0.0f))
                     {
                         var bakedShadowTex =
-                            MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, sourceMainTexture!);
+                            MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mainTexture);
                         mtoon.ShadeColorFactor = Color.white.ToVector3();
                         mtoon.ShadeMultiplyTexture =
                             exporter.ExportTextureInfoMToon(material, bakedShadowTex, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: bakedShadowTex != null);
+                                enableAlphaChannel: false, blit: false);
                     }
                     else
                     {
@@ -2990,7 +3005,7 @@ namespace com.github.hkrn
                         mtoon.ShadeMultiplyTexture = shadowColorTex
                             ? exporter.ExportTextureInfoMToon(material, shadowColorTex, ColorSpace.Gamma,
                                 enableAlphaChannel: false, blit: true)
-                            : mainTexture;
+                            : mainTextureInfo;
                     }
 
                     var texture = LocalRetrieveTexture2D("_ShadowBorderTex");
@@ -3014,7 +3029,7 @@ namespace com.github.hkrn
                 else
                 {
                     mtoon.ShadeColorFactor = System.Numerics.Vector3.One;
-                    mtoon.ShadeMultiplyTexture = mainTexture;
+                    mtoon.ShadeMultiplyTexture = mainTextureInfo;
                 }
 
                 var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
@@ -3051,7 +3066,7 @@ namespace com.github.hkrn
                         var bakedMatCap = MaterialBaker.AutoBakeMatCap(_assetSaver, material);
                         mtoon.MatcapTexture =
                             exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: bakedMatCap != null);
+                                enableAlphaChannel: false, blit: false);
                         mtoon.MatcapFactor = System.Numerics.Vector3.One;
                     }
                 }
@@ -4253,6 +4268,14 @@ namespace com.github.hkrn
                 return material;
             }
 
+            internal Texture? ResolveTexture(gltf.material.TextureInfo? info)
+            {
+                return info == null
+                    ? null
+                    : (from item in _textureIDs where item.Value.Equals(info.Index) select item.Key.Item1)
+                    .FirstOrDefault();
+            }
+
             internal gltf.material.TextureInfo? ExportTextureInfoMToon(Material material, Texture? texture,
                 ColorSpace cs, bool enableAlphaChannel, bool blit)
             {
@@ -4378,7 +4401,7 @@ namespace com.github.hkrn
         private readonly gltf.exporter.Exporter _exporter;
         private readonly gltf.Root _root;
         private readonly IDictionary<Material, gltf.ObjectID> _materialIDs;
-        private readonly IDictionary<Material, Texture?> _bakedMaterialMainTextures;
+        private readonly IDictionary<Material, (Texture, gltf.material.TextureInfo)> _bakedMaterialMainTextures;
         private readonly IDictionary<Transform, gltf.ObjectID> _transformNodeIDs;
         private readonly ISet<string> _transformNodeNames;
         private readonly ISet<string> _extensionsUsed;
