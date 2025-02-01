@@ -21,13 +21,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Install vrc-get
-        uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
-      - name: Install VRChat Avatar SDK and NDMF via vrc-get
+      - name: Moves packages
         run: |
-          vrc-get repo add -- https://vpm.nadena.dev/vpm.json
-          vrc-get install -y com.vrchat.avatars
-          vrc-get install -y nadena.dev.ndmf
+          mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv Editor* Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
+      - name: Adds VPM registry
+        uses: anatawa12/sh-actions/resolve-vpm-packages@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
+        with:
+          repos: |
+            https://vpm.nadena.dev/vpm.json
       - name: Retrieve cache
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
@@ -45,7 +48,6 @@ jobs:
           testMode: EditMode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2022.3.22f1
-          packageMode: true
       - name: Uploads test run result
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: always()
