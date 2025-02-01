@@ -21,14 +21,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Adds VPM registry
-        if: always()
-        uses: anatawa12/sh-actions/resolve-vpm-packages@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
-        with:
-          repos: |
-            https://vpm.nadena.dev/vpm.json
+      - name: Install vrc-get
+        uses: anatawa12/sh-actions/setup-vrc-get@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
       - name: Install VRChat Avatar SDK and NDMF via vrc-get
         run: |
+          vrc-get repo add -- https://vpm.nadena.dev/vpm.json
           vrc-get install -y com.vrchat.avatars
           vrc-get install -y nadena.dev.ndmf
       - name: Retrieve cache
