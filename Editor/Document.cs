@@ -2159,7 +2159,7 @@ namespace com.github.hkrn.gltf
                         : indexBufferViewSuffix),
                 };
                 var (indices, values) = builder.Build();
-                var componentType = indices.Max() switch
+                var componentType = indices.Last() switch
                 {
                     > ushort.MaxValue => accessor.ComponentType.UnsignedInt,
                     > byte.MaxValue => accessor.ComponentType.UnsignedShort,
