@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2025-02-02
+
+- [exporter] overhaul of texture processing ([#18](https://github.com/hkrn/ndmf-vrm-exporter/pull/18))
+- [exporter] fixes a bug baking shadow texture don't work properly ([#17](https://github.com/hkrn/ndmf-vrm-exporter/pull/17))
+
 ## [1.0.2] - 2025-01-30
 
 - [exporter] fixes a bug [#4](https://github.com/hkrn/ndmf-vrm-exporter/pull/4) is not actually fixed ([#15](https://github.com/hkrn/ndmf-vrm-exporter/pull/15))
