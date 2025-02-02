@@ -424,7 +424,8 @@ namespace com.github.hkrn
                         Graphics.CopyTexture(baseTexture, 0, 0, srcX, srcY, lowerSize, lowerSize, intermediateTexture,
                             0, 0, 0, 0);
                         var filePath = result.OriginThumbnailPath.Replace(".origin.png", ".png");
-                        var destTexture = intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma);
+                        var destTexture =
+                            intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma, null);
                         var bytes = destTexture.EncodeToPNG();
                         DestroyImmediate(destTexture);
                         File.WriteAllBytes(filePath, bytes);
@@ -1190,18 +1191,27 @@ namespace com.github.hkrn
             return newTexture;
         }
 
-        internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs)
+        internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
+            Material? material = null)
         {
-            return Blit(sourceTexture, sourceTexture.width, sourceTexture.height, textureFormat, cs);
+            return Blit(sourceTexture, sourceTexture.width, sourceTexture.height, textureFormat, cs, material);
         }
 
         internal static Texture2D Blit(this Texture sourceTexture, int width, int height, TextureFormat textureFormat,
-            ColorSpace cs)
+            ColorSpace cs, Material? material)
         {
             var rw = cs == ColorSpace.Gamma ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
             var activeRenderTexture = RenderTexture.active;
             var destRenderTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.Default, rw);
-            Graphics.Blit(sourceTexture, destRenderTexture);
+            if (material)
+            {
+                Graphics.Blit(sourceTexture, destRenderTexture, material);
+            }
+            else
+            {
+                Graphics.Blit(sourceTexture, destRenderTexture);
+            }
+
             RenderTexture.active = destRenderTexture;
             var outputTexture = new Texture2D(width, height, textureFormat, false, cs == ColorSpace.Linear)
             {
@@ -2089,7 +2099,7 @@ namespace com.github.hkrn
                 if (thumbnail.width == thumbnail.height)
                 {
                     var textureUnit =
-                        ExportTextureUnit(thumbnail, component.name, TextureFormat.RGB24, ColorSpace.Gamma, true);
+                        ExportTextureUnit(thumbnail, component.name, TextureFormat.RGB24, ColorSpace.Gamma, null, true);
                     thumbnailImage = _exporter.CreateSampledTexture(_root, textureUnit);
                 }
             }
@@ -2577,13 +2587,13 @@ namespace com.github.hkrn
         }
 
         private static gltf.exporter.SampledTextureUnit ExportTextureUnit(Texture texture, string name,
-            TextureFormat textureFormat, ColorSpace cs, bool blit)
+            TextureFormat textureFormat, ColorSpace cs, Material? blitMaterial, bool needsBlit)
         {
             using var _ = new ScopedProfile($"ExportTextureUnit({name})");
             byte[] bytes;
-            if (blit)
+            if (needsBlit)
             {
-                var destTexture = texture.Blit(textureFormat, cs);
+                var destTexture = texture.Blit(textureFormat, cs, blitMaterial);
                 bytes = destTexture.EncodeToPNG();
                 Object.DestroyImmediate(destTexture);
             }
@@ -2988,7 +2998,7 @@ namespace com.github.hkrn
                         mtoon.ShadeColorFactor = Color.white.ToVector3();
                         mtoon.ShadeMultiplyTexture =
                             exporter.ExportTextureInfoMToon(material, bakedShadowTex, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: false);
+                                needsBlit: false);
                     }
                     else
                     {
@@ -3004,13 +3014,12 @@ namespace com.github.hkrn
                         var shadowColorTex = LocalRetrieveTexture2D("_ShadowColorTex");
                         mtoon.ShadeMultiplyTexture = shadowColorTex
                             ? exporter.ExportTextureInfoMToon(material, shadowColorTex, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: true)
+                                needsBlit: true)
                             : mainTextureInfo;
                     }
 
                     var texture = LocalRetrieveTexture2D("_ShadowBorderTex");
-                    var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Gamma,
-                        enableAlphaChannel: false, blit: true);
+                    var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Gamma, needsBlit: true);
                     if (info != null)
                     {
                         mtoon.ShadingShiftTexture = new vrm.mtoon.ShadingShiftTexture
@@ -3049,7 +3058,7 @@ namespace com.github.hkrn
                     {
                         mtoon.RimMultiplyTexture =
                             exporter.ExportTextureInfoMToon(material, rimColorTexture, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: true);
+                                needsBlit: true);
                     }
                 }
                 else
@@ -3065,8 +3074,7 @@ namespace com.github.hkrn
                     {
                         var bakedMatCap = MaterialBaker.AutoBakeMatCap(_assetSaver, material);
                         mtoon.MatcapTexture =
-                            exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma,
-                                enableAlphaChannel: false, blit: false);
+                            exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma, needsBlit: false);
                         mtoon.MatcapFactor = System.Numerics.Vector3.One;
                     }
                 }
@@ -3082,7 +3090,7 @@ namespace com.github.hkrn
                     mtoon.OutlineColorFactor = colors["_OutlineColor"].colorValue.ToVector3();
                     mtoon.OutlineWidthMultiplyTexture =
                         exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Gamma,
-                            enableAlphaChannel: false, blit: true);
+                            needsBlit: true);
                 }
 
                 var isCutout = shaderName.Contains("Cutout");
@@ -4098,11 +4106,18 @@ namespace com.github.hkrn
             public GltfMaterialExporter(gltf.Root root, gltf.exporter.Exporter exporter,
                 ISet<string> extensionsUsed)
             {
+                var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
+                var metalGlossOcclusionChannelSwapShader =
+                    Resources.Load("MetalGlossOcclusionChannelSwap", typeof(Shader)) as Shader;
+                var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
                 _root = root;
                 _exporter = exporter;
-                _textureIDs = new Dictionary<(Texture, bool), gltf.ObjectID>();
+                _textureIDs = new Dictionary<Texture, gltf.ObjectID>();
                 TextureMetadata = new Dictionary<gltf.ObjectID, TextureItemMetadata>();
                 _extensionsUsed = extensionsUsed;
+                _metalGlossChannelSwapMaterial = new Material(metalGlossChannelSwapShader);
+                _metalGlossOcclusionChannelSwapMaterial = new Material(metalGlossOcclusionChannelSwapShader);
+                _normalChannelMaterial = new Material(normalChannelShader);
             }
 
             public gltf.material.Material Export(Material source, ExportOverrides overrides)
@@ -4136,14 +4151,14 @@ namespace com.github.hkrn
                 if (overrides.MainTexture)
                 {
                     material.PbrMetallicRoughness.BaseColorTexture =
-                        ExportTextureInfo(source, overrides.MainTexture, ColorSpace.Gamma, enableAlphaChannel: true,
-                            blit: false);
+                        ExportTextureInfo(source, overrides.MainTexture, ColorSpace.Gamma, blitMaterial: null,
+                            needsBlit: false);
                 }
                 else if (source.HasProperty(PropertyMainTex))
                 {
                     var texture = source.GetTexture(PropertyMainTex);
                     material.PbrMetallicRoughness.BaseColorTexture =
-                        ExportTextureInfo(source, texture, ColorSpace.Gamma, enableAlphaChannel: false, blit: true);
+                        ExportTextureInfo(source, texture, ColorSpace.Gamma, blitMaterial: null, needsBlit: true);
                     DecorateTextureTransform(source, PropertyMainTex, material.PbrMetallicRoughness.BaseColorTexture);
                 }
 
@@ -4173,7 +4188,7 @@ namespace com.github.hkrn
                     {
                         var texture = source.GetTexture(PropertyEmissionMap);
                         material.EmissiveTexture =
-                            ExportTextureInfo(source, texture, ColorSpace.Gamma, enableAlphaChannel: false, blit: true);
+                            ExportTextureInfo(source, texture, ColorSpace.Gamma, blitMaterial: null, needsBlit: true);
                         DecorateTextureTransform(source, PropertyEmissionMap, material.EmissiveTexture);
                     }
                 }
@@ -4183,8 +4198,8 @@ namespace com.github.hkrn
                     var texture = source.GetTexture(PropertyBumpMap);
                     if (texture)
                     {
-                        var info = ExportTextureInfo(source, texture, ColorSpace.Linear, enableAlphaChannel: false,
-                            blit: true);
+                        var info = ExportTextureInfo(source, texture, ColorSpace.Linear, _normalChannelMaterial,
+                            needsBlit: true);
                         material.NormalTexture = new gltf.material.NormalTextureInfo
                         {
                             Index = info!.Index,
@@ -4205,8 +4220,8 @@ namespace com.github.hkrn
                     var texture = source.GetTexture(PropertyOcclusionMap);
                     if (texture)
                     {
-                        var info = ExportTextureInfo(source, texture, ColorSpace.Linear, enableAlphaChannel: false,
-                            blit: true);
+                        var info = ExportTextureInfo(source, texture, ColorSpace.Linear,
+                            _metalGlossOcclusionChannelSwapMaterial, needsBlit: true);
                         material.OcclusionTexture = new gltf.material.OcclusionTextureInfo
                         {
                             Index = info!.Index,
@@ -4229,8 +4244,8 @@ namespace com.github.hkrn
                     if (texture)
                     {
                         material.PbrMetallicRoughness.MetallicRoughnessTexture =
-                            ExportTextureInfo(source, texture, ColorSpace.Linear, enableAlphaChannel: false,
-                                blit: true);
+                            ExportTextureInfo(source, texture, ColorSpace.Linear, _metalGlossChannelSwapMaterial,
+                                needsBlit: true);
                         material.PbrMetallicRoughness.MetallicFactor = 1.0f;
                         material.PbrMetallicRoughness.RoughnessFactor = 1.0f;
                         DecorateTextureTransform(source, PropertyMetallicGlossMap,
@@ -4272,53 +4287,42 @@ namespace com.github.hkrn
             {
                 return info == null
                     ? null
-                    : (from item in _textureIDs where item.Value.Equals(info.Index) select item.Key.Item1)
+                    : (from item in _textureIDs where item.Value.Equals(info.Index) select item.Key)
                     .FirstOrDefault();
             }
 
             internal gltf.material.TextureInfo? ExportTextureInfoMToon(Material material, Texture? texture,
-                ColorSpace cs, bool enableAlphaChannel, bool blit)
+                ColorSpace cs, bool needsBlit)
             {
-                return ExportTextureInfoInner(material, texture, cs, enableAlphaChannel, blit, true);
+                return ExportTextureInfoInner(material, texture, cs, blitMaterial: null, needsBlit, mtoon: true);
             }
 
             private gltf.material.TextureInfo? ExportTextureInfo(Material material, Texture? texture,
-                ColorSpace cs, bool enableAlphaChannel, bool blit)
+                ColorSpace cs, Material? blitMaterial, bool needsBlit)
             {
-                return ExportTextureInfoInner(material, texture, cs, enableAlphaChannel, blit, false);
+                return ExportTextureInfoInner(material, texture, cs, blitMaterial, needsBlit, mtoon: false);
             }
 
             private gltf.material.TextureInfo? ExportTextureInfoInner(Material material, Texture? texture,
-                ColorSpace cs, bool enableAlphaChannel, bool blit, bool mtoon)
+                ColorSpace cs, Material? blitMaterial, bool needsBlit, bool mtoon)
             {
                 if (!texture || texture is null)
                 {
                     return null;
                 }
 
-                if (!_textureIDs.TryGetValue((texture, enableAlphaChannel), out var textureID))
+                if (!_textureIDs.TryGetValue(texture, out var textureID))
                 {
-                    var textureFormat = TextureFormat.RGB24;
-                    var hasTransparent = material.GetTag("RenderType", true) switch
-                    {
-                        "Transparent" => true,
-                        "TransparentCutout" => true,
-                        _ => false,
-                    };
-                    if (hasTransparent && enableAlphaChannel)
-                    {
-                        textureFormat = TextureFormat.RGBA32;
-                    }
-
+                    const TextureFormat textureFormat = TextureFormat.RGBA32;
                     var name = $"{AssetPathUtils.TrimCloneSuffix(material.name)}_{texture.name}_{textureFormat}";
                     if (mtoon)
                     {
                         name = $"MToon_{name}";
                     }
 
-                    var textureUnit = ExportTextureUnit(texture, name, textureFormat, cs, blit);
+                    var textureUnit = ExportTextureUnit(texture, name, textureFormat, cs, blitMaterial, needsBlit);
                     textureID = _exporter.CreateSampledTexture(_root, textureUnit);
-                    _textureIDs.Add((texture, enableAlphaChannel), textureID);
+                    _textureIDs.Add(texture, textureID);
                     TextureMetadata.Add(textureID, new TextureItemMetadata
                     {
                         TextureFormat = textureFormat,
@@ -4392,8 +4396,11 @@ namespace com.github.hkrn
             public IDictionary<gltf.ObjectID, TextureItemMetadata> TextureMetadata { get; }
             private readonly gltf.Root _root;
             private readonly gltf.exporter.Exporter _exporter;
-            private readonly IDictionary<(Texture, bool), gltf.ObjectID> _textureIDs;
+            private readonly IDictionary<Texture, gltf.ObjectID> _textureIDs;
             private readonly ISet<string> _extensionsUsed;
+            private readonly Material _metalGlossChannelSwapMaterial;
+            private readonly Material _metalGlossOcclusionChannelSwapMaterial;
+            private readonly Material _normalChannelMaterial;
         }
 
         private readonly GameObject _gameObject;
