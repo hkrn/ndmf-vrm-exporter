@@ -150,7 +150,7 @@ namespace com.github.hkrn
 
         [TestCase(gltf.buffer.Target.ArrayBuffer)]
         [TestCase(gltf.buffer.Target.ElementArrayBuffer)]
-        public void AnimationPathConverter(gltf.buffer.Target expected)
+        public void BufferTargetConverter(gltf.buffer.Target expected)
         {
             var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
             var result = JsonConvert.DeserializeObject<gltf.buffer.Target>(json, gltf.Document.SerializerOptions);

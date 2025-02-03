@@ -64,7 +64,7 @@ namespace com.github.hkrn
         [TestCase(vrm.core.FirstPersonType.Both)]
         [TestCase(vrm.core.FirstPersonType.FirstPersonOnly)]
         [TestCase(vrm.core.FirstPersonType.ThirdPersonOnly)]
-        public void CreditNotationConverter(vrm.core.FirstPersonType expected)
+        public void FirstPersonTypeConverter(vrm.core.FirstPersonType expected)
         {
             var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
             var result = JsonConvert.DeserializeObject<vrm.core.FirstPersonType>(json, gltf.Document.SerializerOptions);
@@ -74,7 +74,7 @@ namespace com.github.hkrn
         [TestCase(vrm.core.ExpressionOverrideType.Blend)]
         [TestCase(vrm.core.ExpressionOverrideType.Block)]
         [TestCase(vrm.core.ExpressionOverrideType.None)]
-        public void CreditNotationConverter(vrm.core.ExpressionOverrideType expected)
+        public void ExpressionOverrideTypeConverter(vrm.core.ExpressionOverrideType expected)
         {
             var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
             var result = JsonConvert.DeserializeObject<vrm.core.ExpressionOverrideType>(json, gltf.Document.SerializerOptions);
@@ -86,7 +86,7 @@ namespace com.github.hkrn
         [TestCase(vrm.core.MaterialColorType.OutlineColor)]
         [TestCase(vrm.core.MaterialColorType.RimColor)]
         [TestCase(vrm.core.MaterialColorType.ShadeColor)]
-        public void CreditNotationConverter(vrm.core.MaterialColorType expected)
+        public void MaterialColorTypeConverter(vrm.core.MaterialColorType expected)
         {
             var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
             var result = JsonConvert.DeserializeObject<vrm.core.MaterialColorType>(json, gltf.Document.SerializerOptions);
@@ -95,7 +95,7 @@ namespace com.github.hkrn
 
         [TestCase(vrm.core.LookAtType.Bone)]
         [TestCase(vrm.core.LookAtType.Expression)]
-        public void CreditNotationConverter(vrm.core.LookAtType expected)
+        public void LookAtTypeConverter(vrm.core.LookAtType expected)
         {
             var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
             var result = JsonConvert.DeserializeObject<vrm.core.LookAtType>(json, gltf.Document.SerializerOptions);
