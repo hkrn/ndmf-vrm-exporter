@@ -3,12 +3,15 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
+// ReSharper disable once CheckNamespace
 namespace com.github.hkrn
 {
     internal sealed class GltfDocumentTest
@@ -232,6 +235,66 @@ namespace com.github.hkrn
             }));
         }
 
+        [TestCase("", "", 0)]
+        [TestCase("0", "0   ", 4)]
+        [TestCase("{}", "{}  ", 4)]
+        [TestCase("012", "012 ", 4)]
+        [TestCase("true", "true", 4)]
+        [TestCase("false", "false   ", 8)]
+        public void ExporterExport_JSON(string json, string expectedJson, int expectedJsonSize)
+        {
+            using var exporter = new gltf.exporter.Exporter();
+            using var outputStream = new MemoryStream();
+            exporter.Export(json, outputStream);
+            var bytes = outputStream.GetBuffer();
+            var inputStream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(inputStream);
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("glTF"));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(2));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(28 + expectedJsonSize));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(expectedJsonSize));
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("JSON"));
+            Assert.That(reader.ReadBytes(expectedJsonSize), Is.EqualTo(expectedJson));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(0));
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("BIN\0"));
+        }
+
+        [TestCase("",  "", 0)]
+        [TestCase("0",  "0\0\0\0", 4)]
+        [TestCase("01",  "01\0\0", 4)]
+        [TestCase("012",  "012\0", 4)]
+        [TestCase("0123",  "0123", 4)]
+        [TestCase("01234",  "01234\0\0\0", 8)]
+        public void ExporterExport_BIN(string bin, string expectedBin, int expectedBinSize)
+        {
+            var root = new gltf.Root
+            {
+                BufferViews = new List<gltf.buffer.BufferView>(),
+                Images = new List<gltf.buffer.Image>(),
+                Samplers = new List<gltf.material.Sampler>(),
+                Textures = new List<gltf.material.Texture>(),
+            };
+            using var exporter = new gltf.exporter.Exporter();
+            exporter.CreateSampledTexture(root, new gltf.exporter.SampledTextureUnit
+            {
+                Data = Encoding.ASCII.GetBytes(bin),
+            });
+            using var outputStream = new MemoryStream();
+            exporter.Export("{}", outputStream);
+            var bytes = outputStream.GetBuffer();
+            var inputStream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(inputStream);
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("glTF"));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(2));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(32 + expectedBinSize));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(4));
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("JSON"));
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("{}  "));
+            Assert.That(reader.ReadInt32(), Is.EqualTo(expectedBinSize));
+            Assert.That(reader.ReadBytes(4), Is.EqualTo("BIN\0"));
+            Assert.That(reader.ReadBytes(expectedBinSize), Is.EqualTo(expectedBin));
+        }
+
         [Test]
         public void ExporterCreateSampledTexture()
         {
@@ -243,11 +306,12 @@ namespace com.github.hkrn
                 Textures = new List<gltf.material.Texture>(),
             };
             using var exporter = new gltf.exporter.Exporter();
+            var inputData = new byte[] { 0, 0, 0, 0 };
             var textureId = exporter.CreateSampledTexture(root, new gltf.exporter.SampledTextureUnit
             {
                 Name = new gltf.UnicodeString("sampledTexture"),
                 MimeType = "image/png",
-                Data = new byte[] { 0, 0, 0, 0 },
+                Data = inputData,
                 MagFilter = gltf.material.TextureFilterMode.Linear,
                 MinFilter = gltf.material.TextureFilterMode.Linear,
                 WrapS = gltf.material.TextureWrapMode.Repeat,
@@ -276,6 +340,7 @@ namespace com.github.hkrn
             Assert.That(texture.Sampler!.Value.ID, Is.Zero);
             Assert.That(texture.Source!.Value.ID, Is.Zero);
             Assert.That(texture.Name!.Value, Is.EqualTo("sampledTexture"));
+            Assert.That(exporter.Length, Is.EqualTo(inputData.Length));
         }
 
         [Test]
@@ -550,7 +615,6 @@ namespace com.github.hkrn
         [TestCase(0x100, gltf.accessor.ComponentType.UnsignedShort, 2)]
         [TestCase(0xffff, gltf.accessor.ComponentType.UnsignedShort, 2)]
         [TestCase(0x10000, gltf.accessor.ComponentType.UnsignedInt, 4)]
-        [Ignore("This will be fixed reviewed PR #14")]
         public void ExporterCreateSparseAccessorVector3_Indices(int index, gltf.accessor.ComponentType expectedType,
             int expectedSize)
         {

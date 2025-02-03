@@ -1722,7 +1722,6 @@ namespace com.github.hkrn.gltf
                     Source = sourceID,
                     Name = sampledTextureUnit.Name,
                 };
-                WriteStream(sampledTextureUnit.Data);
                 var textureID = new ObjectID((uint)root.Textures!.Count);
                 root.Samplers!.Add(sampler);
                 root.Textures!.Add(texture);
