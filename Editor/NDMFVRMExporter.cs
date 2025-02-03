@@ -1825,6 +1825,8 @@ namespace com.github.hkrn
         private static readonly string VrmcMaterialsMtoon = "VRMC_materials_mtoon";
         private static readonly int PropertyCull = Shader.PropertyToID("_Cull");
         private static readonly int PropertyUseEmission = Shader.PropertyToID("_UseEmission");
+        private static readonly int PropertyEmissionMainStrength = Shader.PropertyToID("_EmissionMainStrength");
+        private static readonly int PropertyEmissionBlendMask = Shader.PropertyToID("_EmissionBlendMask");
         private static readonly int PropertyUseBumpMap = Shader.PropertyToID("_UseBumpMap");
         private static readonly int PropertyAlphaMaskMode = Shader.PropertyToID("_AlphaMaskMode");
 
@@ -2522,7 +2524,12 @@ namespace com.github.hkrn
                         config.CullMode = m.HasProperty(PropertyCull)
                             ? (int)m.GetFloat(PropertyCull)
                             : (int)CullMode.Back;
-                        config.EnableEmission = Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f);
+                        if (Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f))
+                        {
+                            config.EmissiveStrength = !m.GetTexture(PropertyEmissionBlendMask)
+                                ? 1.0f - Mathf.Clamp01(m.GetFloat(PropertyEmissionMainStrength))
+                                : 0.0f;
+                        }
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
 
                         if (component.disableVertexColorOnLiltoon)
@@ -4071,7 +4078,7 @@ namespace com.github.hkrn
                 public Texture? MainTexture { get; set; }
                 public gltf.material.AlphaMode? AlphaMode { get; set; }
                 public int? CullMode { get; set; }
-                public bool EnableEmission { get; set; }
+                public float? EmissiveStrength { get; set; }
                 public bool EnableNormalMap { get; set; } = true;
             }
 
@@ -4162,26 +4169,28 @@ namespace com.github.hkrn
                     DecorateTextureTransform(source, PropertyMainTex, material.PbrMetallicRoughness.BaseColorTexture);
                 }
 
-                if (overrides.EnableEmission || source.IsKeywordEnabled("_EMISSION"))
+                if (overrides.EmissiveStrength.HasValue)
                 {
-                    if (source.HasProperty(PropertyEmissionColor))
+                    var emissiveStrength = overrides.EmissiveStrength.Value;
+                    if (emissiveStrength > 0.0f)
                     {
-                        var emissiveFactor = source.GetColor(PropertyEmissionColor)
-                            .ToVector3(ColorSpace.Gamma, ColorSpace.Linear);
-                        material.EmissiveFactor = System.Numerics.Vector3.Clamp(emissiveFactor,
+                        material.EmissiveFactor = System.Numerics.Vector3.Clamp(GetEmissionColor(source),
                             System.Numerics.Vector3.Zero, System.Numerics.Vector3.One);
-                        var emissiveStrength = Mathf.Max(emissiveFactor.X, emissiveFactor.Y, emissiveFactor.Z);
-                        if (emissiveStrength > 1.0f)
+                        if (emissiveStrength < 1.0f)
                         {
-                            material.Extensions ??= new Dictionary<string, JToken>();
-                            material.Extensions.Add(gltf.extensions.KhrMaterialsEmissiveStrength.Name,
-                                gltf.Document.SaveAsNode(
-                                    new gltf.extensions.KhrMaterialsEmissiveStrength
-                                    {
-                                        EmissiveStrength = emissiveStrength,
-                                    }));
-                            _extensionsUsed.Add(gltf.extensions.KhrMaterialsEmissiveStrength.Name);
+                            material.EmissiveFactor *= emissiveStrength;
                         }
+                    }
+                }
+                else if (source.IsKeywordEnabled("_EMISSION"))
+                {
+                    var emissiveFactor = GetEmissionColor(source);
+                    material.EmissiveFactor = System.Numerics.Vector3.Clamp(emissiveFactor,
+                        System.Numerics.Vector3.Zero, System.Numerics.Vector3.One);
+                    var emissiveStrength = Mathf.Max(emissiveFactor.X, emissiveFactor.Y, emissiveFactor.Z);
+                    if (emissiveStrength > 1.0f)
+                    {
+                        AddEmissiveStrengthExtension(emissiveStrength, material);
                     }
 
                     if (source.HasProperty(PropertyEmissionMap))
@@ -4349,6 +4358,26 @@ namespace com.github.hkrn
 
                 info.Extensions ??= new Dictionary<string, JToken>();
                 DecorateTextureTransform(material, propertyID, info.Extensions);
+            }
+
+            private static System.Numerics.Vector3 GetEmissionColor(Material source)
+            {
+                if (!source.HasProperty(PropertyEmissionColor))
+                    return System.Numerics.Vector3.Zero;
+                return source.GetColor(PropertyEmissionColor)
+                    .ToVector3(ColorSpace.Gamma, ColorSpace.Linear);
+            }
+
+            private void AddEmissiveStrengthExtension(float emissiveStrength, gltf.material.Material material)
+            {
+                material.Extensions ??= new Dictionary<string, JToken>();
+                material.Extensions.Add(gltf.extensions.KhrMaterialsEmissiveStrength.Name,
+                    gltf.Document.SaveAsNode(
+                        new gltf.extensions.KhrMaterialsEmissiveStrength
+                        {
+                            EmissiveStrength = emissiveStrength,
+                        }));
+                _extensionsUsed.Add(gltf.extensions.KhrMaterialsEmissiveStrength.Name);
             }
 
             private void DecorateTextureTransform(Material material, int propertyID,
