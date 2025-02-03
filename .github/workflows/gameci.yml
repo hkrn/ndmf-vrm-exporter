@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: Library
-          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**', 'Tests/**') }}
+          key: Library-unity-2022.3.22f1
           restore-keys: |
             Library-
       - name: Run all tests
