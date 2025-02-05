@@ -2854,19 +2854,58 @@ namespace com.github.hkrn
 
                         if (sourceID.IsNull)
                         {
+                            Debug.LogWarning($"VRCRotationConstraint {node.name} has no source");
                             return null;
+                        }
+
+                        vrm.constraint.Constraint constraint;
+                        switch (vrcRotationConstraint.AffectsRotationX, vrcRotationConstraint.AffectsRotationY,
+                            vrcRotationConstraint.AffectsRotationZ)
+                        {
+                            case (true, true, true):
+                            {
+                                constraint = new vrm.constraint.Constraint
+                                {
+                                    Rotation = new vrm.constraint.RotationConstraint
+                                    {
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                };
+                                break;
+                            }
+                            case (true, false, false):
+                            case (false, true, false):
+                            case (false, false, true):
+                            {
+                                var rollAxis = (vrcRotationConstraint.AffectsRotationX,
+                                        vrcRotationConstraint.AffectsRotationY,
+                                        vrcRotationConstraint.AffectsRotationZ) switch
+                                    {
+                                        (true, false, false) => "X",
+                                        (false, true, false) => "Y",
+                                        (false, false, true) => "Z",
+                                        _ => throw new ArgumentOutOfRangeException(),
+                                    };
+                                constraint = new vrm.constraint.Constraint
+                                {
+                                    Roll = new vrm.constraint.RollConstraint
+                                    {
+                                        RollAxis = rollAxis,
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                };
+                                break;
+                            }
+                            default:
+                                Debug.LogWarning($"VRCRotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
+                                return null;
                         }
 
                         vrmNodeConstraint = new vrm.constraint.NodeConstraint
                         {
-                            Constraint = new vrm.constraint.Constraint
-                            {
-                                Rotation = new vrm.constraint.RotationConstraint
-                                {
-                                    Source = sourceID,
-                                    Weight = weight,
-                                }
-                            }
+                            Constraint = constraint,
                         };
                     }
                     else
@@ -2909,19 +2948,56 @@ namespace com.github.hkrn
 
                         if (sourceID.IsNull)
                         {
+                            Debug.LogWarning($"RotationConstraint {node.name} has no source");
                             return null;
+                        }
+
+                        vrm.constraint.Constraint constraint;
+                        switch (rotationConstraint.rotationAxis)
+                        {
+                            case Axis.X | Axis.Y | Axis.Z:
+                            {
+                                constraint = new vrm.constraint.Constraint
+                                {
+                                    Rotation = new vrm.constraint.RotationConstraint
+                                    {
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                };
+                                break;
+                            }
+                            case Axis.X:
+                            case Axis.Y:
+                            case Axis.Z:
+                            {
+                                var rollAxis = rotationConstraint.rotationAxis switch
+                                {
+                                    Axis.X => "X",
+                                    Axis.Y => "Y",
+                                    Axis.Z => "Z",
+                                    _ => throw new ArgumentOutOfRangeException(),
+                                };
+                                constraint = new vrm.constraint.Constraint
+                                {
+                                    Roll = new vrm.constraint.RollConstraint
+                                    {
+                                        RollAxis = rollAxis,
+                                        Source = sourceID,
+                                        Weight = weight,
+                                    }
+                                };
+                                break;
+                            }
+                            case Axis.None:
+                            default:
+                                Debug.LogWarning($"RotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
+                                return null;
                         }
 
                         vrmNodeConstraint = new vrm.constraint.NodeConstraint
                         {
-                            Constraint = new vrm.constraint.Constraint
-                            {
-                                Rotation = new vrm.constraint.RotationConstraint
-                                {
-                                    Source = sourceID,
-                                    Weight = weight,
-                                }
-                            }
+                            Constraint = constraint,
                         };
                     }
                     else

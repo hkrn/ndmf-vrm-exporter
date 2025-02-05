@@ -270,10 +270,23 @@ Constraint または VRM Constraint が使われている場合は VRM Constrain
 * `RotationConstraint`
 * `ParentConstraint`
   * ソースノードが存在しない場合のみ
+  * VRM Constraint の仕様の整合性のため専用のノードが追加され、それを参照先として利用します。
 
-いずれも複数ソースノードを持つものについては VRM Constraint の仕様上対応できないため、最初のソースノードのみ利用されます。またソースノードが存在しない Constraint がひとつ以上ある場合は VRM Constraint の仕様の整合性のため専用のノードが追加され、それを参照先として利用します。
+いずれも複数ソースノードを持つものについては VRM Constraint の仕様上対応できないため、最初のソースノードのみ利用されます。
 
-Unity Constraint での `Constraint Settings` および VRC Constraint での `Constraint Settings` と `Advanced Settings` の設定の変換は VRM に仕様に対応する機能が存在しないため対応していません。
+`RotationConstraint` は `Freeze Rotation Axes` の結果によって変換先が変わります。
+
+|X軸|Y軸|Z軸|変換先|
+|---|---|---|---|
+|✅|✅|✅|`RotationConstraint`|
+|✅|❌|❌|`RollConstraint` (X軸)|
+|❌|✅|❌|`RollConstraint` (Y軸)|
+|❌|❌|✅|`RollConstraint` (Z軸)|
+|✅|✅|❌|（変換しない）|
+|❌|✅|✅|（変換しない）|
+|❌|❌|❌|（変換しない）|
+
+Unity Constraint での `Constraint Settings` および VRC Constraint での `Freeze Rotation Axes` **以外の** `Constraint Settings` と `Advanced Settings` の設定の変換は VRM に仕様に対応する機能が存在しないため対応していません。
 
 スプリングボーンと同様に VRM Constraint と Unity/VRC Constraint は計算方法が異なるため結果は同一になりません。
 
