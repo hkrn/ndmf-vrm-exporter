@@ -942,7 +942,7 @@ namespace com.github.hkrn
             if (!blendShapeAnimationClip)
                 return new List<string?>();
             return (from binding in AnimationUtility.GetCurveBindings(blendShapeAnimationClip)
-                where binding.propertyName.StartsWith(BlendShapeNamePrefix)
+                where binding.propertyName.StartsWith(BlendShapeNamePrefix, StringComparison.Ordinal)
                 let name = binding.propertyName[BlendShapeNamePrefix.Length..]
                 let curve = AnimationUtility.GetEditorCurve(blendShapeAnimationClip, binding)
                 from keyframe in curve.keys
@@ -1179,18 +1179,6 @@ namespace com.github.hkrn
             };
         }
 
-        internal static Texture2D? Clone(this Texture sourceTexture)
-        {
-            if (sourceTexture is not Texture2D texture)
-            {
-                return null;
-            }
-
-            var newTexture = new Texture2D(texture.width, texture.height, texture.format, true);
-            Graphics.CopyTexture(texture, newTexture);
-            return newTexture;
-        }
-
         internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
             Material? material = null)
         {
@@ -1283,7 +1271,7 @@ namespace com.github.hkrn
             hsvgMaterial.CopyTexture(dictionaries, "_MainGradationTex");
             hsvgMaterial.CopyTexture(dictionaries, "_MainColorAdjustMask");
 
-            SetMaterialTexture(assetSaver, mainTex, hsvgMaterial, PropertyMainTex, ref srcTexture);
+            AssignMaterialTexture(assetSaver, mainTex, hsvgMaterial, PropertyMainTex, ref srcTexture);
             if (bakeSecond)
             {
                 hsvgMaterial.CopyFloat(dictionaries, "_UseMain2ndTex");
@@ -1303,9 +1291,9 @@ namespace com.github.hkrn
                 hsvgMaterial.CopyTextureOffset(dictionaries, "_Main2ndBlendMask");
                 hsvgMaterial.CopyTextureScale(dictionaries, "_Main2ndBlendMask");
 
-                SetMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndTex"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndTex"), hsvgMaterial,
                     PropertyMainSecondTex, ref srcMain2);
-                SetMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndBlendMask"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndBlendMask"), hsvgMaterial,
                     PropertyMainSecondBlendMask, ref srcMask2);
             }
 
@@ -1328,9 +1316,9 @@ namespace com.github.hkrn
                 hsvgMaterial.CopyTextureOffset(dictionaries, "_Main3rdBlendMask");
                 hsvgMaterial.CopyTextureScale(dictionaries, "_Main3rdBlendMask");
 
-                SetMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdTex"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdTex"), hsvgMaterial,
                     PropertyMainThirdTex, ref srcMain3);
-                SetMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdBlendMask"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdBlendMask"), hsvgMaterial,
                     PropertyMainThirdBlendMask, ref srcMask3);
             }
 
@@ -1349,7 +1337,7 @@ namespace com.github.hkrn
         }
 
         public static Texture? AutoBakeShadowTexture(IAssetSaver assetSaver, Material material,
-            Texture bakedMainTex, int shadowType = 0)
+            Texture baseMainTexture, int shadowType = 0)
         {
             var dictionaries = GetProps(material);
             var useShadow = dictionaries.GetFloat("_UseShadow");
@@ -1413,76 +1401,17 @@ namespace com.github.hkrn
                     break;
             }
 
-            bool existsShadowTex;
-            if (shadowTex && assetSaver.IsTemporaryAsset(shadowTex))
-            {
-                Object.DestroyImmediate(srcMain2);
-                srcMain2 = shadowTex!.Clone();
-                hsvgMaterial.SetTexture(PropertyMainSecondTex, srcMain2);
-                existsShadowTex = true;
-            }
-            else
-            {
-                var path = AssetDatabase.GetAssetPath(shadowTex);
-                existsShadowTex = !string.IsNullOrEmpty(path);
-                if (existsShadowTex)
-                {
-                    lilTextureUtils.LoadTexture(ref srcMain2, path);
-                    hsvgMaterial.SetTexture(PropertyMainSecondTex, srcMain2);
-                }
-            }
+            var referenceMainTexture =
+                LoadTexture(assetSaver, baseMainTexture, ref srcTexture) ? srcTexture : Texture2D.whiteTexture;
+            var referenceMainSecondTexture = LoadTexture(assetSaver, shadowTex, ref srcMain2) ? srcMain2 : referenceMainTexture;
+            hsvgMaterial.SetTexture(PropertyMainTex, referenceMainTexture);
+            hsvgMaterial.SetTexture(PropertyMainSecondTex, referenceMainSecondTexture);
+            hsvgMaterial.SetTexture(PropertyMainThirdTex, referenceMainTexture);
 
-            Texture2D? innerMainTexture;
-            if (bakedMainTex && assetSaver.IsTemporaryAsset(bakedMainTex))
-            {
-                Object.DestroyImmediate(srcTexture);
-                srcTexture = bakedMainTex.Clone()!;
-                innerMainTexture = srcTexture;
-            }
-            else
-            {
-                var path = AssetDatabase.GetAssetPath(bakedMainTex);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    lilTextureUtils.LoadTexture(ref srcTexture, path);
-                    innerMainTexture = srcTexture;
-                }
-                else
-                {
-                    innerMainTexture = Texture2D.whiteTexture;
-                }
-            }
-
-            hsvgMaterial.SetTexture(PropertyMainTex, innerMainTexture);
-            hsvgMaterial.SetTexture(PropertyMainThirdTex, innerMainTexture);
-            if (!existsShadowTex)
-            {
-                hsvgMaterial.SetTexture(PropertyMainSecondTex, innerMainTexture);
-            }
-
-            Texture2D? innerMaskTexture;
-            if (shadowStrengthMask && assetSaver.IsTemporaryAsset(shadowStrengthMask))
-            {
-                Object.DestroyImmediate(srcMask2);
-                srcMask2 = shadowStrengthMask!.Clone();
-                innerMaskTexture = srcMask2;
-            }
-            else
-            {
-                var path = AssetDatabase.GetAssetPath(shadowStrengthMask);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    lilTextureUtils.LoadTexture(ref srcMask2, path);
-                    innerMaskTexture = srcMask2;
-                }
-                else
-                {
-                    innerMaskTexture = Texture2D.whiteTexture;
-                }
-            }
-
-            hsvgMaterial.SetTexture(PropertyMainSecondBlendMask, innerMaskTexture);
-            hsvgMaterial.SetTexture(PropertyMainThirdBlendMask, innerMaskTexture);
+            var referenceMaskTexture =
+                LoadTexture(assetSaver, shadowStrengthMask, ref srcMask2) ? srcMask2 : Texture2D.whiteTexture;
+            hsvgMaterial.SetTexture(PropertyMainSecondBlendMask, referenceMaskTexture);
+            hsvgMaterial.SetTexture(PropertyMainThirdBlendMask, referenceMaskTexture);
 
             var outTexture = RunBake(srcTexture, hsvgMaterial);
             outTexture.name = $"{mainTexName}_{nameof(AutoBakeShadowTexture)}";
@@ -1513,7 +1442,7 @@ namespace com.github.hkrn
 
             hsvgMaterial.SetColor(PropertyColor, matcapColor);
             hsvgMaterial.SetVector(PropertyMainTexHsvg, lilConstants.defaultHSVG);
-            SetMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
+            AssignMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
 
             var outTexture = RunBake(srcTexture, hsvgMaterial);
             outTexture.name = $"{matcapTexName}_{nameof(AutoBakeMatCap)}";
@@ -1545,31 +1474,15 @@ namespace com.github.hkrn
             hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskValue");
 
             var baseTex = dictionaries.GetTexture("_AlphaMask");
-            if (baseTex && assetSaver.IsTemporaryAsset(baseTex))
+            Texture2D? outTexture = null;
+            if (LoadTexture(assetSaver, baseTex, ref srcAlphaMask))
             {
-                Object.DestroyImmediate(srcAlphaMask);
-                srcAlphaMask = baseTex!.Clone();
                 hsvgMaterial.SetTexture(PropertyAlphaMask, srcAlphaMask);
+                AssignMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
+                outTexture = RunBake(srcTexture, hsvgMaterial);
+                outTexture.name = $"{mainTexName}_{nameof(AutoBakeAlphaMask)}";
+                assetSaver.SaveAsset(outTexture);
             }
-            else
-            {
-                var path = AssetDatabase.GetAssetPath(baseTex);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    lilTextureUtils.LoadTexture(ref srcAlphaMask, path);
-                    hsvgMaterial.SetTexture(PropertyAlphaMask, srcAlphaMask);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-
-            SetMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
-
-            var outTexture = RunBake(srcTexture, hsvgMaterial);
-            outTexture.name = $"{mainTexName}_{nameof(AutoBakeAlphaMask)}";
-            assetSaver.SaveAsset(outTexture);
 
             Object.DestroyImmediate(hsvgMaterial);
             Object.DestroyImmediate(srcTexture);
@@ -1603,28 +1516,38 @@ namespace com.github.hkrn
             return outTexture;
         }
 
-        private static void SetMaterialTexture(IAssetSaver assetSaver, Texture? baseTex, Material hsvgMaterial,
+        private static void AssignMaterialTexture(IAssetSaver assetSaver, Texture? baseTex, Material material,
             int propertyID, ref Texture2D srcTexture)
         {
-            if (baseTex && assetSaver.IsTemporaryAsset(baseTex))
+            var result = LoadTexture(assetSaver, baseTex, ref srcTexture);
+            material.SetTexture(propertyID, result ? srcTexture : Texture2D.whiteTexture);
+        }
+
+        private static bool LoadTexture(IAssetSaver assetSaver, Texture? baseTexture, ref Texture2D srcTexture)
+        {
+            if (baseTexture is Texture2D { isReadable: true } readableTexture)
             {
-                Object.DestroyImmediate(srcTexture);
-                srcTexture = baseTex!.Clone()!;
-                hsvgMaterial.SetTexture(propertyID, srcTexture);
+                srcTexture.LoadImage(readableTexture.EncodeToPNG());
+            }
+            else if (baseTexture && assetSaver.IsTemporaryAsset(baseTexture))
+            {
+                Object.Destroy(srcTexture);
+                var innerBaseTexture = baseTexture!;
+                srcTexture = new Texture2D(innerBaseTexture.width, innerBaseTexture.height);
+                Graphics.CopyTexture(innerBaseTexture, srcTexture);
             }
             else
             {
-                var path = AssetDatabase.GetAssetPath(baseTex);
-                if (!string.IsNullOrEmpty(path))
+                var path = AssetDatabase.GetAssetPath(baseTexture);
+                if (string.IsNullOrEmpty(path))
                 {
-                    lilTextureUtils.LoadTexture(ref srcTexture, path);
-                    hsvgMaterial.SetTexture(propertyID, srcTexture);
+                    return false;
                 }
-                else
-                {
-                    hsvgMaterial.SetTexture(propertyID, Texture2D.whiteTexture);
-                }
+
+                lilTextureUtils.LoadTexture(ref srcTexture, path);
             }
+
+            return true;
         }
 
         private static (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
@@ -1793,7 +1716,7 @@ namespace com.github.hkrn
 
         public static string TrimCloneSuffix(string name)
         {
-            if (name.EndsWith(CloneSuffix))
+            if (name.EndsWith(CloneSuffix, StringComparison.Ordinal))
             {
                 name = name[..^CloneSuffix.Length];
             }
@@ -1875,6 +1798,12 @@ namespace com.github.hkrn
             private readonly string _name;
         }
 
+        private sealed class MToonTexture
+        {
+            public Texture MainTexture { get; init; } = null!;
+            public gltf.material.TextureInfo MainTextureInfo { get; init; } = null!;
+        }
+
         public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver)
         {
             var packageJsonFile = File.ReadAllText($"Packages/{PackageJson.Name}/package.json");
@@ -1882,7 +1811,7 @@ namespace com.github.hkrn
             _gameObject = gameObject;
             _assetSaver = assetSaver;
             _materialIDs = new Dictionary<Material, gltf.ObjectID>();
-            _bakedMaterialMainTextures = new Dictionary<Material, (Texture, gltf.material.TextureInfo)>();
+            _materialMToonTextures = new Dictionary<Material, MToonTexture>();
             _transformNodeIDs = new Dictionary<Transform, gltf.ObjectID>();
             _transformNodeNames = new HashSet<string>();
             _exporter = new gltf.exporter.Exporter();
@@ -2150,10 +2079,9 @@ namespace com.github.hkrn
             foreach (var gltfMaterial in _root.Materials!)
             {
                 var material = materialIDs[materialID];
-                if (_bakedMaterialMainTextures.TryGetValue(material, out var item))
+                if (_materialMToonTextures.TryGetValue(material, out var mToonTexture))
                 {
-                    var (texture, textureInfo) = item;
-                    var mtoon = vrmExporter.ExportMToon(material, texture, textureInfo, _materialExporter);
+                    var mtoon = vrmExporter.ExportMToon(material, mToonTexture, _materialExporter);
                     gltfMaterial.Extensions ??= new Dictionary<string, JToken>();
                     gltfMaterial.Extensions.Add(gltf.extensions.KhrMaterialsUnlit.Name, new JObject());
                     gltfMaterial.Extensions.Add(VrmcMaterialsMtoon, vrm.Document.SaveAsNode(mtoon));
@@ -2500,7 +2428,7 @@ namespace com.github.hkrn
                     var config = new GltfMaterialExporter.ExportOverrides();
 #if NVE_HAS_LILTOON
                     var isShaderLiltoon = false;
-                    if (shaderName == "lilToon" || shaderName.StartsWith("Hidden/lilToon"))
+                    if (shaderName == "lilToon" || shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal))
                     {
                         if (shaderName.Contains("Cutout"))
                         {
@@ -2559,8 +2487,11 @@ namespace com.github.hkrn
                             _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
                         if (bakedMainTexture)
                         {
-                            _bakedMaterialMainTextures.Add(m,
-                                (bakedMainTexture!, material.PbrMetallicRoughness!.BaseColorTexture!));
+                            _materialMToonTextures.Add(m, new MToonTexture
+                            {
+                                MainTexture = bakedMainTexture!,
+                                MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture!,
+                            });
                         }
                     }
 #endif // NVE_HAS_LILTOON
@@ -3042,8 +2973,7 @@ namespace com.github.hkrn
                 return vrmNodeConstraint;
             }
 
-            public vrm.mtoon.MToon ExportMToon(Material material, Texture mainTexture,
-                gltf.material.TextureInfo mainTextureInfo,
+            public vrm.mtoon.MToon ExportMToon(Material material, MToonTexture mToonTexture,
                 GltfMaterialExporter exporter)
             {
                 var mtoon = new vrm.mtoon.MToon
@@ -3077,11 +3007,12 @@ namespace com.github.hkrn
                         !Mathf.Approximately(floats["_ShadowMainStrength"].floatValue, 0.0f))
                     {
                         var bakedShadowTex =
-                            MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mainTexture);
+                            MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mToonTexture.MainTexture);
                         mtoon.ShadeColorFactor = Color.white.ToVector3();
-                        mtoon.ShadeMultiplyTexture =
-                            exporter.ExportTextureInfoMToon(material, bakedShadowTex, ColorSpace.Gamma,
-                                needsBlit: false);
+                        mtoon.ShadeMultiplyTexture = bakedShadowTex
+                            ? exporter.ExportTextureInfoMToon(material, bakedShadowTex, ColorSpace.Gamma,
+                                needsBlit: false)
+                            : mToonTexture.MainTextureInfo;
                     }
                     else
                     {
@@ -3098,7 +3029,7 @@ namespace com.github.hkrn
                         mtoon.ShadeMultiplyTexture = shadowColorTex
                             ? exporter.ExportTextureInfoMToon(material, shadowColorTex, ColorSpace.Gamma,
                                 needsBlit: true)
-                            : mainTextureInfo;
+                            : mToonTexture.MainTextureInfo;
                     }
 
                     var texture = LocalRetrieveTexture2D("_ShadowBorderTex");
@@ -3121,7 +3052,7 @@ namespace com.github.hkrn
                 else
                 {
                     mtoon.ShadeColorFactor = System.Numerics.Vector3.One;
-                    mtoon.ShadeMultiplyTexture = mainTextureInfo;
+                    mtoon.ShadeMultiplyTexture = mToonTexture.MainTextureInfo;
                 }
 
                 var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
@@ -3785,7 +3716,8 @@ namespace com.github.hkrn
                         var morphTargetBinds = new List<vrm.core.MorphTargetBind>();
                         foreach (var binding in AnimationUtility.GetCurveBindings(property.blendShapeAnimationClip))
                         {
-                            if (!binding.propertyName.StartsWith(VrmExpressionProperty.BlendShapeNamePrefix))
+                            if (!binding.propertyName.StartsWith(VrmExpressionProperty.BlendShapeNamePrefix,
+                                    StringComparison.Ordinal))
                                 continue;
                             var blendShapeName =
                                 binding.propertyName[VrmExpressionProperty.BlendShapeNamePrefix.Length..];
@@ -4513,7 +4445,7 @@ namespace com.github.hkrn
         private readonly gltf.exporter.Exporter _exporter;
         private readonly gltf.Root _root;
         private readonly IDictionary<Material, gltf.ObjectID> _materialIDs;
-        private readonly IDictionary<Material, (Texture, gltf.material.TextureInfo)> _bakedMaterialMainTextures;
+        private readonly IDictionary<Material, MToonTexture> _materialMToonTextures;
         private readonly IDictionary<Transform, gltf.ObjectID> _transformNodeIDs;
         private readonly ISet<string> _transformNodeNames;
         private readonly ISet<string> _extensionsUsed;
