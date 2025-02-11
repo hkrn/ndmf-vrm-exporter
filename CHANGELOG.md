@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.0.5] - 2025-02-11
+
+### Fixed
+
+- [exporter] use `Graphics.ConvertTexture` instead ([#29](https://github.com/hkrn/ndmf-vrm-exporter/pull/29))
+- [exporter] fix issue where multiple PB colliders were not considered ([#28](https://github.com/hkrn/ndmf-vrm-exporter/pull/28))
+- [exporter] prevent retaining the `(Clone)` suffix ([#27](https://github.com/hkrn/ndmf-vrm-exporter/pull/27))
+
 ## [1.0.4] - 2025-02-06
 
 ### Fixed
@@ -10,7 +18,7 @@
 - [exporter] modify constraint output based on `Freeze Rotation Axis` ([#24](https://github.com/hkrn/ndmf-vrm-exporter/pull/24))
 - [exporter] disable emission when an emission mask is present in lilToon ([#23](https://github.com/hkrn/ndmf-vrm-exporter/pull/23))
 - [exporter] fix a bug where WriteStream was called twice ([#21](https://github.com/hkrn/ndmf-vrm-exporter/pull/21))
-- BlendShape の変形が正しく行われない問題を修正 ([#14](https://github.com/hkrn/ndmf-vrm-exporter/pull/14))
+- BlendShape の変形が正しく行われない問題を修正 ([#14](https://github.com/hkrn/ndmf-vrm-exporter/pull/14)) by @Shiokai
 
 ## [1.0.3] - 2025-02-02
 
@@ -40,7 +48,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...HEAD
+[1.0.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...1.0.5
 [1.0.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.1...1.0.2
