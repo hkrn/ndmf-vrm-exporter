@@ -2596,9 +2596,16 @@ namespace com.github.hkrn
                 {
                     if (!transform.gameObject.activeInHierarchy ||
                         component.excludedSpringBoneColliderTransforms.Contains(transform) ||
-                        !transform.TryGetComponent<VRCPhysBoneCollider>(out var collider))
+                        !transform.TryGetComponent<VRCPhysBoneCollider>(out _))
+                    {
                         continue;
-                    ConvertBoneCollider(collider, ref pbColliders, ref colliders);
+                    }
+
+                    var innerColliders = transform.GetComponents<VRCPhysBoneCollider>();
+                    foreach (var innerCollider in innerColliders!)
+                    {
+                        ConvertBoneCollider(innerCollider, ref pbColliders, ref colliders);
+                    }
                 }
 
                 foreach (var (transform, _) in _transformNodeIDs)
