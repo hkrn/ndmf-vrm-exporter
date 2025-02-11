@@ -1534,7 +1534,7 @@ namespace com.github.hkrn
                 Object.Destroy(srcTexture);
                 var innerBaseTexture = baseTexture!;
                 srcTexture = new Texture2D(innerBaseTexture.width, innerBaseTexture.height);
-                Graphics.CopyTexture(innerBaseTexture, srcTexture);
+                Graphics.ConvertTexture(innerBaseTexture, srcTexture);
             }
             else
             {
