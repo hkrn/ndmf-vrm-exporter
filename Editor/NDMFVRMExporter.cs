@@ -1716,7 +1716,7 @@ namespace com.github.hkrn
 
         public static string TrimCloneSuffix(string name)
         {
-            if (name.EndsWith(CloneSuffix, StringComparison.Ordinal))
+            while (name.EndsWith(CloneSuffix, StringComparison.Ordinal))
             {
                 name = name[..^CloneSuffix.Length];
             }
@@ -2029,8 +2029,9 @@ namespace com.github.hkrn
                 var thumbnail = component.thumbnail!;
                 if (thumbnail.width == thumbnail.height)
                 {
+                    var name = $"VRM_Core_Meta_Thumbnail_{AssetPathUtils.TrimCloneSuffix(component.name)}";
                     var textureUnit =
-                        ExportTextureUnit(thumbnail, component.name, TextureFormat.RGB24, ColorSpace.Gamma, null, true);
+                        ExportTextureUnit(thumbnail, name, TextureFormat.RGB24, ColorSpace.Gamma, null, true);
                     thumbnailImage = _exporter.CreateSampledTexture(_root, textureUnit);
                 }
             }
@@ -2376,7 +2377,7 @@ namespace com.github.hkrn
 
             var meshUnit = new gltf.exporter.MeshUnit
             {
-                Name = new gltf.UnicodeString(mesh.name),
+                Name = new gltf.UnicodeString(AssetPathUtils.TrimCloneSuffix(mesh.name)),
                 Positions = positions,
                 Normals = normals,
                 Colors = component.enableVertexColorOutput
@@ -4152,7 +4153,7 @@ namespace com.github.hkrn
 
                 var material = new gltf.material.Material
                 {
-                    Name = new gltf.UnicodeString(source.name),
+                    Name = new gltf.UnicodeString(AssetPathUtils.TrimCloneSuffix(source.name)),
                     PbrMetallicRoughness = new gltf.material.PbrMetallicRoughness(),
                     AlphaMode = alphaMode,
                 };
@@ -4334,7 +4335,7 @@ namespace com.github.hkrn
                     var name = $"{AssetPathUtils.TrimCloneSuffix(material.name)}_{texture.name}_{textureFormat}";
                     if (mtoon)
                     {
-                        name = $"MToon_{name}";
+                        name = $"VRM_MToon_{name}";
                     }
 
                     var textureUnit = ExportTextureUnit(texture, name, textureFormat, cs, blitMaterial, needsBlit);
