@@ -254,6 +254,9 @@ VRM Spring Bone と VRC PhysBone は計算方法が異なるため結果は同�
   * `Ignore` と同じ
 * `Grab & Pose`
 
+> [!TIPS]
+> 枝分かれが存在する場合はスプリングボーン名に `.${番号}` が末尾に付与されます。番号は 1 からはじまり、たとえばスプリングボーン名が `SB` で 2 つ存在する場合は `SB.1` と `SB.2` になります。
+
 VRC PhysBone の子孫に枝分かれが存在する場合はそれぞれが独立した VRM Spring Bone として作られます[^9]。ただし VRM の仕様では枝分かれした Spring Bone の動作は [未定義で実装依存](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_springBone-1.0/README.ja.md#%E5%88%86%E5%B2%90%E3%81%99%E3%82%8B-springchain-%E6%9C%AA%E5%AE%9A%E7%BE%A9) となるため、動作の一貫性を重視する場合は枝分かれをしないように VRC PhysBone の再設定が必要になる場合があります。
 
 VRC PhysBone のコライダーは以下の三種類に対応しています。

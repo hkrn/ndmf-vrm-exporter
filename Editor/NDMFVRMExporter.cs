@@ -3998,22 +3998,24 @@ namespace com.github.hkrn
                 colliderGroups.Add(colliderGroup);
             }
 
-            private static bool RetrieveSpringBoneChainTransforms(Transform transform, bool branch, ref List<List<Transform>> chains)
+            private static bool RetrieveSpringBoneChainTransforms(Transform transform, ref List<List<Transform>> chains)
             {
                 var numChildren = 0;
-                var hasChildren = false;
-                for (var i = 0; i < transform.childCount; i++, numChildren++)
+                for (var i = 0; i < transform.childCount; i++)
                 {
                     var child = transform.GetChild(i);
                     if (!child || child is null)
+                    {
                         continue;
-                    chains.Last().Add(child);
-                    hasChildren |= RetrieveSpringBoneChainTransforms(child,  !hasChildren, ref chains);
-                }
+                    }
 
-                if (hasChildren && branch)
-                {
-                    chains.Add(new List<Transform>());
+                    chains.Last().Add(child);
+                    if (RetrieveSpringBoneChainTransforms(child, ref chains))
+                    {
+                        chains.Add(new List<Transform>());
+                    }
+
+                    numChildren++;
                 }
 
                 return numChildren > 0;
@@ -4023,7 +4025,7 @@ namespace com.github.hkrn
             {
                 var numChildren = 0;
                 var hasChildren = false;
-                for (var i = 0; i < transform?.childCount; i++, numChildren++)
+                for (var i = 0; i < transform?.childCount; i++)
                 {
                     var child = transform.GetChild(i);
                     if (!child || child is null)
@@ -4032,6 +4034,7 @@ namespace com.github.hkrn
                     }
 
                     hasChildren |= CalcTransformDepth(child, !hasChildren, ref depth);
+                    numChildren++;
                 }
 
                 if (hasChildren && incrementDepth)
@@ -4069,14 +4072,20 @@ namespace com.github.hkrn
                 {
                     new() { rootTransform }
                 };
-                RetrieveSpringBoneChainTransforms(rootTransform, true, ref chains);
-                foreach (var transforms in chains.Select(ImmutableList.CreateRange))
+                RetrieveSpringBoneChainTransforms(rootTransform, ref chains);
+                var newChains = chains.Where(chain => chain.Count != 0).Select(ImmutableList.CreateRange)
+                    .ToImmutableList();
+                var hasChainBranch = newChains.Count > 1;
+                var index = 1;
+                foreach (var transforms in newChains)
                 {
-                    ConvertSpringBoneInner(pb, transforms, pbColliders, colliderGroups, ref springs);
+                    var name = hasChainBranch ? $"{pb.name}.{index}" : pb.name;
+                    ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                    index++;
                 }
             }
 
-            private void ConvertSpringBoneInner(VRCPhysBone pb, IImmutableList<Transform> transforms,
+            private void ConvertSpringBoneInner(VRCPhysBone pb, string name, IImmutableList<Transform> transforms,
                 IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
@@ -4146,7 +4155,7 @@ namespace com.github.hkrn
 
                 var spring = new vrm.sb.Spring
                 {
-                    Name = new gltf.UnicodeString(pb.name),
+                    Name = new gltf.UnicodeString(name),
                     Center = null,
                     ColliderGroups = newColliderGroups.Count > 0 ? newColliderGroups.ToList() : null,
                     Joints = joints.Where(joint => joint != null).Select(joint => joint!).ToList(),
