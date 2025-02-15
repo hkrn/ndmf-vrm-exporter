@@ -1804,6 +1804,74 @@ namespace com.github.hkrn
             public gltf.material.TextureInfo MainTextureInfo { get; init; } = null!;
         }
 
+        private sealed class KtxConverterBuilder
+        {
+            public KtxConverterBuilder(string ktxToolPath)
+            {
+                _ktxToolPath = ktxToolPath;
+            }
+
+            public string InternalFormat { set; private get; } = null!;
+
+            public string Oetf { set; private get; } = null!;
+
+            public string Primaries { set; private get; } = null!;
+
+            public KtxConverter Build()
+            {
+                var info = new ProcessStartInfo(_ktxToolPath);
+                info.ArgumentList.Add("create");
+                info.ArgumentList.Add("--format");
+                info.ArgumentList.Add(InternalFormat);
+                info.ArgumentList.Add("--assign-oetf");
+                info.ArgumentList.Add(Oetf);
+                info.ArgumentList.Add("--assign-primaries");
+                info.ArgumentList.Add(Primaries);
+                info.ArgumentList.Add("--encode");
+                info.ArgumentList.Add("uastc");
+                info.ArgumentList.Add("--zstd");
+                info.ArgumentList.Add("22");
+                info.ArgumentList.Add("--generate-mipmap");
+                info.ArgumentList.Add("--stdin");
+                info.ArgumentList.Add("--stdout");
+                info.CreateNoWindow = true;
+                info.UseShellExecute = false;
+                info.RedirectStandardInput = true;
+                info.RedirectStandardOutput = true;
+                return new KtxConverter(info);
+            }
+
+            private readonly string _ktxToolPath;
+        }
+
+        private sealed class KtxConverter
+        {
+            internal KtxConverter(ProcessStartInfo info)
+            {
+                _info = info;
+            }
+
+            public byte[]? Run(byte[] inputData)
+            {
+                using var process = Process.Start(_info);
+                if (process is null)
+                {
+                    return null;
+                }
+
+                {
+                    using var writer = new BinaryWriter(process.StandardInput.BaseStream);
+                    writer.Write(inputData);
+                }
+                using var reader = new MemoryStream();
+                process.StandardOutput.BaseStream.CopyTo(reader);
+                process.WaitForExit(30000);
+                return reader.GetBuffer();
+            }
+
+            private readonly ProcessStartInfo _info;
+        }
+
         public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver)
         {
             var packageJsonFile = File.ReadAllText($"Packages/{PackageJson.Name}/package.json");
@@ -2096,13 +2164,19 @@ namespace com.github.hkrn
 
         private void ConvertAllTexturesToKtx(string ktxToolPath)
         {
+            using var _ = new ScopedProfile($"{nameof(ConvertAllTexturesToKtx)}");
+            var builder = new KtxConverterBuilder(ktxToolPath);
             var basePath = AssetPathUtils.GetTempPath(_gameObject);
             var textureIndex = 0;
             Directory.CreateDirectory(basePath);
             foreach (var texture in _root.Textures!)
             {
                 var textureID = new gltf.ObjectID((uint)textureIndex);
-                var metadata = _materialExporter.TextureMetadata[textureID];
+                if (!_materialExporter.TextureMetadata.TryGetValue(textureID, out var metadata))
+                {
+                    continue;
+                }
+
                 var internalFormat = metadata.KtxImageDataFormat;
                 if (internalFormat != null)
                 {
@@ -2116,33 +2190,18 @@ namespace com.github.hkrn
                     var image = _root.Images![(int)source.ID];
                     var bufferView = _root.BufferViews![(int)image.BufferView!.Value.ID];
                     var inputData = _exporter.GetData(bufferView);
-                    var sourcePath = $"{basePath}/{source.ID}.bin";
-                    var destPath = $"{basePath}/{source.ID}.ktx";
-                    File.WriteAllBytes(sourcePath, inputData);
-                    var info = new ProcessStartInfo(ktxToolPath);
-                    info.ArgumentList.Add("create");
-                    info.ArgumentList.Add("--format");
-                    info.ArgumentList.Add(internalFormat);
-                    info.ArgumentList.Add("--assign-oetf");
-                    info.ArgumentList.Add(oetf);
-                    info.ArgumentList.Add("--assign-primaries");
-                    info.ArgumentList.Add(primaries);
-                    info.ArgumentList.Add("--encode");
-                    info.ArgumentList.Add("uastc");
-                    info.ArgumentList.Add("--zstd");
-                    info.ArgumentList.Add("22");
-                    info.ArgumentList.Add("--generate-mipmap");
-                    info.ArgumentList.Add(sourcePath);
-                    info.ArgumentList.Add(destPath);
-                    info.CreateNoWindow = true;
-                    info.UseShellExecute = false;
                     try
                     {
-                        using var process = Process.Start(info);
-                        if (process is null)
+                        builder.InternalFormat = internalFormat;
+                        builder.Oetf = oetf;
+                        builder.Primaries = primaries;
+                        var converter = builder.Build();
+                        var outputData = converter.Run(inputData);
+                        if (outputData is null)
+                        {
                             continue;
-                        process.WaitForExit();
-                        var outputData = File.ReadAllBytes(destPath);
+                        }
+
                         var sourceID = _exporter.CreateTextureSource(_root, outputData, texture.Name, "image/ktx2");
                         texture.Extensions ??= new Dictionary<string, JToken>();
                         texture.Extensions.Add(gltf.extensions.KhrTextureBasisu.Name, gltf.Document.SaveAsNode(
