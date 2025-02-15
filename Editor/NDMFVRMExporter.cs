@@ -2667,22 +2667,24 @@ namespace com.github.hkrn
                     }
                 }
 
+                var immutablePbColliders = ImmutableList.CreateRange(pbColliders);
                 foreach (var (transform, _) in _transformNodeIDs)
                 {
                     if (!transform.gameObject.activeInHierarchy ||
                         component.excludedSpringBoneTransforms.Contains(transform) ||
                         !transform.TryGetComponent<VRCPhysBone>(out var pb))
                         continue;
-                    ConvertColliderGroup(pb, pbColliders, ref colliderGroups);
+                    ConvertColliderGroup(pb, immutablePbColliders, ref colliderGroups);
                 }
 
+                var immutableColliderGroups = ImmutableList.CreateRange(colliderGroups);
                 foreach (var (transform, _) in _transformNodeIDs)
                 {
                     if (!transform.gameObject.activeInHierarchy ||
                         component.excludedSpringBoneTransforms.Contains(transform) ||
                         !transform.TryGetComponent<VRCPhysBone>(out var pb))
                         continue;
-                    ConvertSpringBone(pb, pbColliders, colliderGroups, ref springs);
+                    ConvertSpringBone(pb, immutablePbColliders, immutableColliderGroups, ref springs);
                 }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
@@ -3977,7 +3979,8 @@ namespace com.github.hkrn
                 pbColliders.Add(collider);
             }
 
-            private static void ConvertColliderGroup(VRCPhysBone pb, IList<VRCPhysBoneColliderBase> pbColliders,
+            private static void ConvertColliderGroup(VRCPhysBone pb,
+                IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 ref IList<vrm.sb.ColliderGroup> colliderGroups)
             {
                 var colliders = (from collider in pb.colliders
@@ -3995,16 +3998,25 @@ namespace com.github.hkrn
                 colliderGroups.Add(colliderGroup);
             }
 
-            private static void RetrieveTransforms(Transform transform, ref List<Transform> result)
+            private static bool RetrieveSpringBoneChainTransforms(Transform transform, bool branch, ref List<List<Transform>> chains)
             {
-                for (var i = 0; i < transform.childCount; i++)
+                var numChildren = 0;
+                var hasChildren = false;
+                for (var i = 0; i < transform.childCount; i++, numChildren++)
                 {
                     var child = transform.GetChild(i);
                     if (!child || child is null)
                         continue;
-                    result.Add(child);
-                    RetrieveTransforms(child, ref result);
+                    chains.Last().Add(child);
+                    hasChildren |= RetrieveSpringBoneChainTransforms(child,  !hasChildren, ref chains);
                 }
+
+                if (hasChildren && branch)
+                {
+                    chains.Add(new List<Transform>());
+                }
+
+                return numChildren > 0;
             }
 
             private static bool CalcTransformDepth(Transform? transform, bool incrementDepth, ref int depth)
@@ -4045,16 +4057,30 @@ namespace com.github.hkrn
                 {
                     lowerDepth++;
                 }
+
                 return (upperDepth, lowerDepth);
             }
 
-            private void ConvertSpringBone(VRCPhysBone pb, IList<VRCPhysBoneColliderBase> pbColliders,
-                IList<vrm.sb.ColliderGroup> colliderGroups,
-                ref IList<vrm.sb.Spring> springs)
+            private void ConvertSpringBone(VRCPhysBone pb, IImmutableList<VRCPhysBoneColliderBase> pbColliders,
+                IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
                 var rootTransform = pb.GetRootTransform();
-                var transforms = new List<Transform> { rootTransform };
-                RetrieveTransforms(rootTransform, ref transforms);
+                var chains = new List<List<Transform>>
+                {
+                    new() { rootTransform }
+                };
+                RetrieveSpringBoneChainTransforms(rootTransform, true, ref chains);
+                foreach (var transforms in chains.Select(ImmutableList.CreateRange))
+                {
+                    ConvertSpringBoneInner(pb, transforms, pbColliders, colliderGroups, ref springs);
+                }
+            }
+
+            private void ConvertSpringBoneInner(VRCPhysBone pb, IImmutableList<Transform> transforms,
+                IImmutableList<VRCPhysBoneColliderBase> pbColliders,
+                IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
+            {
+                var rootTransform = pb.GetRootTransform();
                 var joints = transforms.Select(transform =>
                     {
                         var nodeID = FindTransformNodeID(transform);

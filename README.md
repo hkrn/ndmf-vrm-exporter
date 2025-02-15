@@ -254,6 +254,8 @@ VRM Spring Bone と VRC PhysBone は計算方法が異なるため結果は同�
   * `Ignore` と同じ
 * `Grab & Pose`
 
+VRC PhysBone の子孫に枝分かれが存在する場合はそれぞれが独立した VRM Spring Bone として作られます[^9]。ただし VRM の仕様では枝分かれした Spring Bone の動作は [未定義で実装依存](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_springBone-1.0/README.ja.md#%E5%88%86%E5%B2%90%E3%81%99%E3%82%8B-springchain-%E6%9C%AA%E5%AE%9A%E7%BE%A9) となるため、動作の一貫性を重視する場合は枝分かれをしないように VRC PhysBone の再設定が必要になる場合があります。
+
 VRC PhysBone のコライダーは以下の三種類に対応しています。
 
 * `Capsule` (カプセル)
@@ -262,7 +264,7 @@ VRC PhysBone のコライダーは以下の三種類に対応しています。
 
 `Inside Bounds` が有効もしくは `Plain` の場合は `VRMC_springBone_extended_collider` 拡張に対応しているアプリケーションが必要となります。対応していないアプリケーションを利用した場合は前者が存在しないものとして、後者の場合は半径 10km の巨大スフィアコライダーを設定する形でそれぞれ処理されます。
 
-Constraint または VRM Constraint が使われている場合は VRM Constraint に変換されます。またその場合は以下の三種類に対応しています。[^9]
+Constraint または VRM Constraint が使われている場合は VRM Constraint に変換されます。またその場合は以下の三種類に対応しています。[^10]
 
 * `AimConstraint`
   * VRM の仕様上 X/Y/Z の単一方向ベクトルのみに制約されるため、例えば斜め方向の場合変換できません
@@ -332,7 +334,7 @@ lilToon 以外のシェーダが使われている場合は MToon の変換は�
 
 VRChat アバターを VRM に変換（またはその逆）するツールとして定番である [VRM Converter for VRChat](https://github.com/esperecyan/VRMConverterForVRChat) は VRM 0.x の仕様準拠で変換するのに対して NDMF VRM Exporter は VRM 1.0 の仕様準拠で変換するという点にあります。
 
-そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^10]。
+そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^11]。
 
 |項目|VRM Converter for VRChat|NDMF VRM Exporter|
 |---|---|---|
@@ -389,5 +391,6 @@ XWear Packager と NDMF VRM Exporter は一緒に入れることができるた�
 [^6]: VRM の派生元である glTF の仕様として [ノード名が一意であることを求めていません](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_node_name)。その一方で利用先アプリケーションによってはノード名が一意であることが求められる場合があるため、開発用途でなければ有効のままにしてください
 [^7]: lilToon において頂点色は [輪郭線設定](https://lilxyzw.github.io/lilToon/ja_JP/advanced/outline.html) または [ファー設定](https://lilxyzw.github.io/lilToon/ja_JP/advanced/fur.html) として転用されますが、VRM の派生元である glTF では本来の目的である頂点色として使われるため、設定を解除すると意図しない色出力が発生することがあります
 [^8]: VRM をサーバにアップロードして利用する場合はテクスチャ圧縮をサーバ側で実施するため NDMF VRM Exporter 側で実施する必要はありません。一方でサーバにアップロードしないかつ `KHR_textures_basisu` に対応しているアプリケーションを利用するか、開発用途の場合でこのオプションが有用になることがあります
-[^9]: Position Constraint (実質的に Parent Constraint も同様) は未対応ですが https://github.com/vrm-c/vrm-specification/issues/468 で要望があがっています
-[^10]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
+[^9]: 1.0.5 以前は枝分かれに考慮されていなかったため、枝分かれも繋がったひとつのスプリングボーンとして出力されていました
+[^10]: Position Constraint (実質的に Parent Constraint も同様) は未対応ですが https://github.com/vrm-c/vrm-specification/issues/468 で要望があがっています
+[^11]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
