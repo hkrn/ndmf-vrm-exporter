@@ -4007,16 +4007,27 @@ namespace com.github.hkrn
                 }
             }
 
-            private static void CalcTransformDepth(Transform? transform, ref int depth)
+            private static bool CalcTransformDepth(Transform? transform, bool incrementDepth, ref int depth)
             {
-                for (var i = 0; i < transform?.childCount; i++)
+                var numChildren = 0;
+                var hasChildren = false;
+                for (var i = 0; i < transform?.childCount; i++, numChildren++)
                 {
                     var child = transform.GetChild(i);
                     if (!child || child is null)
+                    {
                         continue;
-                    depth++;
-                    CalcTransformDepth(child, ref depth);
+                    }
+
+                    hasChildren |= CalcTransformDepth(child, !hasChildren, ref depth);
                 }
+
+                if (hasChildren && incrementDepth)
+                {
+                    depth++;
+                }
+
+                return numChildren > 0;
             }
 
             private static (int, int) FindTransformDepth(Transform? transform, Transform? root)
@@ -4030,7 +4041,10 @@ namespace com.github.hkrn
                 }
 
                 var lowerDepth = 0;
-                CalcTransformDepth(transform, ref lowerDepth);
+                if (CalcTransformDepth(transform, true, ref lowerDepth))
+                {
+                    lowerDepth++;
+                }
                 return (upperDepth, lowerDepth);
             }
 
@@ -4038,8 +4052,9 @@ namespace com.github.hkrn
                 IList<vrm.sb.ColliderGroup> colliderGroups,
                 ref IList<vrm.sb.Spring> springs)
             {
-                var transforms = new List<Transform>();
-                RetrieveTransforms(pb.GetRootTransform(), ref transforms);
+                var rootTransform = pb.GetRootTransform();
+                var transforms = new List<Transform> { rootTransform };
+                RetrieveTransforms(rootTransform, ref transforms);
                 var joints = transforms.Select(transform =>
                     {
                         var nodeID = FindTransformNodeID(transform);
@@ -4049,7 +4064,7 @@ namespace com.github.hkrn
                             return null;
                         }
 
-                        var (upperDepth, lowerDepth) = FindTransformDepth(transform, pb.GetRootTransform());
+                        var (upperDepth, lowerDepth) = FindTransformDepth(transform, rootTransform);
                         var depthRatio = upperDepth / (float)(upperDepth + lowerDepth);
                         var evaluate = new Func<float, AnimationCurve, float>(
                             (value, curve) =>
