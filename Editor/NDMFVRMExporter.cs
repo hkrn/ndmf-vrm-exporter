@@ -2672,9 +2672,16 @@ namespace com.github.hkrn
                 {
                     if (!transform.gameObject.activeInHierarchy ||
                         component.excludedSpringBoneTransforms.Contains(transform) ||
-                        !transform.TryGetComponent<VRCPhysBone>(out var pb))
+                        !transform.TryGetComponent<VRCPhysBone>(out _))
+                    {
                         continue;
-                    ConvertColliderGroup(pb, immutablePbColliders, ref colliderGroups);
+                    }
+
+                    var bones = transform.GetComponents<VRCPhysBone>();
+                    foreach (var bone in bones!)
+                    {
+                        ConvertColliderGroup(bone, immutablePbColliders, ref colliderGroups);
+                    }
                 }
 
                 var immutableColliderGroups = ImmutableList.CreateRange(colliderGroups);
@@ -2682,9 +2689,16 @@ namespace com.github.hkrn
                 {
                     if (!transform.gameObject.activeInHierarchy ||
                         component.excludedSpringBoneTransforms.Contains(transform) ||
-                        !transform.TryGetComponent<VRCPhysBone>(out var pb))
+                        !transform.TryGetComponent<VRCPhysBone>(out _))
+                    {
                         continue;
-                    ConvertSpringBone(pb, immutablePbColliders, immutableColliderGroups, ref springs);
+                    }
+
+                    var bones = transform.GetComponents<VRCPhysBone>();
+                    foreach (var bone in bones!)
+                    {
+                        ConvertSpringBone(bone, immutablePbColliders, immutableColliderGroups, ref springs);
+                    }
                 }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
