@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.0.6] - 2025-02-15
+
+### Fixed
+
+- [exporter] support for converting multiple PB components ([#35](https://github.com/hkrn/ndmf-vrm-exporter/pull/35))
+- [exporter] process PB branches as independent segments ([#33](https://github.com/hkrn/ndmf-vrm-exporter/pull/33))
+- [exporter] fix an issue here root bone was missing from VRM spring bone ([#32](https://github.com/hkrn/ndmf-vrm-exporter/pull/32))
+
 ## [1.0.5] - 2025-02-11
 
 ### Fixed
@@ -48,7 +56,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...HEAD
+[1.0.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...1.0.6
 [1.0.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...1.0.5
 [1.0.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.2...1.0.3
