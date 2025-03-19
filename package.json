@@ -12,6 +12,6 @@
   "repo": "https://hkrn.github.io/vpm.json",
   "vpmDependencies": {
     "com.vrchat.avatars": ">=3.7.0",
-    "nadena.dev.ndmf": "^1.6.0"
+    "nadena.dev.ndmf": ">=1.6.0 < 2.0.0"
   }
 }
