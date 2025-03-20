@@ -329,7 +329,7 @@ lilToon 以外のシェーダが使われている場合は MToon の変換は�
 * `Authors` 設定が入っていない
 * `License URL` 設定が URL 形式として不正
 
-ただしごく稀に Skinned Mesh Renderer の実行時破損検出処理で NDMF のコンソールにエラーとして表示されることがあります。これは本来起こり得るエラーではないため VRM 書き出しを諦めるかプロジェクトの作り直しが必要になります。
+ただし [Skinned Mesh Renderer](https://docs.unity3d.com/ja/2022.3/Manual/class-SkinnedMeshRenderer.html) の実行時破損検出処理で NDMF のコンソールにエラーとして表示されることがあります。その場合は該当する Skinned Mesh Renderer を [Mesh Renderer](https://docs.unity3d.com/ja/2022.3/Manual/class-MeshRenderer.html) に変更するか、プロジェクトの作り直しが必要になります。
 
 ### 出力した VRM 1.0 アバターを 0.x にダウングレードできますか？
 

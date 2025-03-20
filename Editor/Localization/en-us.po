@@ -233,4 +233,4 @@ msgid "component.runtime.error.validation.license-url"
 msgstr "Building VRM file will be skipped due to required license URL property is empty or invalid"
 
 msgid "component.runtime.error.validation.smr"
-msgstr "Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found"
+msgstr "Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found. You will need to convert it to MeshRenderer or recreate the project."

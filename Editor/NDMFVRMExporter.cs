@@ -1403,7 +1403,8 @@ namespace com.github.hkrn
 
             var referenceMainTexture =
                 LoadTexture(assetSaver, baseMainTexture, ref srcTexture) ? srcTexture : Texture2D.whiteTexture;
-            var referenceMainSecondTexture = LoadTexture(assetSaver, shadowTex, ref srcMain2) ? srcMain2 : referenceMainTexture;
+            var referenceMainSecondTexture =
+                LoadTexture(assetSaver, shadowTex, ref srcMain2) ? srcMain2 : referenceMainTexture;
             hsvgMaterial.SetTexture(PropertyMainTex, referenceMainTexture);
             hsvgMaterial.SetTexture(PropertyMainSecondTex, referenceMainSecondTexture);
             hsvgMaterial.SetTexture(PropertyMainThirdTex, referenceMainTexture);
@@ -2518,6 +2519,7 @@ namespace com.github.hkrn
                                 ? 1.0f - Mathf.Clamp01(m.GetFloat(PropertyEmissionMainStrength))
                                 : 0.0f;
                         }
+
                         config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
 
                         if (component.disableVertexColorOnLiltoon)
@@ -2920,7 +2922,8 @@ namespace com.github.hkrn
                                 break;
                             }
                             default:
-                                Debug.LogWarning($"VRCRotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
+                                Debug.LogWarning(
+                                    $"VRCRotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
                                 return null;
                         }
 
@@ -3012,7 +3015,8 @@ namespace com.github.hkrn
                             }
                             case Axis.None:
                             default:
-                                Debug.LogWarning($"RotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
+                                Debug.LogWarning(
+                                    $"RotationConstraint {node.name} is not converted due to unsupported freeze axes pattern");
                                 return null;
                         }
 
@@ -4621,14 +4625,11 @@ namespace com.github.hkrn
                         return;
                     }
 
-                    try
-                    {
-                        CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform);
-                    }
-                    catch (CorruptedSkinnedMeshRendererFoundException e)
-                    {
+                    var corrupted = new List<SkinnedMeshRenderer>();
+                    CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
+                    if (corrupted.Count > 0) {
                         ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                            "component.runtime.error.validation.smr", e.SkinnedMeshRenderer);
+                            "component.runtime.error.validation.smr", corrupted);
                         return;
                     }
 
@@ -4665,17 +4666,7 @@ namespace com.github.hkrn
                 });
         }
 
-        private sealed class CorruptedSkinnedMeshRendererFoundException : Exception
-        {
-            public CorruptedSkinnedMeshRendererFoundException(SkinnedMeshRenderer smr) : base("")
-            {
-                SkinnedMeshRenderer = smr;
-            }
-
-            public SkinnedMeshRenderer SkinnedMeshRenderer { get; }
-        }
-
-        private static void CheckAllSkinnedMeshRenderers(Transform parent)
+        private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
         {
             foreach (Transform child in parent)
             {
@@ -4684,16 +4675,45 @@ namespace com.github.hkrn
                     continue;
                 }
 
-                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) && smr.sharedMesh)
+                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) && smr.sharedMesh &&
+                    (smr.bones.Any(bone => !bone) || IsSharedMeshCorrupted(smr)))
                 {
-                    if (smr.bones.Any(bone => !bone))
-                    {
-                        throw new CorruptedSkinnedMeshRendererFoundException(smr);
-                    }
+                    corrupted.Add(smr);
                 }
 
-                CheckAllSkinnedMeshRenderers(child);
+                CheckAllSkinnedMeshRenderers(child, ref corrupted);
             }
+        }
+
+        private static bool IsSharedMeshCorrupted(SkinnedMeshRenderer smr)
+        {
+            var mesh = smr.sharedMesh;
+            var numPositions = mesh.boneWeights.Length;
+            var numSubMeshes = mesh.subMeshCount;
+            var indexMapping = new Dictionary<uint, uint>();
+            for (var meshIndex = 0; meshIndex < numSubMeshes; meshIndex++)
+            {
+                var indices = mesh.GetIndices(meshIndex).Select(index => (uint)index).ToArray();
+                var indexSet = new HashSet<uint>(indices);
+                indexMapping.Clear();
+                for (uint i = 0; i < numPositions; i++)
+                {
+                    if (!indexSet.Contains(i))
+                    {
+                        continue;
+                    }
+
+                    var newIndex = (uint)indexMapping.Count;
+                    indexMapping.Add(i, newIndex);
+                }
+
+                if (indices.Any(index => !indexMapping.TryGetValue(index, out _)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
