@@ -4097,8 +4097,29 @@ namespace com.github.hkrn
                 var index = 1;
                 foreach (var transforms in newChains)
                 {
-                    var name = hasChainBranch ? $"{pb.name}.{index}" : pb.name;
-                    ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                    switch (hasChainBranch)
+                    {
+                        case true when pb.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore && index == 1:
+                        {
+                            var name = $"{pb.name}.{index}";
+                            ConvertSpringBoneInner(pb, name, transforms.Skip(1).ToImmutableList(), pbColliders,
+                                colliderGroups, ref springs);
+                            break;
+                        }
+                        case true:
+                        {
+                            var name = $"{pb.name}.{index}";
+                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                            break;
+                        }
+                        default:
+                        {
+                            var name = pb.name;
+                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                            break;
+                        }
+                    }
+
                     index++;
                 }
             }
