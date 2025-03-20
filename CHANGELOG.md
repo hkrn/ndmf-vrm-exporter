@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.0.7] - 2025-03-20
+
+### Fixed
+
+- [exporter] Fixes a bug where source joints were included when `Multi-Child` Type was set to `Ignore` ([#43](https://github.com/hkrn/ndmf-vrm-exporter/pull/43))
+- [exporter] Add vertex index corruption detection processing ([#42](https://github.com/hkrn/ndmf-vrm-exporter/pull/42))
+- [exporter] Change NDMF compatible version to 1.6 or higher but less than 2.0 ([#41](https://github.com/hkrn/ndmf-vrm-exporter/pull/41))
+
+### Fixed
+
 ## [1.0.6] - 2025-02-15
 
 ### Fixed
@@ -56,7 +66,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.7...HEAD
+[1.0.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.7
 [1.0.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...1.0.6
 [1.0.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...1.0.5
 [1.0.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.3...1.0.4
