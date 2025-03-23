@@ -1747,6 +1747,7 @@ namespace com.github.hkrn
         private static readonly string VrmcSpringBoneExtendedCollider = "VRMC_springBone_extended_collider";
         private static readonly string VrmcNodeConstraint = "VRMC_node_constraint";
         private static readonly string VrmcMaterialsMtoon = "VRMC_materials_mtoon";
+        private static readonly string VrmcSpringBoneLimit = "VRMC_springBone_limit";
         private static readonly int PropertyCull = Shader.PropertyToID("_Cull");
         private static readonly int PropertyUseEmission = Shader.PropertyToID("_UseEmission");
         private static readonly int PropertyEmissionMainStrength = Shader.PropertyToID("_EmissionMainStrength");
@@ -4151,7 +4152,7 @@ namespace com.github.hkrn
                         var pull = evaluate(pb.pull, pb.pullCurve);
                         var immobile = evaluate(pb.immobile, pb.immobileCurve) * 0.5f;
                         float stiffnessFactor, pullFactor;
-                        if (pb.limitType != VRCPhysBoneBase.LimitType.None)
+                        if (false /* pb.limitType != VRCPhysBoneBase.LimitType.None */)
                         {
                             var maxAngleX = evaluate(pb.maxAngleX, pb.maxAngleXCurve);
                             stiffnessFactor = maxAngleX > 0.0f ? 1.0f / Mathf.Clamp01(maxAngleX / 180.0f) : 0.0f;
@@ -4199,7 +4200,69 @@ namespace com.github.hkrn
                     ColliderGroups = newColliderGroups.Count > 0 ? newColliderGroups.ToList() : null,
                     Joints = joints.Where(joint => joint != null).Select(joint => joint!).ToList(),
                 };
+                var limit = ConvertSpringLimit(pb);
+                if (limit != null)
+                {
+                    spring.Extensions ??= new Dictionary<string, JToken>();
+                    spring.Extensions.Add(VrmcSpringBoneLimit, vrm.Document.SaveAsNode(new vrm.sb.SpringLimit
+                    {
+                        SpecVersion = "1.0",
+                        Limit = limit,
+                    }));
+                }
                 springs.Add(spring);
+            }
+
+            private static vrm.sb.Limit? ConvertSpringLimit(VRCPhysBone pb)
+            {
+                vrm.sb.Limit? limit = null;
+                switch (pb.limitType)
+                {
+                    case VRCPhysBoneBase.LimitType.Angle:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Cone = new vrm.sb.ConeLimit
+                            {
+                                Angle = pb.maxAngleX,
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.Hinge:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Hinge = new vrm.sb.HingeLimit
+                            {
+                                Angle = pb.maxAngleX,
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.Polar:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Spherical = new vrm.sb.SphericalLimit
+                            {
+                                Theta = pb.maxAngleX,
+                                Phi = pb.maxAngleZ,
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.None:
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                return limit;
             }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
