@@ -14,6 +14,9 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 #if !NET5_0_OR_GREATER
 namespace System.Runtime.CompilerServices
@@ -301,7 +304,7 @@ namespace com.github.hkrn.gltf
         }
     }
 
-    internal sealed class ListUtils<T> where T : ICloneable
+    internal static class ListUtils<T> where T : ICloneable
     {
         public static IList<T>? DeepClone(IList<T>? values)
         {
@@ -316,7 +319,7 @@ namespace com.github.hkrn.gltf
         }
     }
 
-    internal sealed class ExtensionsUtils
+    internal static class ExtensionsUtils
     {
         public static IExtensions? DeepClone(IExtensions? extensions)
         {
@@ -1447,7 +1450,7 @@ namespace com.github.hkrn.gltf
             }
         }
 
-        public sealed class KhrMaterialsUnlit
+        public static class KhrMaterialsUnlit
         {
             public static readonly string Name = "KHR_materials_unlit";
         }
@@ -1555,12 +1558,15 @@ namespace com.github.hkrn.gltf
 
         public class KeyframeAccessorUnit
         {
+            // ReSharper disable once CollectionNeverUpdated.Global
             public IList<KeyframeUnit> Keyframes { get; private init; } = new List<KeyframeUnit>();
             public ObjectID InputAccessor { get; set; } = ObjectID.Null;
             public ObjectID OutputAccessor { get; set; } = ObjectID.Null;
+            // ReSharper disable once UnassignedGetOnlyAutoProperty
             public bool HasTangent { get; }
         }
 
+        // ReSharper disable once ClassNeverInstantiated.Global
         public sealed class KeyframeAccessorBundle
         {
             public KeyframeAccessorUnit Scales { get; private init; } = new();
@@ -2630,7 +2636,7 @@ namespace com.github.hkrn.gltf
         }
     }
 
-    public class Document
+    public static class Document
     {
         public static Root? LoadFromString(string json)
         {
@@ -3126,6 +3132,7 @@ namespace com.github.hkrn.vrm.core
         public JToken? Extras { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class MeshAnnotation
     {
         public gltf.ObjectID Node { get; set; } = gltf.ObjectID.Null;
@@ -3134,6 +3141,7 @@ namespace com.github.hkrn.vrm.core
         public JToken? Extras { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class FirstPerson
     {
         public IList<MeshAnnotation>? MeshAnnotations { get; set; }
@@ -3150,6 +3158,7 @@ namespace com.github.hkrn.vrm.core
         public JToken? Extras { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class MaterialColorBind
     {
         public gltf.ObjectID Material { get; set; } = gltf.ObjectID.Null;
@@ -3158,6 +3167,7 @@ namespace com.github.hkrn.vrm.core
         public JToken? Extras { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class TextureTransformBind
     {
         public gltf.ObjectID Material { get; set; } = gltf.ObjectID.Null;
@@ -3207,6 +3217,7 @@ namespace com.github.hkrn.vrm.core
     public sealed class Expressions
     {
         public Preset Preset { get; init; } = new();
+        // ReSharper disable once CollectionNeverQueried.Global
         public IDictionary<gltf.UnicodeString, ExpressionItem>? Custom { get; set; }
         public IExtensions? Extensions { get; set; }
         public JToken? Extras { get; set; }
@@ -3244,6 +3255,7 @@ namespace com.github.hkrn.vrm.core
         public JToken? Extras { get; set; }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class MaterialsHdrEmissiveMultiplier
     {
         public float EmissiveMultiplier { get; set; } = 1.0f;
@@ -3285,6 +3297,7 @@ namespace com.github.hkrn.vrm.sb
     {
         public gltf.ObjectID Node { get; set; } = gltf.ObjectID.Null;
         public Shape Shape { get; init; } = new();
+        // ReSharper disable once CollectionNeverQueried.Global
         public IExtensions? Extensions { get; set; }
         public JToken? Extras { get; set; }
     }
@@ -3347,7 +3360,7 @@ namespace com.github.hkrn.vrm.sb
         public gltf.ObjectID Node { get; set; } = gltf.ObjectID.Null;
         public float HitRadius { get; set; }
         public float Stiffness { get; set; } = 1.0f;
-        public float GravityPower { get; set; } = 0.0f;
+        public float GravityPower { get; set; }
         public Vector3 GravityDir { get; set; } = -Vector3.UnitY;
         public float DragForce { get; set; } = 0.5f;
         public IExtensions? Extensions { get; set; }
@@ -3474,11 +3487,11 @@ namespace com.github.hkrn.vrm.mtoon
     public sealed class MToon
     {
         public string SpecVersion { get; set; } = "1.0";
-        public bool TransparentWithZWrite { get; set; } = false;
+        public bool TransparentWithZWrite { get; set; }
         public int RenderQueueOffsetNumber { get; set; } = 0;
         public Vector3 ShadeColorFactor { get; set; } = Vector3.Zero;
         public gltf.material.TextureInfo? ShadeMultiplyTexture { get; set; }
-        public float ShadingShiftFactor { get; set; } = 0.0f;
+        public float ShadingShiftFactor { get; set; }
         public ShadingShiftTexture? ShadingShiftTexture { get; set; }
         public float ShadingToonyFactor { get; set; } = 0.9f;
         public float GIEqualizationFactor { get; set; } = 0.9f;
@@ -3488,16 +3501,16 @@ namespace com.github.hkrn.vrm.mtoon
         public gltf.material.TextureInfo? RimMultiplyTexture { get; set; }
         public float RimLightingMixFactor { get; set; } = 1.0f;
         public float ParametricRimFresnelPowerFactor { get; set; } = 5.0f;
-        public float ParametricRimLiftFactor { get; set; } = 0.0f;
+        public float ParametricRimLiftFactor { get; set; }
         public OutlineWidthMode OutlineWidthMode { get; set; } = OutlineWidthMode.None;
-        public float OutlineWidthFactor { get; set; } = 0.0f;
+        public float OutlineWidthFactor { get; set; }
         public gltf.material.TextureInfo? OutlineWidthMultiplyTexture { get; set; }
         public Vector3 OutlineColorFactor { get; set; } = Vector3.Zero;
         public float OutlineLightingMixFactor { get; set; } = 1.0f;
         public gltf.material.TextureInfo? UVAnimationMaskTexture { get; set; }
-        public float UVAnimationScrollXSpeedFactor { get; set; } = 0.0f;
-        public float UVAnimationScrollYSpeedFactor { get; set; } = 0.0f;
-        public float UVAnimationRotationSpeedFactor { get; set; } = 0.0f;
+        public float UVAnimationScrollXSpeedFactor { get; set; }
+        public float UVAnimationScrollYSpeedFactor { get; set; }
+        public float UVAnimationRotationSpeedFactor { get; set; }
         public IExtensions? Extensions { get; set; }
         public JToken? Extras { get; set; }
     }
@@ -3505,7 +3518,7 @@ namespace com.github.hkrn.vrm.mtoon
 
 namespace com.github.hkrn.vrm
 {
-    public class Document
+    public static class Document
     {
         public static JToken SaveAsNode(core.Core core)
         {
