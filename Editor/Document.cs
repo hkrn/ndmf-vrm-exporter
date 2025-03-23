@@ -3449,6 +3449,48 @@ namespace com.github.hkrn.vrm.sb
         public JToken? Extras { get; set; }
     }
 
+    public sealed class ConeLimit
+    {
+        public float Angle { get; set; }
+        public Quaternion Rotation { get; set; } = Quaternion.Identity;
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class HingeLimit
+    {
+        public float Angle { get; set; }
+        public Quaternion Rotation { get; set; } = Quaternion.Identity;
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class SphericalLimit
+    {
+        public float Pitch { get; set; }
+        public float Yaw { get; set; }
+        public Quaternion Rotation { get; set; } = Quaternion.Identity;
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class Limit
+    {
+        public ConeLimit? Cone { get; set; }
+        public HingeLimit? Hinge { get; set; }
+        public SphericalLimit? Spherical { get; set; }
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class SpringLimit
+    {
+        public string SpecVersion { get; set; } = "1.0";
+        public Limit Limit { get; set; } = new Limit();
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
     public sealed class Spring
     {
         public gltf.ObjectID? Center { get; set; }
@@ -3620,6 +3662,11 @@ namespace com.github.hkrn.vrm
         public static JToken SaveAsNode(sb.ExtendedCollider collider)
         {
             return JToken.FromObject(collider, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(sb.SpringLimit limit)
+        {
+            return JToken.FromObject(limit, JsonSerializer.Create(SerializerOptions));
         }
 
         public static JToken SaveAsNode(constraint.NodeConstraint nodeConstraint)

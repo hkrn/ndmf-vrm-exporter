@@ -175,12 +175,17 @@ namespace com.github.hkrn
 
         [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
 
+        // from 1.3.0
+        [NotKeyable] [SerializeField] internal bool experimentalEnableSpringBoneLimit;
+
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
         public bool HasLicenseUrl =>
             !string.IsNullOrWhiteSpace(licenseUrl) && Uri.TryCreate(licenseUrl, UriKind.Absolute, out _);
 
         public bool HasAvatarRoot => RuntimeUtil.IsAvatarRoot(gameObject.transform);
+
+        public bool IsSpringBoneLimitEnabled => experimentalEnableSpringBoneLimit;
 
         // ReSharper disable once Unity.RedundantEventFunction
         private void Start()
@@ -238,12 +243,14 @@ namespace com.github.hkrn
         private SerializedProperty _deleteTemporaryObjectsProp = null!;
         private SerializedProperty _ktxToolPathProp = null!;
         private SerializedProperty _metadataModeSelection = null!;
-
         private SerializedProperty _expressionModeSelection = null!;
 
         // from 1.1.0
         private SerializedProperty _extensionFoldoutProp = null!;
         private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
+
+        // from 1.3.0
+        private SerializedProperty _experimentalEnableSpringBoneLimit = null!;
 #if NVE_HAS_VRCHAT_AVATAR_SDK
         private struct VRChatAvatarToMetadata
         {
@@ -312,6 +319,8 @@ namespace com.github.hkrn
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedSpringBoneColliderTransforms));
             _excludedSpringBoneTransformsProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedSpringBoneTransforms));
+            _experimentalEnableSpringBoneLimit =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.experimentalEnableSpringBoneLimit));
             _constraintFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.constraintFoldout));
             _excludedConstraintTransformsProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedConstraintTransforms));
@@ -805,6 +814,7 @@ namespace com.github.hkrn
             EditorGUILayout.PropertyField(_excludedSpringBoneTransformsProp,
                 new GUIContent(Translator._("component.spring-bone.exclude.bones")));
             EditorGUI.indentLevel--;
+            DrawToggleLeft(Translator._("component.spring-bone.experimental-enable-limit"), _experimentalEnableSpringBoneLimit);
         }
 
         private void DrawConstraintOptions()
@@ -1760,6 +1770,7 @@ namespace com.github.hkrn
         private static readonly string VrmcSpringBoneExtendedCollider = "VRMC_springBone_extended_collider";
         private static readonly string VrmcNodeConstraint = "VRMC_node_constraint";
         private static readonly string VrmcMaterialsMtoon = "VRMC_materials_mtoon";
+        private static readonly string VrmcSpringBoneLimit = "VRMC_springBone_limit";
         private static readonly int PropertyCull = Shader.PropertyToID("_Cull");
         private static readonly int PropertyUseEmission = Shader.PropertyToID("_UseEmission");
         private static readonly int PropertyEmissionMainStrength = Shader.PropertyToID("_EmissionMainStrength");
@@ -2900,7 +2911,7 @@ namespace com.github.hkrn
                     var bones = transform.GetComponents<VRCPhysBone>();
                     foreach (var bone in bones!)
                     {
-                        ConvertSpringBone(bone, immutablePbColliders, immutableColliderGroups, ref springs);
+                        ConvertSpringBone(bone, component, immutablePbColliders, immutableColliderGroups, ref springs);
                     }
                 }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
@@ -4273,7 +4284,19 @@ namespace com.github.hkrn
                 return numChildren > 0;
             }
 
-            private static (int, int) FindTransformDepth(Transform? transform, Transform? root)
+            private readonly struct DepthRatio
+            {
+                public DepthRatio(float upperDepth, float lowerDepth)
+                {
+                    var totalDepth = upperDepth + lowerDepth;
+                    var depthRatio = totalDepth != 0 ? upperDepth / totalDepth : 0;
+                    Value = depthRatio;
+                }
+
+                public float Value { get; }
+            }
+
+            private static DepthRatio FindTransformDepth(Transform? transform, Transform? root)
             {
                 var upperDepth = 0;
                 var upperTransform = transform;
@@ -4289,10 +4312,10 @@ namespace com.github.hkrn
                     lowerDepth++;
                 }
 
-                return (upperDepth, lowerDepth);
+                return new DepthRatio(upperDepth, lowerDepth);
             }
 
-            private void ConvertSpringBone(VRCPhysBone pb, IImmutableList<VRCPhysBoneColliderBase> pbColliders,
+            private void ConvertSpringBone(VRCPhysBone pb, NdmfVrmExporterComponent component, IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
                 var rootTransform = pb.GetRootTransform();
@@ -4312,23 +4335,20 @@ namespace com.github.hkrn
                         case true when pb.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore && index == 1:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, name, transforms.Skip(1).ToImmutableList(),
-                                pbColliders,
+                            ConvertSpringBoneInner(pb, component, name, transforms.Skip(1).ToImmutableList(), pbColliders,
                                 colliderGroups, ref springs);
                             break;
                         }
                         case true:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups,
-                                ref springs);
+                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups, ref springs);
                             break;
                         }
                         default:
                         {
                             var name = pb.name;
-                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups,
-                                ref springs);
+                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups, ref springs);
                             break;
                         }
                     }
@@ -4337,7 +4357,7 @@ namespace com.github.hkrn
                 }
             }
 
-            private void ConvertSpringBoneInner(VRCPhysBone pb, string name, IImmutableList<Transform> transforms,
+            private void ConvertSpringBoneInner(VRCPhysBone pb, NdmfVrmExporterComponent component, string name, IImmutableList<Transform> transforms,
                 IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
@@ -4351,32 +4371,26 @@ namespace com.github.hkrn
                             return null;
                         }
 
-                        var (upperDepth, lowerDepth) = FindTransformDepth(transform, rootTransform);
-                        var totalDepth = upperDepth + lowerDepth;
-                        var depthRatio = totalDepth != 0 ? upperDepth / (float)totalDepth : 0;
-                        var evaluate = new Func<float, AnimationCurve, float>((value, curve) =>
-                            curve is { length: > 0 }
-                                ? curve.Evaluate(depthRatio) * value
-                                : value);
-                        var gravity = evaluate(pb.gravity, pb.gravityCurve);
-                        var stiffness = evaluate(pb.stiffness, pb.stiffnessCurve);
-                        var hitRadius = evaluate(pb.radius, pb.radiusCurve);
-                        var pull = evaluate(pb.pull, pb.pullCurve);
-                        var immobile = evaluate(pb.immobile, pb.immobileCurve) * 0.5f;
+                        var depthRatio = FindTransformDepth(transform, rootTransform);
+                        var gravity = EvaluateCurve(pb.gravityCurve, pb.gravity, depthRatio);
+                        var stiffness = EvaluateCurve(pb.stiffnessCurve, pb.stiffness, depthRatio);
+                        var hitRadius = EvaluateCurve(pb.radiusCurve, pb.radius, depthRatio);
+                        var pull = EvaluateCurve(pb.pullCurve, pb.pull, depthRatio);
+                        var immobile = EvaluateCurve(pb.immobileCurve, pb.immobile, depthRatio) * 0.5f;
                         float stiffnessFactor, pullFactor;
-                        if (pb.limitType != VRCPhysBoneBase.LimitType.None)
-                        {
-                            var maxAngleX = evaluate(pb.maxAngleX, pb.maxAngleXCurve);
-                            stiffnessFactor = maxAngleX > 0.0f ? 1.0f / Mathf.Clamp01(maxAngleX / 180.0f) : 0.0f;
-                            pullFactor = stiffnessFactor * 0.5f;
-                        }
-                        else
+                        if (component.IsSpringBoneLimitEnabled)
                         {
                             stiffnessFactor = 1.0f;
                             pullFactor = 1.0f;
                         }
+                        else
+                        {
+                            var maxAngleX = EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio);
+                            stiffnessFactor = maxAngleX > 0.0f ? 1.0f / Mathf.Clamp01(maxAngleX / 180.0f) : 0.0f;
+                            pullFactor = stiffnessFactor * 0.5f;
+                        }
 
-                        return new vrm.sb.Joint
+                        var joint = new vrm.sb.Joint
                         {
                             Node = nodeID.Value,
                             HitRadius = hitRadius,
@@ -4385,6 +4399,21 @@ namespace com.github.hkrn
                             GravityDir = -System.Numerics.Vector3.UnitY,
                             DragForce = Mathf.Clamp01(immobile + pull * pullFactor),
                         };
+                        var limit = component.IsSpringBoneLimitEnabled ? ConvertSpringLimit(pb, depthRatio) : null;
+                        if (limit == null)
+                        {
+                            return joint;
+                        }
+
+                        joint.Extensions ??= new Dictionary<string, JToken>();
+                        joint.Extensions.Add(VrmcSpringBoneLimit, vrm.Document.SaveAsNode(new vrm.sb.SpringLimit
+                        {
+                            SpecVersion = "1.0-draft",
+                            Limit = limit,
+                        }));
+                        _extensionUsed.Add(VrmcSpringBoneLimit);
+
+                        return joint;
                     })
                     .ToList();
                 var colliders = (from pbCollider in pb.colliders
@@ -4413,6 +4442,63 @@ namespace com.github.hkrn
                     Joints = joints.Where(joint => joint != null).Select(joint => joint!).ToList(),
                 };
                 springs.Add(spring);
+            }
+
+            private static vrm.sb.Limit? ConvertSpringLimit(VRCPhysBone pb, DepthRatio depthRatio)
+            {
+                vrm.sb.Limit? limit = null;
+                switch (pb.limitType)
+                {
+                    case VRCPhysBoneBase.LimitType.Angle:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Cone = new vrm.sb.ConeLimit
+                            {
+                                Angle = Mathf.Deg2Rad * EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio),
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.Hinge:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Hinge = new vrm.sb.HingeLimit
+                            {
+                                Angle = Mathf.Deg2Rad * EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio),
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.Polar:
+                    {
+                        limit = new vrm.sb.Limit
+                        {
+                            Spherical = new vrm.sb.SphericalLimit
+                            {
+                                Pitch = EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio),
+                                Yaw = EvaluateCurve(pb.maxAngleZCurve, pb.maxAngleZ, depthRatio),
+                                Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
+                            }
+                        };
+                        break;
+                    }
+                    case VRCPhysBoneBase.LimitType.None:
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                return limit;
+            }
+
+            private static float EvaluateCurve(AnimationCurve curve, float value, DepthRatio depthRatio)
+            {
+                return curve is { length: > 0 } ? curve.Evaluate(depthRatio.Value) * value : value;
             }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 

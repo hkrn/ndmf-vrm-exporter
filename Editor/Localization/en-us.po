@@ -220,6 +220,9 @@ msgstr "Excluded Spring Bones"
 msgid "component.constraint.exclude.constraints"
 msgstr "Excluded Constraints"
 
+msgid "component.spring-bone.experimental-enable-limit"
+msgstr "Enable Spring Bone Limit Extension"
+
 msgid "component.debug.make-all-node-names-unique"
 msgstr "Make All Node Names Unique"
 

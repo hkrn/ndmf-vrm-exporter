@@ -11,7 +11,7 @@
 > [!NOTE]
 > VRC PhysBone が登場する前に使われていた [Dynamic Bone](https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743) からの変換には対応していません
 
-VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については VRM Spring Bone に対応する仕様が存在しないため、「動きにくくする措置」として以下で計算されます。
+VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については `Enable Spring Bone Limit` を無効にしている場合に限り「動きにくくする措置」として以下で計算されます。
 
 * Limit の場合は角度を 180 で割り、その係数を以って乗算
   * 0 の場合は Stiffness と DragForce を無効化
@@ -43,7 +43,19 @@ VRC PhysBone のコライダーは以下の三種類に対応しています。
 * `Plain` (平面)
 * `Sphere` (球)
 
-`Inside Bounds` が有効もしくは `Plain` の場合は `VRMC_springBone_extended_collider` 拡張に対応しているアプリケーションが必要となります。対応していないアプリケーションを利用した場合は前者が存在しないものとして、後者の場合は半径 10km の巨大スフィアコライダーを設定する形でそれぞれ処理されます。
+`Inside Bounds` が有効もしくは `Plain` の場合は [VRMC_springBone_extended_collider](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_springBone_extended_collider-1.0/README.ja.md) 拡張に対応しているアプリケーションが必要となります。対応していないアプリケーションを利用した場合は前者が存在しないものとして、後者の場合は半径 10km の巨大スフィアコライダーを設定する形でそれぞれ処理されます。
+
+`Enable Spring Bone Limit` を有効にしている場合は VRC PhysBone の角度制限を [VRMC_springBone_limit](https://github.com/vrm-c/vrm-specification/pull/496) に移植します。VRC PhysBone の角度制限のうち以下の種別に対応しており、ほぼ同じ形で移植されます。
+
+* `Angle`
+  * `Cone` として移植
+* `Hinge`
+  * `Hinge` そのまま
+* `Polar`
+  * `Spherical` として移植
+  * `Max Angle` を Pitch に、`Max Yaw` を Yaw にコピー
+
+`VRMC_springBone_limit` 未対応のアプリケーションで読み込まれた場合は単に角度制限が行われません。
 
 ## Constraint の変換
 

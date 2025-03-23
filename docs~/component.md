@@ -183,6 +183,12 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 ビルド時に非表示のゲームオブジェクトがある場合は出力から除外しますが、この項目を使うことによってゲームオブジェクトを非表示に設定しなくても出力を除外することが可能になります。
 
+* `Enable Spring Bone Limit Extension`
+
+スプリングボーンに可動域となる角度制限を付与する拡張仕様である [VRMC_springBone_limit](https://github.com/vrm-c/vrm-specification/pull/496) 拡張を有効にします。有効にすると VRC PhysBone の角度制限の設定を移植する形で反映されます。詳細は「Spring Bone の変換」を確認してください。
+
+UniVRM 0.131 以降で利用可能ですが、実装時点ではまだ仕様が正式のものではなくあくまで草稿のため既定では無効となっています。
+
 ## Constraint Options
 
 ビルド時にのみ除外する VRC PhysBone Constraint コンポーネントを設定します。
