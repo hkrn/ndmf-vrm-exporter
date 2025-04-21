@@ -2146,12 +2146,18 @@ namespace com.github.hkrn
             }
 
             var materialID = 0;
+            var materialsShadeToonyHasNaN = new List<Material>();
             foreach (var gltfMaterial in _root.Materials!)
             {
                 var material = materialIDs[materialID];
                 if (_materialMToonTextures.TryGetValue(material, out var mToonTexture))
                 {
                     var mtoon = vrmExporter.ExportMToon(material, mToonTexture, _materialExporter);
+                    if (float.IsNaN(mtoon.ShadingToonyFactor))
+                    {
+                        materialsShadeToonyHasNaN.Add(material);
+                    }
+
                     gltfMaterial.Extensions ??= new Dictionary<string, JToken>();
                     gltfMaterial.Extensions.Add(gltf.extensions.KhrMaterialsUnlit.Name, new JObject());
                     gltfMaterial.Extensions.Add(VrmcMaterialsMtoon, vrm.Document.SaveAsNode(mtoon));
@@ -2160,6 +2166,12 @@ namespace com.github.hkrn
                 }
 
                 materialID++;
+            }
+
+            if (materialsShadeToonyHasNaN.Count > 0)
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                    "component.runtime.error.mtoon.nan", materialsShadeToonyHasNaN);
             }
         }
 
@@ -4345,6 +4357,7 @@ namespace com.github.hkrn
                             material.EmissiveFactor *= emissiveStrength;
                         }
                     }
+
                     ExportEmissionTexture(source, material);
                 }
                 else if (source.IsKeywordEnabled("_EMISSION"))
@@ -4357,6 +4370,7 @@ namespace com.github.hkrn
                     {
                         AddEmissiveStrengthExtension(emissiveStrength, material);
                     }
+
                     ExportEmissionTexture(source, material);
                 }
 
@@ -4532,6 +4546,7 @@ namespace com.github.hkrn
                 {
                     return;
                 }
+
                 var texture = source.GetTexture(PropertyEmissionMap);
                 material.EmissiveTexture =
                     ExportTextureInfo(source, texture, ColorSpace.Gamma, blitMaterial: null, needsBlit: true);
@@ -4654,7 +4669,8 @@ namespace com.github.hkrn
 
                     var corrupted = new List<SkinnedMeshRenderer>();
                     CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
-                    if (corrupted.Count > 0) {
+                    if (corrupted.Count > 0)
+                    {
                         ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
                             "component.runtime.error.validation.smr", corrupted);
                         return;
