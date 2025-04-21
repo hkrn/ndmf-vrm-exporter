@@ -4345,6 +4345,7 @@ namespace com.github.hkrn
                             material.EmissiveFactor *= emissiveStrength;
                         }
                     }
+                    ExportEmissionTexture(source, material);
                 }
                 else if (source.IsKeywordEnabled("_EMISSION"))
                 {
@@ -4356,14 +4357,7 @@ namespace com.github.hkrn
                     {
                         AddEmissiveStrengthExtension(emissiveStrength, material);
                     }
-
-                    if (source.HasProperty(PropertyEmissionMap))
-                    {
-                        var texture = source.GetTexture(PropertyEmissionMap);
-                        material.EmissiveTexture =
-                            ExportTextureInfo(source, texture, ColorSpace.Gamma, blitMaterial: null, needsBlit: true);
-                        DecorateTextureTransform(source, PropertyEmissionMap, material.EmissiveTexture);
-                    }
+                    ExportEmissionTexture(source, material);
                 }
 
                 if (overrides.EnableNormalMap && source.HasProperty(PropertyBumpMap))
@@ -4530,6 +4524,18 @@ namespace com.github.hkrn
                     return System.Numerics.Vector3.Zero;
                 return source.GetColor(PropertyEmissionColor)
                     .ToVector3(ColorSpace.Gamma, ColorSpace.Linear);
+            }
+
+            private void ExportEmissionTexture(Material source, gltf.material.Material material)
+            {
+                if (!source.HasProperty(PropertyEmissionMap))
+                {
+                    return;
+                }
+                var texture = source.GetTexture(PropertyEmissionMap);
+                material.EmissiveTexture =
+                    ExportTextureInfo(source, texture, ColorSpace.Gamma, blitMaterial: null, needsBlit: true);
+                DecorateTextureTransform(source, PropertyEmissionMap, material.EmissiveTexture);
             }
 
             private void AddEmissiveStrengthExtension(float emissiveStrength, gltf.material.Material material)
