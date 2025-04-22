@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.0.8] - 2025-04-23
+
+### Aded
+
+- [exporter] Added output of information in NDMF dialog when ShadingToony is `NaN` ([#49](https://github.com/hkrn/ndmf-vrm-exporter/pull/49))
+
+### Fixed
+
+- [exporter] Fixed a bug where emission textures were not being output when using lilToon ([#48](https://github.com/hkrn/ndmf-vrm-exporter/pull/48))
+
 ## [1.0.7] - 2025-03-20
 
 ### Fixed
@@ -66,7 +76,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.7...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...HEAD
+[1.0.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.8
 [1.0.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.7
 [1.0.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...1.0.6
 [1.0.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...1.0.5
