@@ -3085,9 +3085,11 @@ namespace com.github.hkrn
                 so.Update();
                 var props = so.FindProperty("m_SavedProperties");
                 var textures = MaterialBaker.GetProps(props.FindPropertyRelative("m_TexEnvs"));
-                var floats = MaterialBaker.GetProps(props.FindPropertyRelative("m_Floats"));
-                var colors = MaterialBaker.GetProps(props.FindPropertyRelative("m_Colors"));
-                var scrollRotate = colors["_MainTex_ScrollRotate"].colorValue;
+                var floats = MaterialBaker.GetProps(props.FindPropertyRelative("m_Floats"))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value.floatValue);
+                var colors = MaterialBaker.GetProps(props.FindPropertyRelative("m_Colors"))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value.colorValue);
+                var scrollRotate = colors.GetValueOrDefault("_MainTex_ScrollRotate", Color.clear);
 
                 Texture2D? LocalRetrieveTexture2D(string name)
                 {
@@ -3095,15 +3097,15 @@ namespace com.github.hkrn
                     return prop?.FindPropertyRelative("m_Texture").objectReferenceValue as Texture2D;
                 }
 
-                if (Mathf.Approximately(floats["_UseShadow"].floatValue, 1.0f))
+                if (Mathf.Approximately(floats.GetValueOrDefault("_UseShadow", 0.0f), 1.0f))
                 {
-                    var shadowBorder = floats["_ShadowBorder"].floatValue;
-                    var shadowBlur = floats["_ShadowBlur"].floatValue;
+                    var shadowBorder = floats.GetValueOrDefault("_ShadowBorder", 0.5f);
+                    var shadowBlur = floats.GetValueOrDefault("_ShadowBlur", 0.1f);
                     var shadeShift = Mathf.Clamp01(shadowBorder - (shadowBlur * 0.5f)) * 2.0f - 1.0f;
                     var shadeToony = (2.0f - Mathf.Clamp01(shadowBorder + shadowBlur * 0.5f) * 2.0f) /
                                      (1.0f - shadeShift);
                     if (LocalRetrieveTexture2D("_ShadowStrengthMask") ||
-                        !Mathf.Approximately(floats["_ShadowMainStrength"].floatValue, 0.0f))
+                        !Mathf.Approximately(floats.GetValueOrDefault("_ShadowMainStrength", 0.0f), 0.0f))
                     {
                         var bakedShadowTex =
                             MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mToonTexture.MainTexture);
@@ -3115,8 +3117,8 @@ namespace com.github.hkrn
                     }
                     else
                     {
-                        var shadowColor = colors["_ShadowColor"].colorValue;
-                        var shadowStrength = floats["_ShadowStrength"].floatValue;
+                        var shadowColor = colors.GetValueOrDefault("_ShadowColor", new Color(0.82f, 0.76f, 0.85f));
+                        var shadowStrength = floats.GetValueOrDefault("_ShadowStrength", 1.0f);
                         var shadeColorStrength = new Color(
                             1.0f - (1.0f - shadowColor.r) * shadowStrength,
                             1.0f - (1.0f - shadowColor.g) * shadowStrength,
@@ -3155,19 +3157,21 @@ namespace com.github.hkrn
                 }
 
                 var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
-                if (component.enableMToonRimLight && Mathf.Approximately(floats["_UseRim"].floatValue, 1.0f))
+                if (component.enableMToonRimLight &&
+                    Mathf.Approximately(floats.GetValueOrDefault("_UseRim", 0.0f), 1.0f))
                 {
                     var rimColorTexture = LocalRetrieveTexture2D("_RimColorTex");
-                    var rimBorder = floats["_RimBorder"].floatValue;
-                    var rimBlur = floats["_RimBlur"].floatValue;
-                    var rimFresnelPower = floats["_RimFresnelPower"].floatValue;
+                    var rimBorder = floats.GetValueOrDefault("_RimBorder", 0.5f);
+                    var rimBlur = floats.GetValueOrDefault("_RimBlur", 0.65f);
+                    var rimFresnelPower = floats.GetValueOrDefault("_RimFresnelPower", 3.5f);
                     var rimFp = rimFresnelPower / Mathf.Max(0.001f, rimBlur);
                     var rimLift = Mathf.Pow(1.0f - rimBorder, rimFresnelPower) * (1.0f - rimBlur);
                     mtoon.RimLightingMixFactor = 1.0f;
-                    mtoon.ParametricRimColorFactor = colors["_RimColor"].colorValue.ToVector3();
+                    mtoon.ParametricRimColorFactor =
+                        colors.GetValueOrDefault("_RimColor", new Color(0.66f, 0.5f, 0.48f)).ToVector3();
                     mtoon.ParametricRimLiftFactor = rimLift;
                     mtoon.ParametricRimFresnelPowerFactor = rimFp;
-                    if (Mathf.Approximately(floats["_RimBlendMode"].floatValue, 3.0f))
+                    if (Mathf.Approximately(floats.GetValueOrDefault("_RimBlendMode", 1.0f), 3.0f))
                     {
                         mtoon.RimMultiplyTexture =
                             exporter.ExportTextureInfoMToon(material, rimColorTexture, ColorSpace.Gamma,
@@ -3179,8 +3183,9 @@ namespace com.github.hkrn
                     mtoon.RimLightingMixFactor = 0.0f;
                 }
 
-                if (component.enableMToonMatCap && Mathf.Approximately(floats["_UseMatCap"].floatValue, 1.0f) &&
-                    !Mathf.Approximately(floats["_MatCapBlendMode"].floatValue, 3.0f))
+                if (component.enableMToonMatCap &&
+                    Mathf.Approximately(floats.GetValueOrDefault("_UseMatCap", 0.0f), 1.0f) &&
+                    !Mathf.Approximately(floats.GetValueOrDefault("_MatCapBlendMode", 1.0f), 3.0f))
                 {
                     var matcapTexture = LocalRetrieveTexture2D("_MatCapTex");
                     if (matcapTexture)
@@ -3199,8 +3204,9 @@ namespace com.github.hkrn
                     var outlineWidthTexture = LocalRetrieveTexture2D("_OutlineWidthMask");
                     mtoon.OutlineWidthMode = vrm.mtoon.OutlineWidthMode.WorldCoordinates;
                     mtoon.OutlineLightingMixFactor = 1.0f;
-                    mtoon.OutlineWidthFactor = floats["_OutlineWidth"].floatValue * 0.01f;
-                    mtoon.OutlineColorFactor = colors["_OutlineColor"].colorValue.ToVector3();
+                    mtoon.OutlineWidthFactor = floats.GetValueOrDefault("_OutlineWidth", 0.08f) * 0.01f;
+                    mtoon.OutlineColorFactor = colors.GetValueOrDefault("_OutlineColor", new Color(0.6f, 0.56f, 0.73f))
+                        .ToVector3();
                     mtoon.OutlineWidthMultiplyTexture =
                         exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Gamma,
                             needsBlit: true);
@@ -3209,7 +3215,8 @@ namespace com.github.hkrn
                 var isCutout = shaderName.Contains("Cutout");
                 var isTransparent = shaderName.Contains("Transparent") || shaderName.Contains("Overlay");
                 mtoon.TransparentWithZWrite =
-                    isCutout || (isTransparent && !Mathf.Approximately(floats["_ZWrite"].floatValue, 0.0f));
+                    isCutout || (isTransparent &&
+                                 !Mathf.Approximately(floats.GetValueOrDefault("_ZWrite", 1.0f), 0.0f));
 
                 mtoon.UVAnimationScrollXSpeedFactor = scrollRotate.r;
                 mtoon.UVAnimationScrollYSpeedFactor = scrollRotate.g;
