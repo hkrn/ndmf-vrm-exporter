@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.0.9] - 2025-05-05
+
+### Fixed
+
+- [exporter] Changed to use GetValueOrDefault ([#52](https://github.com/hkrn/ndmf-vrm-exporter/pull/52))
+
 ## [1.0.8] - 2025-04-23
 
 ### Aded
@@ -76,8 +82,9 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...HEAD
-[1.0.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.8
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...HEAD
+[1.0.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...1.0.9
+[1.0.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.7...1.0.8
 [1.0.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.7
 [1.0.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.5...1.0.6
 [1.0.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.4...1.0.5
