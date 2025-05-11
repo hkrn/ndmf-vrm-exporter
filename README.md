@@ -324,7 +324,35 @@ lilToon シェーダが使われている場合は MToon 互換設定に変換�
 
 lilToon 以外のシェーダが使われている場合は MToon の変換は行われず、glTF 準拠の最低限の設定で変換します。
 
+## 設計思想
+
+NDMF VRM Exporter は「最小限の労力でおおむね１００点満点中８０点くらいの VRM ファイルを生成すること」を念頭に置いて設計及び開発されています。
+
+それにあたって極力設定及び変換の自動化を行います。この背景として NDMF もとい Modular Avatar を利用した着せ替えを利用したアバターは数十から数百にのぼる可能性があり、ひとつひとつにかけられる時間を極力抑えることにあります。具体的に以下の機能はそれに基づくものです。
+
+* VRChat API を用いて VRM メタデータを自動入力
+* VRChat のリップシンクのブレンドシェイプを VRM の表情設定
+* PhysBone を VRM Spring Bone または VRM Constraint に変換
+* lilToon を VRM MToon に変換
+
+仕組み的には一定の法則に基づく機械的な変換なので、どうしても粗が出てしまい主に VRM Spring Bone 及び VRM Constraint まわりで手で設定された VRM ファイルに比べると見劣りします。一方で VRM ファイルを改めて手動で設定するにあたって最低限必要な参考実装として利用することを想定しています。
+
 ## よくある質問
+
+### VRChat SDK / lilToon / Avatar Optimizer は必須ですか？
+
+いずれも利用するにあたって必須ではありませんが、入れることで変換精度及び実用性が上がるため入れることを強く推奨します。
+
+* [VRChat SDK](https://creators.vrchat.com/sdk/)
+  * VRChat API を用いてメタデータを自動入力できるようになる
+  * VRChat Avatar Description に設定されている Viseme を VRM の表情設定に自動的に変換されるようになる
+  * PhysBone から VRM Spring Bone および VRM Constraint への変換ができるようになる
+* [lilToon](https://github.com/lilxyzw/lilToon)
+  * lilToon から VRM MToon への変換ができるようになる
+* [Avatar Optimizer](https://github.com/anatawa12/AvatarOptimizer/)
+  * 機能的には変わらないものの、ブレンドシェイプによる VRM の肥大化を抑制できる
+
+名前を冠している通り [NDMF](https://github.com/bdunderscore/ndmf) のみ必須で、VRChat SDK は原則 VCC 経由で導入する想定であることの関係で事実上必須扱いです。
 
 ### VRM が出力されていない
 
