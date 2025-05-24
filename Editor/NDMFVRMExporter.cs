@@ -2032,12 +2032,14 @@ namespace com.github.hkrn
                 var node = _root.Nodes![(int)nodeID.ID];
                 if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) && smr.sharedMesh)
                 {
-                    RetrieveMesh(smr.sharedMesh, smr.sharedMaterials, component, smr, child, ref node);
+                    RetrieveMesh(smr.sharedMesh, smr.sharedMaterials, smr.sharedMaterial, component, child, smr,
+                        ref node);
                 }
                 else if (child.gameObject.TryGetComponent<MeshRenderer>(out var mr) &&
                          mr.TryGetComponent<MeshFilter>(out var filter) && filter.sharedMesh)
                 {
-                    RetrieveMesh(filter.sharedMesh, mr.sharedMaterials, component, null, null, ref node);
+                    RetrieveMesh(filter.sharedMesh, mr.sharedMaterials, smr.sharedMaterial, component, child, null,
+                        ref node);
                 }
 
                 RetrieveAllMeshRenderers(child, component);
@@ -2385,17 +2387,17 @@ namespace com.github.hkrn
             }
         }
 
-        private void RetrieveMesh(Mesh mesh, Material[] materials, NdmfVrmExporterComponent component,
-            SkinnedMeshRenderer? smr, Transform? parentTransform,
+        private void RetrieveMesh(Mesh mesh, Material[] materials, Material fallbackMaterial,
+            NdmfVrmExporterComponent component, Transform parentTransform, SkinnedMeshRenderer? smr,
             ref gltf.node.Node node)
         {
             using var _ = new ScopedProfile($"{nameof(RetrieveMesh)}({mesh.name})");
             System.Numerics.Vector3[] positions, normals;
             gltf.exporter.JointUnit[] jointUnits;
             System.Numerics.Vector4[] weights;
-            if (smr && parentTransform)
+            if (smr)
             {
-                var resolver = new BoneResolver(parentTransform!, smr!);
+                var resolver = new BoneResolver(parentTransform, smr!);
                 var boneWeights = smr!.sharedMesh.boneWeights;
                 var index = 0;
                 jointUnits = new gltf.exporter.JointUnit[boneWeights.Length];
@@ -2465,6 +2467,14 @@ namespace com.github.hkrn
             };
             var enableBakingAlphaMaskTexture = component.enableBakingAlphaMaskTexture;
 
+            var numMaterials = materials.Length;
+            if (numMaterials < mesh.subMeshCount)
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                    "component.runtime.error.mesh.oob-materials", parentTransform.gameObject);
+            }
+
+            var noMaterialReferenceHasBeenReported = false;
             for (int i = 0, numSubMeshes = mesh.subMeshCount; i < numSubMeshes; i++)
             {
                 var subMesh = mesh.GetSubMesh(i);
@@ -2494,10 +2504,20 @@ namespace com.github.hkrn
                     MeshTopology.Triangles => gltf.mesh.PrimitiveMode.Triangles,
                     _ => throw new ArgumentOutOfRangeException(),
                 };
-                var m = materials[i];
-                if (!_materialIDs.TryGetValue(m, out var materialID))
+                var subMeshMaterial = i < numMaterials ? materials[i] : fallbackMaterial;
+                if (!subMeshMaterial)
                 {
-                    var shaderName = m.shader.name;
+                    if (!noMaterialReferenceHasBeenReported)
+                    {
+                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                            "component.runtime.error.mesh.no-material", parentTransform.gameObject);
+                        noMaterialReferenceHasBeenReported = true;
+                    }
+                    continue;
+                }
+                if (!_materialIDs.TryGetValue(subMeshMaterial, out var materialID))
+                {
+                    var shaderName = subMeshMaterial.shader.name;
                     var config = new GltfMaterialExporter.ExportOverrides();
 #if NVE_HAS_LILTOON
                     var isShaderLiltoon = false;
@@ -2506,33 +2526,33 @@ namespace com.github.hkrn
                         if (shaderName.Contains("Cutout"))
                         {
                             config.AlphaMode = gltf.material.AlphaMode.Mask;
-                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
+                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
                         }
                         else if (shaderName.Contains("Transparent") || shaderName.Contains("Overlay"))
                         {
                             config.AlphaMode = gltf.material.AlphaMode.Blend;
                             config.MainTexture = enableBakingAlphaMaskTexture &&
-                                                 Mathf.Approximately(m.GetFloat(PropertyAlphaMaskMode), 1.0f)
-                                ? MaterialBaker.AutoBakeAlphaMask(_assetSaver, m)
-                                : MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
+                                                 Mathf.Approximately(subMeshMaterial.GetFloat(PropertyAlphaMaskMode), 1.0f)
+                                ? MaterialBaker.AutoBakeAlphaMask(_assetSaver, subMeshMaterial)
+                                : MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
                         }
                         else
                         {
                             config.AlphaMode = gltf.material.AlphaMode.Opaque;
-                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, m);
+                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
                         }
 
-                        config.CullMode = m.HasProperty(PropertyCull)
-                            ? (int)m.GetFloat(PropertyCull)
+                        config.CullMode = subMeshMaterial.HasProperty(PropertyCull)
+                            ? (int)subMeshMaterial.GetFloat(PropertyCull)
                             : (int)CullMode.Back;
-                        if (Mathf.Approximately(m.GetFloat(PropertyUseEmission), 1.0f))
+                        if (Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseEmission), 1.0f))
                         {
-                            config.EmissiveStrength = !m.GetTexture(PropertyEmissionBlendMask)
-                                ? 1.0f - Mathf.Clamp01(m.GetFloat(PropertyEmissionMainStrength))
+                            config.EmissiveStrength = !subMeshMaterial.GetTexture(PropertyEmissionBlendMask)
+                                ? 1.0f - Mathf.Clamp01(subMeshMaterial.GetFloat(PropertyEmissionMainStrength))
                                 : 0.0f;
                         }
 
-                        config.EnableNormalMap = Mathf.Approximately(m.GetFloat(PropertyUseBumpMap), 1.0f);
+                        config.EnableNormalMap = Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
 
                         if (component.disableVertexColorOnLiltoon)
                         {
@@ -2550,9 +2570,9 @@ namespace com.github.hkrn
                     }
 #endif // NVE_HAS_LILTOON
                     materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
-                    var material = _materialExporter.Export(m, config);
+                    var material = _materialExporter.Export(subMeshMaterial, config);
                     _root.Materials!.Add(material);
-                    _materialIDs.Add(m, materialID);
+                    _materialIDs.Add(subMeshMaterial, materialID);
 
 #if NVE_HAS_LILTOON
                     if (isShaderLiltoon)
@@ -2561,7 +2581,7 @@ namespace com.github.hkrn
                             _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
                         if (bakedMainTexture)
                         {
-                            _materialMToonTextures.Add(m, new MToonTexture
+                            _materialMToonTextures.Add(subMeshMaterial, new MToonTexture
                             {
                                 MainTexture = bakedMainTexture!,
                                 MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture!,
@@ -3815,7 +3835,7 @@ namespace com.github.hkrn
                                 }
                             };
                         Debug.LogWarning($"BlendShape {property.blendShapeName} is not found");
-                        return null;
+                        break;
                     }
                     case VrmExpressionProperty.BaseType.AnimationClip:
                     {
@@ -4159,11 +4179,10 @@ namespace com.github.hkrn
 
                         var (upperDepth, lowerDepth) = FindTransformDepth(transform, rootTransform);
                         var depthRatio = upperDepth / (float)(upperDepth + lowerDepth);
-                        var evaluate = new Func<float, AnimationCurve, float>(
-                            (value, curve) =>
-                                curve.length > 0
-                                    ? curve.Evaluate(depthRatio) * value
-                                    : value);
+                        var evaluate = new Func<float, AnimationCurve, float>((value, curve) =>
+                            curve.length > 0
+                                ? curve.Evaluate(depthRatio) * value
+                                : value);
                         var gravity = evaluate(pb.gravity, pb.gravityCurve);
                         var stiffness = evaluate(pb.stiffness, pb.stiffnessCurve);
                         var hitRadius = evaluate(pb.radius, pb.radiusCurve);

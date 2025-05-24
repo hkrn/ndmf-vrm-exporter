@@ -237,3 +237,9 @@ msgstr "Building VRM file will be skipped due to corrupted SkinnedMeshRenderer f
 
 msgid "component.runtime.error.mtoon.nan"
 msgstr "The Shade Toony included in this material will be exported as NaN. Therefore, it may not load correctly in applications that use MToon. To prevent this, please adjust either Border or Blur in Color > Shadow."
+
+msgid "component.runtime.error.mesh.oob-materials"
+msgstr "Since there are more submeshes than materials, submeshes with indices greater than the number of materials will have the default material applied. This may result in unintended conversion results."
+
+msgid "component.runtime.error.mesh.no-material"
+msgstr "The submesh output was skipped because there is no material reference for the submesh. Please verify that the material reference is set correctly."
