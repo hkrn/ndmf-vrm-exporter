@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.0.10] - 2025-06-02
+
+### Fixed
+
+- [exporter] Fixes multiple bugs in material output ([#56](https://github.com/hkrn/ndmf-vrm-exporter/pull/56))
+
+### Changed
+
+- [exporter] Remove workaround for `ShadeToony` becoming `NaN` ([#57](https://github.com/hkrn/ndmf-vrm-exporter/pull/57))
+
 ## [1.0.9] - 2025-05-05
 
 ### Fixed
@@ -82,7 +92,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...HEAD
+[1.0.10]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...1.0.10
 [1.0.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...1.0.9
 [1.0.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.7...1.0.8
 [1.0.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.6...1.0.7
