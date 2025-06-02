@@ -2148,18 +2148,12 @@ namespace com.github.hkrn
             }
 
             var materialID = 0;
-            var materialsShadeToonyHasNaN = new List<Material>();
             foreach (var gltfMaterial in _root.Materials!)
             {
                 var material = materialIDs[materialID];
                 if (_materialMToonTextures.TryGetValue(material, out var mToonTexture))
                 {
                     var mtoon = vrmExporter.ExportMToon(material, mToonTexture, _materialExporter);
-                    if (float.IsNaN(mtoon.ShadingToonyFactor))
-                    {
-                        materialsShadeToonyHasNaN.Add(material);
-                    }
-
                     gltfMaterial.Extensions ??= new Dictionary<string, JToken>();
                     gltfMaterial.Extensions.Add(gltf.extensions.KhrMaterialsUnlit.Name, new JObject());
                     gltfMaterial.Extensions.Add(VrmcMaterialsMtoon, vrm.Document.SaveAsNode(mtoon));
@@ -2168,12 +2162,6 @@ namespace com.github.hkrn
                 }
 
                 materialID++;
-            }
-
-            if (materialsShadeToonyHasNaN.Count > 0)
-            {
-                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                    "component.runtime.error.mtoon.nan", materialsShadeToonyHasNaN);
             }
         }
 
@@ -2513,8 +2501,10 @@ namespace com.github.hkrn
                             "component.runtime.error.mesh.no-material", parentTransform.gameObject);
                         noMaterialReferenceHasBeenReported = true;
                     }
+
                     continue;
                 }
+
                 if (!_materialIDs.TryGetValue(subMeshMaterial, out var materialID))
                 {
                     var shaderName = subMeshMaterial.shader.name;
@@ -2532,7 +2522,8 @@ namespace com.github.hkrn
                         {
                             config.AlphaMode = gltf.material.AlphaMode.Blend;
                             config.MainTexture = enableBakingAlphaMaskTexture &&
-                                                 Mathf.Approximately(subMeshMaterial.GetFloat(PropertyAlphaMaskMode), 1.0f)
+                                                 Mathf.Approximately(subMeshMaterial.GetFloat(PropertyAlphaMaskMode),
+                                                     1.0f)
                                 ? MaterialBaker.AutoBakeAlphaMask(_assetSaver, subMeshMaterial)
                                 : MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
                         }
@@ -2552,7 +2543,8 @@ namespace com.github.hkrn
                                 : 0.0f;
                         }
 
-                        config.EnableNormalMap = Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
+                        config.EnableNormalMap =
+                            Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
 
                         if (component.disableVertexColorOnLiltoon)
                         {
@@ -3122,8 +3114,10 @@ namespace com.github.hkrn
                     var shadowBorder = floats.GetValueOrDefault("_ShadowBorder", 0.5f);
                     var shadowBlur = floats.GetValueOrDefault("_ShadowBlur", 0.1f);
                     var shadeShift = Mathf.Clamp01(shadowBorder - (shadowBlur * 0.5f)) * 2.0f - 1.0f;
-                    var shadeToony = (2.0f - Mathf.Clamp01(shadowBorder + shadowBlur * 0.5f) * 2.0f) /
-                                     (1.0f - shadeShift);
+                    var shadeToony = Mathf.Approximately(shadeShift, 1.0f)
+                        ? 1.0f
+                        : (2.0f - Mathf.Clamp01(shadowBorder + shadowBlur * 0.5f) * 2.0f) /
+                          (1.0f - shadeShift);
                     if (LocalRetrieveTexture2D("_ShadowStrengthMask") ||
                         !Mathf.Approximately(floats.GetValueOrDefault("_ShadowMainStrength", 0.0f), 0.0f))
                     {
