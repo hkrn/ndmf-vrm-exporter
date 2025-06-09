@@ -2038,7 +2038,7 @@ namespace com.github.hkrn
                 else if (child.gameObject.TryGetComponent<MeshRenderer>(out var mr) &&
                          mr.TryGetComponent<MeshFilter>(out var filter) && filter.sharedMesh)
                 {
-                    RetrieveMesh(filter.sharedMesh, mr.sharedMaterials, smr.sharedMaterial, component, child, null,
+                    RetrieveMesh(filter.sharedMesh, mr.sharedMaterials, mr.sharedMaterial, component, child, null,
                         ref node);
                 }
 
