@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.0.11] - 2025-06-14
+
+### Fixed
+
+- [exporter] Fixed a bug where MeshRenderer conversion fails with NRE ([#59](https://github.com/hkrn/ndmf-vrm-exporter/pull/59))
+
 ## [1.0.10] - 2025-06-02
 
 ### Fixed
@@ -92,7 +98,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...HEAD
+[1.0.11]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...1.0.11
 [1.0.10]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...1.0.10
 [1.0.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...1.0.9
 [1.0.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.7...1.0.8
