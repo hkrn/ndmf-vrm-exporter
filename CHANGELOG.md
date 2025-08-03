@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+
+## [1.0.12] - 2025-08-03
+
+### Fixed
+
+- [exporter] Fixes to convert lilToon materials without textures to MToon ([#63](https://github.com/hkrn/ndmf-vrm-exporter/pull/63))
+- [asmdef] removes upper version constraint ([#62](https://github.com/hkrn/ndmf-vrm-exporter/pull/62))
+
 ## [1.0.11] - 2025-06-14
 
 ### Fixed
@@ -98,7 +106,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...HEAD
+[1.0.12]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...1.0.12
 [1.0.11]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...1.0.11
 [1.0.10]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...1.0.10
 [1.0.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.8...1.0.9
