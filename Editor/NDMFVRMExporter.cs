@@ -1337,7 +1337,7 @@ namespace com.github.hkrn
         }
 
         public static Texture? AutoBakeShadowTexture(IAssetSaver assetSaver, Material material,
-            Texture baseMainTexture, int shadowType = 0)
+            Texture? baseMainTexture, int shadowType = 0)
         {
             var dictionaries = GetProps(material);
             var useShadow = dictionaries.GetFloat("_UseShadow");
@@ -1801,8 +1801,8 @@ namespace com.github.hkrn
 
         private sealed class MToonTexture
         {
-            public Texture MainTexture { get; init; } = null!;
-            public gltf.material.TextureInfo MainTextureInfo { get; init; } = null!;
+            public Texture? MainTexture { get; set; }
+            public gltf.material.TextureInfo? MainTextureInfo { get; set; }
         }
 
         private sealed class KtxConverterBuilder
@@ -2571,14 +2571,13 @@ namespace com.github.hkrn
                     {
                         var bakedMainTexture =
                             _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
+                        var mToonTexture = new MToonTexture();
                         if (bakedMainTexture)
                         {
-                            _materialMToonTextures.Add(subMeshMaterial, new MToonTexture
-                            {
-                                MainTexture = bakedMainTexture!,
-                                MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture!,
-                            });
+                            mToonTexture.MainTexture = bakedMainTexture;
+                            mToonTexture.MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture;
                         }
+                        _materialMToonTextures.Add(subMeshMaterial, mToonTexture);
                     }
 #endif // NVE_HAS_LILTOON
                 }
