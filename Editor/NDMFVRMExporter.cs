@@ -1433,7 +1433,7 @@ namespace com.github.hkrn
             var matcapTex = dictionaries.GetTexture("_MatCapTex");
             var shouldNotBakeAll = matcapColor == Color.white;
             if (shouldNotBakeAll)
-                return null;
+                return matcapTex;
             // run bake
             var bufMainTexture = matcapTex as Texture2D;
             var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
@@ -2577,6 +2577,7 @@ namespace com.github.hkrn
                             mToonTexture.MainTexture = bakedMainTexture;
                             mToonTexture.MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture;
                         }
+
                         _materialMToonTextures.Add(subMeshMaterial, mToonTexture);
                     }
 #endif // NVE_HAS_LILTOON
@@ -3205,8 +3206,16 @@ namespace com.github.hkrn
                     {
                         var bakedMatCap = MaterialBaker.AutoBakeMatCap(_assetSaver, material);
                         mtoon.MatcapTexture =
-                            exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma, needsBlit: false);
+                            exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma, needsBlit: true);
                         mtoon.MatcapFactor = System.Numerics.Vector3.One;
+                    }
+
+                    if (!component.enableMToonRimLight)
+                    {
+                        var matcapBlendMaskTexture = LocalRetrieveTexture2D("_MatCapBlendMask");
+                        mtoon.RimMultiplyTexture = exporter.ExportTextureInfoMToon(material, matcapBlendMaskTexture,
+                            ColorSpace.Linear, needsBlit: true);
+                        mtoon.RimLightingMixFactor = 1.0f;
                     }
                 }
 

@@ -193,6 +193,15 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 リムライト、マットキャップ、アウトラインのうち表示上の互換性の問題からアウトラインのみ有効となっています。
 
+表示上の互換性の問題の背景として MToon においてリムライトのブレンドモードが乗算のみ、マットキャップのブレンドモードが加算のみしか利用できない制約によるものです。後者については以下で起票されています。
+
+* [MtoonのMatcap機能拡張 #2328](https://github.com/vrm-c/UniVRM/issues/2328)
+
+> [!TIP]
+> NDMF VRM Exporter においてリムライトを無効にしていることが条件ですが、マットキャップのマスクテクスチャを使う形でマットキャップの乗算モードを擬似的に実現可能です
+
+ただしマットキャップが「有効」かつリムライトが「無効」の場合は MToon の実装の関係でリムライトのパラメータを上書きします。詳細は「出力互換性の情報」の「材質の変換」を確認してください。
+
 ## Spring Bone Options
 
 ビルド時にのみ除外する VRC PhysBone Collider コンポーネント及び VRC PhysBone コンポーネントを設定します。
@@ -309,7 +318,7 @@ Unity Constraint での `Constraint Settings` および VRC Constraint での `F
 
 lilToon シェーダが使われている場合は MToon 互換設定に変換します（MToon 未対応の環境のために `KHR_materials_unlit` も付与します）。その場合は以下の処理を行います。
 
-* lilToon の MToon 変換と同じ方法で再設定
+* lilToon の MToon 変換と基本的に同じ方法で再設定
 * 以下のテクスチャがある場合は焼き込みした上で再設定
   * メイン
   * アルファマスク
@@ -321,6 +330,11 @@ lilToon シェーダが使われている場合は MToon 互換設定に変換�
     * `MToon Options` の `Enable MatCap` が有効かつ加算モードの時のみ
   * アウトライン
     * `MToon Options` の `Enable Outline` が有効の時のみ
+
+`Enable MatCap` が有効かつ `Enable Rim` が **無効** の場合（有効の場合はリムの設定を優先するため行わない）は MToon のマットキャップの計算がリムライトに依存している都合上、以下の追加設定が行われます。
+
+* リムライトの係数を 1.0 に設定
+* リムライトの乗算テクスチャにマットキャップのマスクテクスチャを割り当て
 
 lilToon 以外のシェーダが使われている場合は MToon の変換は行われず、glTF 準拠の最低限の設定で変換します。
 
@@ -353,6 +367,12 @@ NDMF VRM Exporter は「最小限の労力でおおむね１００点満点中�
   * 機能的には変わらないものの、ブレンドシェイプによる VRM の肥大化を抑制できる
 
 名前を冠している通り [NDMF](https://github.com/bdunderscore/ndmf) のみ必須で、VRChat SDK は原則 VCC 経由で導入する想定であることの関係で事実上必須扱いです。
+
+### `Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found` と出る
+
+既知の問題でモデルによっては該当のエラーが表示されることがあります。これの直接的な原因はインデックスからの頂点あるいは頂点からのボーンに対する不正参照によるもので、そのまま出力すると読み込めないあるいは異常表示の VRM が出来上がってしまうことを防ぐための措置です。
+
+変換元モデルに対する問題であり NDMF VRM Exporter で対処できる問題の範疇を超えるため、プロジェクトを作り直すか、エラーが出ている部分を MeshRenderer に変換するか、該当のオブジェクトを非表示にするかの対処療法でしか提示できないのが現状です。
 
 ### VRM が出力されていない
 
@@ -409,6 +429,10 @@ VRM 1.0 を出力できる点は同じですが、出力するまでの過程が
 VRoid Studio の場合は VRM の出力に XAvatar を利用する関係で VRoid Studio の導入が別途必要で、作業自体は Unity 単体で完結しません。くわえて Modular Avatar を使って着せ替えを行なっている場合 VRoid Studio 向けに XAvatar の作業行程を新たに構築する必要があるため、その構築を NDMF VRM Exporter では不要とする点が強みとなります。
 
 XWear Packager と NDMF VRM Exporter は一緒に入れることができるため、XWear/XAvatar が必要な場合は XWear Package 経由で VRoid Studio を、Modular Avatar を使っている場合は NDMF VRM Exporter を使い分けることが可能です。
+
+### NDMF VRM Exporter で生成した VRM ファイルで部分的に黒い箇所が出る
+
+材質の色が黒の場合は既定で無効に設定されているマットキャップが使われている可能性があるため、`MToon Options` の `Enable Matcap` を有効にして再度出力すると正しく表示される可能性があります。
 
 ### NDMF VRM Exporter で生成した VRM ファイルを利用しようとしたらエラーになります
 
