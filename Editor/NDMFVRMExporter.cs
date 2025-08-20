@@ -4237,7 +4237,7 @@ namespace com.github.hkrn
                     spring.Extensions ??= new Dictionary<string, JToken>();
                     spring.Extensions.Add(VrmcSpringBoneLimit, vrm.Document.SaveAsNode(new vrm.sb.SpringLimit
                     {
-                        SpecVersion = "1.0",
+                        SpecVersion = "1.0-draft",
                         Limit = limit,
                     }));
                 }
@@ -4279,8 +4279,8 @@ namespace com.github.hkrn
                         {
                             Spherical = new vrm.sb.SphericalLimit
                             {
-                                Theta = pb.maxAngleX,
-                                Phi = pb.maxAngleZ,
+                                Theta = pb.maxAngleZ,
+                                Phi = pb.maxAngleX,
                                 Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
                             }
                         };
