@@ -77,7 +77,7 @@ msgid "component.metadata.information.vrchat.cancel"
 msgstr "Cancel"
 
 msgid "component.metadata.information.vrchat.error.authorization"
-msgstr "Failed to authorize VRChat. Try sign-in from VRChat SDK control panel."
+msgstr "Failed to authorize VRChat. Try sign-in from VRChat SDK control panel"
 
 msgid "component.metadata.licenses.license-url"
 msgstr "License URL"
@@ -233,10 +233,13 @@ msgid "component.runtime.error.validation.license-url"
 msgstr "Building VRM file will be skipped due to required license URL property is empty or invalid"
 
 msgid "component.runtime.error.validation.smr"
-msgstr "Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found. You will need to convert it to MeshRenderer or recreate the project."
+msgstr "Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found. You will need to convert it to MeshRenderer or recreate the project"
 
 msgid "component.runtime.error.mesh.oob-materials"
-msgstr "Since there are more submeshes than materials, submeshes with indices greater than the number of materials will have the default material applied. This may result in unintended conversion results."
+msgstr "Since there are more submeshes than materials, submeshes with indices greater than the number of materials will have the default material applied. This may result in unintended conversion results"
 
 msgid "component.runtime.error.mesh.no-material"
-msgstr "The submesh output was skipped because there is no material reference for the submesh. Please verify that the material reference is set correctly."
+msgstr "The submesh output was skipped because there is no material reference for the submesh. Please verify that the material reference is set correctly"
+
+msgid "component.runtime.error.mesh.no-primitive"
+msgstr "Mesh output will be skipped because the mesh entity does not exist"
