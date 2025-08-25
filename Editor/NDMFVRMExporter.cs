@@ -885,7 +885,7 @@ namespace com.github.hkrn
 
         internal bool IsValid => baseType switch
         {
-            BaseType.AnimationClip => blendShapeAnimationClip != null,
+            BaseType.AnimationClip => blendShapeAnimationClip,
             BaseType.BlendShape => !string.IsNullOrEmpty(blendShapeName),
             _ => throw new ArgumentOutOfRangeException(),
         };
@@ -1347,8 +1347,8 @@ namespace com.github.hkrn
             var shadowStrengthMask = dictionaries.GetTexture("_ShadowStrengthMask");
             var mainTex = dictionaries.GetTexture("_MainTex");
 
-            var shouldNotBakeAll = useShadow == 0.0 && shadowColor == Color.white && shadowColorTex == null &&
-                                   shadowStrengthMask == null;
+            var shouldNotBakeAll = useShadow == 0.0 && shadowColor == Color.white && !shadowColorTex &&
+                                   !shadowStrengthMask;
             if (shouldNotBakeAll)
                 return null;
             // run bake
@@ -1495,12 +1495,12 @@ namespace com.github.hkrn
             Texture2D? referenceTexture = null)
         {
             int width = 4096, height = 4096;
-            if (referenceTexture != null)
+            if (referenceTexture)
             {
-                width = referenceTexture.width;
+                width = referenceTexture!.width;
                 height = referenceTexture.height;
             }
-            else if (srcTexture != null)
+            else if (srcTexture)
             {
                 width = srcTexture.width;
                 height = srcTexture.height;
@@ -2275,7 +2275,7 @@ namespace com.github.hkrn
                 var blendShapeNormals = new Vector3[numPositions];
                 _originPositions = mesh.vertices.ToArray();
                 _originNormals = mesh.normals.ToArray();
-                _boneMatrices = bones.Select(bone => bone.localToWorldMatrix).ToArray();
+                _boneMatrices = bones.Select(bone => bone ? bone.localToWorldMatrix : Matrix4x4.zero).ToArray();
                 _bindPoseMatrices = mesh.bindposes.ToArray();
                 _deltaPositions = new Vector3[numPositions];
                 _deltaNormals = new Vector3[numPositions];
@@ -4746,8 +4746,8 @@ namespace com.github.hkrn
                     continue;
                 }
 
-                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) && smr.sharedMesh &&
-                    (smr.bones.Any(bone => !bone) || IsSharedMeshCorrupted(smr)))
+                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) &&
+                    smr.sharedMesh && IsSharedMeshCorrupted(smr))
                 {
                     corrupted.Add(smr);
                 }
@@ -4759,6 +4759,7 @@ namespace com.github.hkrn
         private static bool IsSharedMeshCorrupted(SkinnedMeshRenderer smr)
         {
             var mesh = smr.sharedMesh;
+            var bones = smr.bones;
             var numPositions = mesh.boneWeights.Length;
             var numSubMeshes = mesh.subMeshCount;
             var indexMapping = new Dictionary<uint, uint>();
@@ -4779,6 +4780,15 @@ namespace com.github.hkrn
                 }
 
                 if (indices.Any(index => !indexMapping.TryGetValue(index, out _)))
+                {
+                    return true;
+                }
+
+                var boneWeights = mesh.boneWeights;
+                if (boneWeights.Any(boneWeight => (boneWeight.weight0 > 0.0 && !bones[boneWeight.boneIndex0]) ||
+                                                  (boneWeight.weight1 > 0.0 && !bones[boneWeight.boneIndex1]) ||
+                                                  (boneWeight.weight2 > 0.0 && !bones[boneWeight.boneIndex2]) ||
+                                                  (boneWeight.weight3 > 0.0 && !bones[boneWeight.boneIndex3])))
                 {
                     return true;
                 }
