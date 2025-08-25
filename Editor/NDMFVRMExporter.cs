@@ -2275,7 +2275,7 @@ namespace com.github.hkrn
                 var blendShapeNormals = new Vector3[numPositions];
                 _originPositions = mesh.vertices.ToArray();
                 _originNormals = mesh.normals.ToArray();
-                _boneMatrices = bones.Select(bone => bone.localToWorldMatrix).ToArray();
+                _boneMatrices = bones.Select(bone => bone ? bone.localToWorldMatrix : Matrix4x4.zero).ToArray();
                 _bindPoseMatrices = mesh.bindposes.ToArray();
                 _deltaPositions = new Vector3[numPositions];
                 _deltaNormals = new Vector3[numPositions];
