@@ -2607,7 +2607,15 @@ namespace com.github.hkrn
                 });
             }
 
-            node.Mesh = _exporter.CreateMesh(_root, meshUnit);
+            if (meshUnit.Primitives.Count > 0)
+            {
+                node.Mesh = _exporter.CreateMesh(_root, meshUnit);
+            }
+            else
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.Information,
+                    "component.runtime.error.mesh.no-primitive", parentTransform.gameObject);
+            }
         }
 
         private static gltf.exporter.SampledTextureUnit ExportTextureUnit(Texture texture, string name,
