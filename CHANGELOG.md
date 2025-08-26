@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.0.13] - 2025-08-26
+
+### Fixed
+
+- [exporter] Skip when mesh primitives do not exist ([#67](hhttps://github.com/hkrn/ndmf-vrm-exporter/pull/67))
+- [exporter] Stricter mesh corruption processing ([#66](https://github.com/hkrn/ndmf-vrm-exporter/pull/66))
+- [exporter] Improves matcap processing ([#65](https://github.com/hkrn/ndmf-vrm-exporter/pull/65))
 
 ## [1.0.12] - 2025-08-03
 
@@ -106,7 +113,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...HEAD
+[1.0.13]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...1.0.13
 [1.0.12]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...1.0.12
 [1.0.11]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...1.0.11
 [1.0.10]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.9...1.0.10
