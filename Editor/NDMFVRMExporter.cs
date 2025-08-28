@@ -4673,6 +4673,18 @@ namespace com.github.hkrn
 
         public override string DisplayName => "NDMF VRM Exporter";
 
+        internal class Variant
+        {
+            public Renderer Renderer { get; init; } = null!;
+            public Material[] Materials { get; init; } = null!;
+        }
+
+        internal class MaterialVariants
+        {
+            public string? Name { get; init; }
+            public Variant[] Variants { get; init; } = null!;
+        }
+
         protected override void Configure()
         {
             InPhase(BuildPhase.Transforming)
@@ -4686,6 +4698,7 @@ namespace com.github.hkrn
                     Type? costumeType = null;
                     Type? materialReplacerType = null;
                     Type? parametersPerMenuType = null;
+                    var materialVariants = new List<MaterialVariants>();
                     foreach (var costumeChanger in costumeChangers)
                     {
                         var costumes = (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(costumeChanger);
@@ -4697,16 +4710,31 @@ namespace com.github.hkrn
                             parametersPerMenuType ??= parametersPerMenu.GetType();
                             var materialReplaces = (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
                                 .GetValue(parametersPerMenu);
+                            var variants = new List<Variant>();
                             foreach (var materialReplace in materialReplaces)
                             {
                                 materialReplacerType ??= materialReplace.GetType();
                                 var fields = materialReplacerType.GetFields();
                                 var renderer = (Renderer) fields.First(item => item.Name == "renderer").GetValue(materialReplace);
                                 var replaceTo = (Material[]) fields.First(item => item.Name == "replaceTo").GetValue(materialReplace);
-                                Debug.Log($"LI = {menuItemName}:{renderer}:{replaceTo}");
+                                variants.Add(new Variant
+                                {
+                                    Renderer = renderer,
+                                    Materials = replaceTo,
+                                });
+                            }
+
+                            if (variants.Count > 0)
+                            {
+                                materialVariants.Add(new MaterialVariants
+                                {
+                                    Name = menuItemName,
+                                    Variants = variants.ToArray(),
+                                });
                             }
                         }
                     }
+                    Debug.Log($"{materialVariants}");
                 });
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
