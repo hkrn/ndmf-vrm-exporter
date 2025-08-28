@@ -5,6 +5,7 @@
         "GUID:62ced99b048af7f4d8dfe4bed8373d76",
         "GUID:fe747755f7b44e048820525b07f9b956",
         "GUID:ac4815c6727e4e34b9e13bb042cbc029",
+        "GUID:1361f424038d2644fa9897816cda865f",
         "GUID:e7f0f8dffe955d640bbc76d1d4f4986e",
         "GUID:6e9c6119ac4eb334284fb7b4bc6d1f05"
     ],
@@ -34,6 +35,11 @@
             "name": "com.vrchat.avatars",
             "expression": "3.7",
             "define": "NVE_HAS_VRCHAT_AVATAR_SDK"
+        },
+        {
+            "name": "jp.lilxyzw.lilycalinventory",
+            "expression": "1.0",
+            "define": "NVE_HAS_LILINV"
         },
         {
             "name": "jp.lilxyzw.liltoon",
