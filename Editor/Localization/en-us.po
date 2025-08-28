@@ -37,6 +37,12 @@ msgstr "Spring Bone Options"
 msgid "component.category.constraint"
 msgstr "Constraint Options"
 
+msgid "component.category.extension"
+msgstr "glTF Extension Options"
+
+msgid "component.extension.enable-khr-materials-variants"
+msgstr "Enable KHR_materials_variants"
+
 msgid "component.category.debug"
 msgstr "Debug Options"
 

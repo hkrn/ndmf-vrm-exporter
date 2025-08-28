@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -37,10 +38,18 @@ using VRC.SDKBase.Editor.Api;
 using Anatawa12.AvatarOptimizer.API;
 #endif // NVE_HAS_AVATAR_OPTIMIZER
 
+#if NVE_HAS_LILYCAL_INVENTORY
+using jp.lilxyzw.lilycalinventory.runtime;
+#endif // NVE_HAS_LILYCAL_INVENTORY
+
 #if NVE_HAS_LILTOON
 using lilToon;
 using UnityEngine.Rendering;
 #endif // NVE_HAS_LILTOON
+
+#if NVE_HAS_MODULAR_AVATAR
+using nadena.dev.modular_avatar.core;
+#endif // NVE_HAS_MODULAR_AVATAR
 
 #if NVE_HAS_NDMF
 using nadena.dev.ndmf;
@@ -161,6 +170,11 @@ namespace com.github.hkrn
 
         [NotKeyable] [SerializeField] internal int expressionModeSelection;
 
+        // from 1.1.0
+        [NotKeyable] [SerializeField] internal bool extensionFoldout;
+
+        [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
+
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
         public bool HasLicenseUrl =>
@@ -225,6 +239,9 @@ namespace com.github.hkrn
         private SerializedProperty _ktxToolPathProp = null!;
         private SerializedProperty _metadataModeSelection = null!;
         private SerializedProperty _expressionModeSelection = null!;
+        // from 1.1.0
+        private SerializedProperty _extensionFoldoutProp = null!;
+        private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
 #if NVE_HAS_VRCHAT_AVATAR_SDK
         private struct VRChatAvatarToMetadata
         {
@@ -304,6 +321,9 @@ namespace com.github.hkrn
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableMToonOutline));
             _enableBakingAlphaMaskProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableBakingAlphaMaskTexture));
+            _extensionFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.extensionFoldout));
+            _enableKhrMaterialsVariantsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableKhrMaterialsVariants));
             _debugFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.debugFoldout));
             _makeAllNodeNamesUniqueProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.makeAllNodeNamesUnique));
@@ -487,6 +507,14 @@ namespace com.github.hkrn
             }
 
             EditorGUILayout.Separator();
+            var extensionFoldout =
+                EditorGUILayout.Foldout(_extensionFoldoutProp.boolValue, Translator._("component.category.extension"));
+            if (extensionFoldout)
+            {
+                DrawExtensionOptions();
+            }
+
+            EditorGUILayout.Separator();
             var debugFoldout =
                 EditorGUILayout.Foldout(_debugFoldoutProp.boolValue, Translator._("component.category.debug"));
             if (debugFoldout)
@@ -499,6 +527,7 @@ namespace com.github.hkrn
             _mtoonFoldoutProp.boolValue = mtoonFoldout;
             _springBoneFoldoutProp.boolValue = springBoneFoldout;
             _constraintFoldoutProp.boolValue = constraintFoldout;
+            _extensionFoldoutProp.boolValue = extensionFoldout;
             _debugFoldoutProp.boolValue = debugFoldout;
             serializedObject.ApplyModifiedProperties();
         }
@@ -769,6 +798,11 @@ namespace com.github.hkrn
                 _excludedConstraintTransformsProp,
                 new GUIContent(Translator._("component.constraint.exclude.constraints")));
             EditorGUI.indentLevel--;
+        }
+
+        private void DrawExtensionOptions()
+        {
+            DrawToggleLeft(Translator._("component.extension.enable-khr-materials-variants"), _enableKhrMaterialsVariantsProp);
         }
 
         private void DrawDebugOptions()
@@ -1080,6 +1114,17 @@ namespace com.github.hkrn
         private List<string> _blendShapeNames = new();
     }
 
+    internal sealed class MaterialVariantMapping
+    {
+        public Renderer Renderer { get; init; } = null!;
+        public Material[] Materials { get; init; } = { };
+    }
+
+    internal sealed class MaterialVariant
+    {
+        public string? Name { get; init; }
+        public MaterialVariantMapping[] Mappings { get; init; } = { };
+    }
 
     internal static class UnityExtensions
     {
@@ -1873,7 +1918,8 @@ namespace com.github.hkrn
             private readonly ProcessStartInfo _info;
         }
 
-        public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver)
+        public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver,
+            IReadOnlyList<MaterialVariant> materialVariants)
         {
             var packageJsonFile = File.ReadAllText($"Packages/{PackageJson.Name}/package.json");
             var packageJson = PackageJson.LoadFromString(packageJsonFile);
@@ -1883,6 +1929,7 @@ namespace com.github.hkrn
             _materialMToonTextures = new Dictionary<Material, MToonTexture>();
             _transformNodeIDs = new Dictionary<Transform, gltf.ObjectID>();
             _transformNodeNames = new HashSet<string>();
+            _materialVariants = materialVariants;
             _exporter = new gltf.exporter.Exporter();
             _root = new gltf.Root
             {
@@ -1952,6 +1999,11 @@ namespace com.github.hkrn
             using (var _ = new ScopedProfile(nameof(RetrieveAllMeshRenderers)))
             {
                 RetrieveAllMeshRenderers(rootTransform, component);
+            }
+
+            using (var _ = new ScopedProfile(nameof(ConvertAllMaterialVariants)))
+            {
+                ConvertAllMaterialVariants(component);
             }
 
             if (!string.IsNullOrEmpty(component.ktxToolPath) && File.Exists(component.ktxToolPath))
@@ -2043,6 +2095,127 @@ namespace com.github.hkrn
                 }
 
                 RetrieveAllMeshRenderers(child, component);
+            }
+        }
+
+        private void ConvertAllMaterialVariants(NdmfVrmExporterComponent component)
+        {
+            var enableBakingAlphaMaskTexture = component.enableBakingAlphaMaskTexture;
+            var materialVariants = new gltf.extensions.KhrMaterialsVariants();
+            var variantIndex = 0u;
+            foreach (var variant in _materialVariants)
+            {
+                materialVariants.Variants.Add(new gltf.extensions.KhrMaterialsVariantsItem
+                {
+                    Name = new gltf.UnicodeString(variant.Name ?? $"Variant{variantIndex}")
+                });
+            }
+
+            var allMeshMaterialMappings =
+                new Dictionary<(gltf.ObjectID, int), gltf.extensions.KhrMaterialsVariantsPrimitive>();
+            variantIndex = 0u;
+            foreach (var variant in _materialVariants)
+            {
+                var mappingIndex = 0u;
+                foreach (var mapping in variant.Mappings)
+                {
+                    var renderer = mapping.Renderer;
+                    if (!renderer)
+                    {
+                        Debug.LogWarning(
+                            $"Cannot convert material variant {variant.Name}:{mappingIndex} due to renderer is null");
+                        continue;
+                    }
+
+                    var nodeID = _transformNodeIDs[renderer.transform];
+                    var node = _root.Nodes![(int)nodeID.ID];
+                    if (!node.Mesh.HasValue)
+                    {
+                        Debug.LogWarning(
+                            $"Cannot convert material variant {variant.Name}:{mappingIndex} due to mesh is none");
+                        continue;
+                    }
+
+                    var meshID = node.Mesh!.Value;
+                    var mesh = _root.Meshes![(int)meshID.ID];
+                    var primitives = mesh.Primitives!;
+                    var primitiveIndex = 0;
+                    foreach (var material in mapping.Materials)
+                    {
+                        if (primitiveIndex >= primitives.Count)
+                        {
+                            break;
+                        }
+
+                        gltf.ObjectID materialID;
+                        if (material)
+                        {
+                            if (!_materialIDs.TryGetValue(material, out materialID))
+                            {
+                                materialID = ConvertMaterial(material, enableBakingAlphaMaskTexture, out _);
+                            }
+                        }
+                        else
+                        {
+                            materialID = primitives[primitiveIndex].Material ?? gltf.ObjectID.Null;
+                        }
+
+                        if (allMeshMaterialMappings.TryGetValue((meshID, primitiveIndex), out var materialMappings))
+                        {
+                            var foundMaterialMapping =
+                                materialMappings.Mappings.FirstOrDefault(item => item.Material.Equals(materialID));
+                            if (foundMaterialMapping != null)
+                            {
+                                foundMaterialMapping.Variants.Add(new gltf.ObjectID(variantIndex));
+                            }
+                            else
+                            {
+                                materialMappings.Mappings.Add(new gltf.extensions.KhrMaterialsVariantsPrimitiveMapping
+                                {
+                                    Material = materialID,
+                                    Variants = new List<gltf.ObjectID> { new(variantIndex) },
+                                });
+                            }
+                        }
+                        else
+                        {
+                            var materialMapping = new gltf.extensions.KhrMaterialsVariantsPrimitiveMapping
+                            {
+                                Material = materialID,
+                                Variants = new List<gltf.ObjectID> { new(variantIndex) },
+                            };
+                            allMeshMaterialMappings.Add((meshID, primitiveIndex),
+                                new gltf.extensions.KhrMaterialsVariantsPrimitive
+                                {
+                                    Mappings = new List<gltf.extensions.KhrMaterialsVariantsPrimitiveMapping>
+                                        { materialMapping }
+                                });
+                        }
+
+                        primitiveIndex++;
+                    }
+
+                    mappingIndex++;
+                }
+
+                variantIndex++;
+            }
+
+            if (allMeshMaterialMappings.Count <= 0)
+            {
+                return;
+            }
+
+            _root.Extensions!.Add(gltf.extensions.KhrMaterialsVariants.Name,
+                gltf.Document.SaveAsNode(materialVariants));
+            _extensionsUsed.Add(gltf.extensions.KhrMaterialsVariants.Name);
+            foreach (var ((meshID, primitiveIndex), variantPrimitive) in allMeshMaterialMappings)
+            {
+                var mesh = _root.Meshes![(int)meshID.ID];
+                var primitive = mesh.Primitives![primitiveIndex];
+                primitive.Extensions ??= new Dictionary<string, JToken>();
+                primitive.Extensions.Add(gltf.extensions.KhrMaterialsVariants.Name,
+                    gltf.Document.SaveAsNode(variantPrimitive));
             }
         }
 
@@ -2506,82 +2679,18 @@ namespace com.github.hkrn
                     continue;
                 }
 
-                if (!_materialIDs.TryGetValue(subMeshMaterial, out var materialID))
+                var materialID =
+                    ConvertMaterial(subMeshMaterial, enableBakingAlphaMaskTexture, out var isShaderLiltoon);
+                if (isShaderLiltoon && component.disableVertexColorOnLiltoon)
                 {
-                    var shaderName = subMeshMaterial.shader.name;
-                    var config = new GltfMaterialExporter.ExportOverrides();
-#if NVE_HAS_LILTOON
-                    var isShaderLiltoon = false;
-                    if (shaderName == "lilToon" || shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal))
+                    var numColors = (uint)meshUnit.Colors.Length;
+                    foreach (var index in newIndices)
                     {
-                        if (shaderName.Contains("Cutout"))
+                        if (index < numColors)
                         {
-                            config.AlphaMode = gltf.material.AlphaMode.Mask;
-                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
+                            meshUnit.Colors[index] = System.Numerics.Vector4.One;
                         }
-                        else if (shaderName.Contains("Transparent") || shaderName.Contains("Overlay"))
-                        {
-                            config.AlphaMode = gltf.material.AlphaMode.Blend;
-                            config.MainTexture = enableBakingAlphaMaskTexture &&
-                                                 Mathf.Approximately(subMeshMaterial.GetFloat(PropertyAlphaMaskMode),
-                                                     1.0f)
-                                ? MaterialBaker.AutoBakeAlphaMask(_assetSaver, subMeshMaterial)
-                                : MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
-                        }
-                        else
-                        {
-                            config.AlphaMode = gltf.material.AlphaMode.Opaque;
-                            config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
-                        }
-
-                        config.CullMode = subMeshMaterial.HasProperty(PropertyCull)
-                            ? (int)subMeshMaterial.GetFloat(PropertyCull)
-                            : (int)CullMode.Back;
-                        if (Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseEmission), 1.0f))
-                        {
-                            config.EmissiveStrength = !subMeshMaterial.GetTexture(PropertyEmissionBlendMask)
-                                ? 1.0f - Mathf.Clamp01(subMeshMaterial.GetFloat(PropertyEmissionMainStrength))
-                                : 0.0f;
-                        }
-
-                        config.EnableNormalMap =
-                            Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
-
-                        if (component.disableVertexColorOnLiltoon)
-                        {
-                            var numColors = (uint)meshUnit.Colors.Length;
-                            foreach (var index in newIndices)
-                            {
-                                if (index < numColors)
-                                {
-                                    meshUnit.Colors[index] = System.Numerics.Vector4.One;
-                                }
-                            }
-                        }
-
-                        isShaderLiltoon = true;
                     }
-#endif // NVE_HAS_LILTOON
-                    materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
-                    var material = _materialExporter.Export(subMeshMaterial, config);
-                    _root.Materials!.Add(material);
-                    _materialIDs.Add(subMeshMaterial, materialID);
-
-#if NVE_HAS_LILTOON
-                    if (isShaderLiltoon)
-                    {
-                        var bakedMainTexture =
-                            _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
-                        var mToonTexture = new MToonTexture();
-                        if (bakedMainTexture)
-                        {
-                            mToonTexture.MainTexture = bakedMainTexture;
-                            mToonTexture.MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture;
-                        }
-
-                        _materialMToonTextures.Add(subMeshMaterial, mToonTexture);
-                    }
-#endif // NVE_HAS_LILTOON
                 }
 
                 var primitiveUnit = new gltf.exporter.PrimitiveUnit
@@ -2617,6 +2726,79 @@ namespace com.github.hkrn
                 ErrorReport.ReportError(Translator.Instance, ErrorSeverity.Information,
                     "component.runtime.error.mesh.no-primitive", parentTransform.gameObject);
             }
+        }
+
+        private gltf.ObjectID ConvertMaterial(Material subMeshMaterial, bool enableBakingAlphaMaskTexture,
+            out bool isShaderLiltoon)
+        {
+            var shaderName = subMeshMaterial.shader.name;
+            isShaderLiltoon = shaderName == "lilToon" ||
+                              shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal);
+            if (_materialIDs.TryGetValue(subMeshMaterial, out var materialID))
+            {
+                return materialID;
+            }
+
+            var config = new GltfMaterialExporter.ExportOverrides();
+#if NVE_HAS_LILTOON
+            if (isShaderLiltoon)
+            {
+                if (shaderName.Contains("Cutout"))
+                {
+                    config.AlphaMode = gltf.material.AlphaMode.Mask;
+                    config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
+                }
+                else if (shaderName.Contains("Transparent") || shaderName.Contains("Overlay"))
+                {
+                    config.AlphaMode = gltf.material.AlphaMode.Blend;
+                    config.MainTexture = enableBakingAlphaMaskTexture &&
+                                         Mathf.Approximately(subMeshMaterial.GetFloat(PropertyAlphaMaskMode),
+                                             1.0f)
+                        ? MaterialBaker.AutoBakeAlphaMask(_assetSaver, subMeshMaterial)
+                        : MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
+                }
+                else
+                {
+                    config.AlphaMode = gltf.material.AlphaMode.Opaque;
+                    config.MainTexture = MaterialBaker.AutoBakeMainTexture(_assetSaver, subMeshMaterial);
+                }
+
+                config.CullMode = subMeshMaterial.HasProperty(PropertyCull)
+                    ? (int)subMeshMaterial.GetFloat(PropertyCull)
+                    : (int)CullMode.Back;
+                if (Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseEmission), 1.0f))
+                {
+                    config.EmissiveStrength = !subMeshMaterial.GetTexture(PropertyEmissionBlendMask)
+                        ? 1.0f - Mathf.Clamp01(subMeshMaterial.GetFloat(PropertyEmissionMainStrength))
+                        : 0.0f;
+                }
+
+                config.EnableNormalMap =
+                    Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
+            }
+#endif // NVE_HAS_LILTOON
+            materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
+            var material = _materialExporter.Export(subMeshMaterial, config);
+            _root.Materials!.Add(material);
+            _materialIDs.Add(subMeshMaterial, materialID);
+
+#if NVE_HAS_LILTOON
+            if (!isShaderLiltoon)
+                return materialID;
+
+            var bakedMainTexture =
+                _materialExporter.ResolveTexture(material.PbrMetallicRoughness!.BaseColorTexture);
+            var mToonTexture = new MToonTexture();
+            if (bakedMainTexture)
+            {
+                mToonTexture.MainTexture = bakedMainTexture;
+                mToonTexture.MainTextureInfo = material.PbrMetallicRoughness!.BaseColorTexture;
+            }
+
+            _materialMToonTextures.Add(subMeshMaterial, mToonTexture);
+#endif // NVE_HAS_LILTOON
+
+            return materialID;
         }
 
         private static gltf.exporter.SampledTextureUnit ExportTextureUnit(Texture texture, string name,
@@ -4297,6 +4479,7 @@ namespace com.github.hkrn
                 public bool EnableNormalMap { get; set; } = true;
             }
 
+            // ReSharper disable once MemberCanBePrivate.Local
             public sealed class TextureItemMetadata
             {
                 public TextureFormat TextureFormat { get; init; }
@@ -4665,6 +4848,7 @@ namespace com.github.hkrn
         private readonly IDictionary<Transform, gltf.ObjectID> _transformNodeIDs;
         private readonly ISet<string> _transformNodeNames;
         private readonly ISet<string> _extensionsUsed;
+        private readonly IReadOnlyList<MaterialVariant> _materialVariants;
         private readonly GltfMaterialExporter _materialExporter;
     }
 
@@ -4676,76 +4860,356 @@ namespace com.github.hkrn
 
         protected override void Configure()
         {
+            InPhase(BuildPhase.Transforming)
+                .BeforePlugin("jp.lilxyzw.lilycalinventory")
+                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
+                    RetrieveAllLiCostumeChangerComponentsPass)
+                .Then
+                .BeforePlugin("nadena.dev.modular-avatar")
+                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
+                    RetrieveAllModularAvatarReactiveComponentsPass);
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("VrmExportPlugin", ctx =>
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+        }
+
+        private static void ExportVrmFilePass(BuildContext ctx)
+        {
+            if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
+                return;
+            }
+
+            if (!component.enabled)
+            {
+                Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
+                return;
+            }
+
+            if (!component.HasAuthor)
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
+                return;
+            }
+
+            if (!component.HasLicenseUrl)
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
+                return;
+            }
+
+            var corrupted = new List<SkinnedMeshRenderer>();
+            CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
+            if (corrupted.Count > 0)
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                    "component.runtime.error.validation.smr", corrupted);
+                return;
+            }
+
+            var ro = ctx.AvatarRootObject;
+            var variants = ctx.GetState<List<MaterialVariant>>().AsReadOnly();
+            var basePath = AssetPathUtils.GetOutputPath(ro);
+            Directory.CreateDirectory(basePath);
+            using var stream = new MemoryStream();
+            using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver, variants);
+            var json = exporter.Export(stream);
+            var bytes = stream.GetBuffer();
+            File.WriteAllBytes($"{basePath}.vrm", bytes);
+            if (component.enableGenerateJsonFile)
+            {
+                File.WriteAllText($"{basePath}.json", json);
+            }
+
+            if (!component.deleteTemporaryObjects)
+            {
+                return;
+            }
+
+            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
+            {
+                try
                 {
-                    if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
-                        return;
-                    }
+                    var info = new DirectoryInfo(item);
+                    info.Delete(true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    /* this is ignorable */
+                }
+            }
+        }
 
-                    if (!component.enabled)
-                    {
-                        Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
-                        return;
-                    }
+        private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext ctx)
+        {
+#if NVE_HAS_MODULAR_AVATAR
+            if (ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+                !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
+            {
+                Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
+                return;
+            }
+            var variants = new List<MaterialVariant>();
+            var installers = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
+            foreach (var installer in installers)
+            {
+                if (!installer.enabled || !installer.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+                {
+                    Debug.Log($"MA menu installer {installer.name} is not enabled or MA menu item is not attached");
+                    continue;
+                }
 
-                    if (!component.HasAuthor)
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
-                        return;
-                    }
+                if (!menuItem.enabled)
+                {
+                    Debug.Log($"MA menu item {menuItem.name} is not enabled");
+                    continue;
+                }
 
-                    if (!component.HasLicenseUrl)
+                if (menuItem.PortableControl.Type == PortableControlType.SubMenu)
+                {
+                    var name = menuItem.name;
+                    foreach (Transform child in menuItem.transform)
                     {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
-                        return;
-                    }
-
-                    var corrupted = new List<SkinnedMeshRenderer>();
-                    CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
-                    if (corrupted.Count > 0)
-                    {
-                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                            "component.runtime.error.validation.smr", corrupted);
-                        return;
-                    }
-
-                    var ro = ctx.AvatarRootObject;
-                    var basePath = AssetPathUtils.GetOutputPath(ro);
-                    Directory.CreateDirectory(basePath);
-                    using var stream = new MemoryStream();
-                    using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver);
-                    var json = exporter.Export(stream);
-                    var bytes = stream.GetBuffer();
-                    File.WriteAllBytes($"{basePath}.vrm", bytes);
-                    if (component.enableGenerateJsonFile)
-                    {
-                        File.WriteAllText($"{basePath}.json", json);
-                    }
-
-                    if (!component.deleteTemporaryObjects)
-                    {
-                        return;
-                    }
-
-                    foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
-                    {
-                        try
+                        if (child.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
                         {
-                            var info = new DirectoryInfo(item);
-                            info.Delete(true);
+                            MapMaterialSwapToVariants(ctx, materialSwap, name, ref variants);
                         }
-                        catch (DirectoryNotFoundException)
+                        else if (child.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
                         {
-                            /* this is ignorable */
+                            MapMaterialSetterToVariants(materialSetter, name, ref variants);
                         }
                     }
-                });
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
+                {
+                    MapMaterialSwapToVariants(ctx, materialSwap, null, ref variants);
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
+                {
+                    MapMaterialSetterToVariants(materialSetter, null, ref variants);
+                }
+            }
+
+            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
+        }
+
+        private static void MapMaterialSwapToVariants(BuildContext ctx, ModularAvatarMaterialSwap materialSwap,
+            string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var reference = materialSwap.Root.Get(materialSwap);
+            var renderers = (reference ?? ctx.AvatarRootObject).GetComponentsInChildren<Renderer>();
+            var sourceMappings = renderers.ToDictionary(renderer => renderer, renderer => renderer.sharedMaterials);
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSwap.gameObject.name;
+            if (materialSwap.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var swap in materialSwap.Swaps)
+            {
+                var swapFrom = ObjectRegistry.GetReference(swap.From);
+                foreach (var (sourceRenderer, sourceMaterials) in sourceMappings)
+                {
+                    var materialIndex = 0;
+                    foreach (var sourceMaterial in sourceMaterials)
+                    {
+                        var sourceMaterialReference = ObjectRegistry.GetReference(sourceMaterial);
+                        if (swapFrom?.Object == sourceMaterialReference?.Object)
+                        {
+                            if (mappings.TryGetValue(sourceRenderer, out var materials))
+                            {
+                                materials[materialIndex] = swap.To;
+                            }
+                            else
+                            {
+                                var newMaterials = new Material[sourceMaterials.Length];
+                                newMaterials[materialIndex] = swap.To;
+                                mappings.Add(sourceRenderer, newMaterials);
+                            }
+                        }
+
+                        materialIndex++;
+                    }
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+        }
+
+        private static void MapMaterialSetterToVariants(ModularAvatarMaterialSetter materialSetter, string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSetter.gameObject.name;
+            if (materialSetter.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var item in materialSetter.Objects)
+            {
+                var go = item.Object.Get(materialSetter);
+                if (!go.TryGetComponent<Renderer>(out var renderer))
+                {
+                    Debug.Log($"{go} in MaterialSwitchObject has no renderer");
+                    continue;
+                }
+
+                if (mappings.TryGetValue(renderer, out var materials))
+                {
+                    if (item.MaterialIndex < materials.Length)
+                    {
+                        materials[item.MaterialIndex] = item.Material;
+                    }
+                }
+                else if (item.MaterialIndex < renderer.sharedMaterials.Length)
+                {
+                    var newMaterials = new Material[renderer.sharedMaterials.Length];
+                    newMaterials[item.MaterialIndex] = item.Material;
+                    mappings.Add(renderer, newMaterials);
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+#else
+            Debug.Log("Modular Avatar (>= 1.13) is not installed and will be skipped");
+#endif // NVE_HAS_MODULAR_AVATAR
+        }
+
+        private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
+        {
+#if NVE_HAS_LILYCAL_INVENTORY
+            if (ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+                !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
+            {
+                Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
+                return;
+            }
+            var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
+            var costumeChangerType = typeof(CostumeChanger);
+            var menuFolderType = typeof(MenuFolder);
+            var menuItemNameChain = new List<string>();
+            const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
+            Type? costumeType = null;
+            Type? materialReplacerType = null;
+            Type? parametersPerMenuType = null;
+            var variants = new List<MaterialVariant>();
+            foreach (var costumeChanger in costumeChangers)
+            {
+                if (!costumeChanger.enabled)
+                {
+                    Debug.Log($"LI CostumeChanger {costumeChanger.name} is disabled and will be skipped");
+                    continue;
+                }
+
+                var baseMenuName =
+                    (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
+                        .GetValue(costumeChanger);
+                var baseParentOverride =
+                    (MenuFolder)costumeChangerType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                var costumes =
+                    (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                foreach (var costume in costumes)
+                {
+                    costumeType ??= costume.GetType();
+                    var parentOverride =
+                        (MenuFolder)costumeType.GetField("parentOverride", bindingAttrPublic)!
+                            .GetValue(costume);
+                    if (!parentOverride)
+                    {
+                        parentOverride = baseParentOverride;
+                    }
+
+                    var menuIsEnabled = true;
+                    menuItemNameChain.Clear();
+                    while (parentOverride)
+                    {
+                        if (!parentOverride.enabled)
+                        {
+                            menuIsEnabled = false;
+                            break;
+                        }
+
+                        var menuItemNameInner =
+                            (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                        menuItemNameChain.Add(menuItemNameInner);
+                        parentOverride =
+                            (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                    }
+
+                    if (!menuIsEnabled)
+                    {
+                        Debug.Log($"LI MenuFolder {parentOverride.name} is disabled and will be skipped");
+                        continue;
+                    }
+
+                    menuItemNameChain.Reverse();
+                    var menuItemName =
+                        (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
+                    var parametersPerMenu =
+                        costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
+                    parametersPerMenuType ??= parametersPerMenu.GetType();
+                    var materialReplaces =
+                        (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
+                            .GetValue(parametersPerMenu);
+                    var mappings = new List<MaterialVariantMapping>();
+                    foreach (var materialReplace in materialReplaces)
+                    {
+                        materialReplacerType ??= materialReplace.GetType();
+                        var fields = materialReplacerType.GetFields();
+                        var renderer = (Renderer)fields.First(item => item.Name == "renderer")
+                            .GetValue(materialReplace);
+                        var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
+                            .GetValue(materialReplace);
+                        mappings.Add(new MaterialVariantMapping
+                        {
+                            Renderer = renderer,
+                            Materials = replaceTo,
+                        });
+                    }
+
+                    if (mappings.Count <= 0)
+                    {
+                        continue;
+                    }
+
+                    var menuItemNameChainInner = new List<string>(menuItemNameChain.AsReadOnly())
+                    {
+                        baseMenuName,
+                        menuItemName
+                    };
+                    variants.Add(new MaterialVariant
+                    {
+                        Name = string.Join("/", menuItemNameChainInner),
+                        Mappings = mappings.ToArray(),
+                    });
+                }
+            }
+
+            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
+#else
+            Debug.Log("lilycalInventory is not installed and will be skipped");
+#endif // NVE_HAS_LILYCAL_INVENTORY
         }
 
         private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
