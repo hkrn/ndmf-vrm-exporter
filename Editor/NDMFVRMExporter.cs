@@ -1082,6 +1082,17 @@ namespace com.github.hkrn
         private List<string> _blendShapeNames = new();
     }
 
+    internal sealed class Variant
+    {
+        public Renderer Renderer { get; init; } = null!;
+        public Material[] Materials { get; init; } = { };
+    }
+
+    internal sealed class MaterialVariants
+    {
+        public string? Name { get; init; }
+        public Variant[] Variants { get; init; } = { };
+    }
 
     internal static class UnityExtensions
     {
@@ -1875,7 +1886,8 @@ namespace com.github.hkrn
             private readonly ProcessStartInfo _info;
         }
 
-        public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver)
+        public NdmfVrmExporter(GameObject gameObject, IAssetSaver assetSaver,
+            IReadOnlyList<MaterialVariants> materialVariants)
         {
             var packageJsonFile = File.ReadAllText($"Packages/{PackageJson.Name}/package.json");
             var packageJson = PackageJson.LoadFromString(packageJsonFile);
@@ -1885,6 +1897,7 @@ namespace com.github.hkrn
             _materialMToonTextures = new Dictionary<Material, MToonTexture>();
             _transformNodeIDs = new Dictionary<Transform, gltf.ObjectID>();
             _transformNodeNames = new HashSet<string>();
+            _materialVariants = materialVariants;
             _exporter = new gltf.exporter.Exporter();
             _root = new gltf.Root
             {
@@ -4667,6 +4680,7 @@ namespace com.github.hkrn
         private readonly IDictionary<Transform, gltf.ObjectID> _transformNodeIDs;
         private readonly ISet<string> _transformNodeNames;
         private readonly ISet<string> _extensionsUsed;
+        private readonly IReadOnlyList<MaterialVariants> _materialVariants;
         private readonly GltfMaterialExporter _materialExporter;
     }
 
@@ -4676,20 +4690,9 @@ namespace com.github.hkrn
 
         public override string DisplayName => "NDMF VRM Exporter";
 
-        internal class Variant
-        {
-            public Renderer Renderer { get; init; } = null!;
-            public Material[] Materials { get; init; } = null!;
-        }
-
-        internal class MaterialVariants
-        {
-            public string? Name { get; init; }
-            public Variant[] Variants { get; init; } = null!;
-        }
-
         protected override void Configure()
         {
+#if NVE_HAS_LILINV
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("jp.lilxyzw.lilycalinventory")
                 .Run("Retrieve Metadata", ctx =>
@@ -4704,22 +4707,29 @@ namespace com.github.hkrn
                     var materialVariants = new List<MaterialVariants>();
                     foreach (var costumeChanger in costumeChangers)
                     {
-                        var costumes = (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(costumeChanger);
+                        var costumes =
+                            (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
+                                costumeChanger);
                         foreach (var costume in costumes)
                         {
                             costumeType ??= costume.GetType();
-                            var menuItemName = (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
-                            var parametersPerMenu = costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
+                            var menuItemName =
+                                (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
+                            var parametersPerMenu =
+                                costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
                             parametersPerMenuType ??= parametersPerMenu.GetType();
-                            var materialReplaces = (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
-                                .GetValue(parametersPerMenu);
+                            var materialReplaces =
+                                (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
+                                    .GetValue(parametersPerMenu);
                             var variants = new List<Variant>();
                             foreach (var materialReplace in materialReplaces)
                             {
                                 materialReplacerType ??= materialReplace.GetType();
                                 var fields = materialReplacerType.GetFields();
-                                var renderer = (Renderer) fields.First(item => item.Name == "renderer").GetValue(materialReplace);
-                                var replaceTo = (Material[]) fields.First(item => item.Name == "replaceTo").GetValue(materialReplace);
+                                var renderer = (Renderer)fields.First(item => item.Name == "renderer")
+                                    .GetValue(materialReplace);
+                                var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
+                                    .GetValue(materialReplace);
                                 variants.Add(new Variant
                                 {
                                     Renderer = renderer,
@@ -4737,8 +4747,10 @@ namespace com.github.hkrn
                             }
                         }
                     }
-                    Debug.Log($"{materialVariants}");
+
+                    ctx.GetState(_ => materialVariants);
                 });
+#endif // NVE_HAS_LILINV
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
@@ -4779,10 +4791,11 @@ namespace com.github.hkrn
                     }
 
                     var ro = ctx.AvatarRootObject;
+                    var materialVariants = ctx.GetState<List<MaterialVariants>>();
                     var basePath = AssetPathUtils.GetOutputPath(ro);
                     Directory.CreateDirectory(basePath);
                     using var stream = new MemoryStream();
-                    using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver);
+                    using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver, materialVariants.AsReadOnly());
                     var json = exporter.Export(stream);
                     var bytes = stream.GetBuffer();
                     File.WriteAllBytes($"{basePath}.vrm", bytes);
