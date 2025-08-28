@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -35,6 +36,7 @@ using VRC.SDKBase.Editor.Api;
 
 #if NVE_HAS_AVATAR_OPTIMIZER
 using Anatawa12.AvatarOptimizer.API;
+using jp.lilxyzw.lilycalinventory.runtime;
 #endif // NVE_HAS_AVATAR_OPTIMIZER
 
 #if NVE_HAS_LILTOON
@@ -4673,11 +4675,44 @@ namespace com.github.hkrn
 
         protected override void Configure()
         {
+            InPhase(BuildPhase.Transforming)
+                .BeforePlugin("jp.lilxyzw.lilycalinventory")
+                .Run("Retrieve Metadata", ctx =>
+                {
+                    var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
+                    var costumeChangerType = typeof(CostumeChanger);
+                    const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
+                    const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
+                    Type? costumeType = null;
+                    Type? materialReplacerType = null;
+                    Type? parametersPerMenuType = null;
+                    foreach (var costumeChanger in costumeChangers)
+                    {
+                        var costumes = (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(costumeChanger);
+                        foreach (var costume in costumes)
+                        {
+                            costumeType ??= costume.GetType();
+                            var menuItemName = (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
+                            var parametersPerMenu = costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
+                            parametersPerMenuType ??= parametersPerMenu.GetType();
+                            var materialReplaces = (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
+                                .GetValue(parametersPerMenu);
+                            foreach (var materialReplace in materialReplaces)
+                            {
+                                materialReplacerType ??= materialReplace.GetType();
+                                var fields = materialReplacerType.GetFields();
+                                var renderer = (Renderer) fields.First(item => item.Name == "renderer").GetValue(materialReplace);
+                                var replaceTo = (Material[]) fields.First(item => item.Name == "replaceTo").GetValue(materialReplace);
+                                Debug.Log($"LI = {menuItemName}:{renderer}:{replaceTo}");
+                            }
+                        }
+                    }
+                });
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("VrmExportPlugin", ctx =>
+                .Run("Export VRM file", ctx =>
                 {
                     if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
                     {
