@@ -2103,6 +2103,7 @@ namespace com.github.hkrn
                         {
                             break;
                         }
+
                         gltf.ObjectID materialID;
                         if (material)
                         {
@@ -2155,8 +2156,14 @@ namespace com.github.hkrn
                 variantIndex++;
             }
 
+            if (allMeshMaterialMappings.Count <= 0)
+            {
+                return;
+            }
+
             _root.Extensions!.Add(gltf.extensions.KhrMaterialsVariants.Name,
                 gltf.Document.SaveAsNode(materialVariants));
+            _extensionsUsed.Add(gltf.extensions.KhrMaterialsVariants.Name);
             foreach (var ((meshID, primitiveIndex), variantPrimitive) in allMeshMaterialMappings)
             {
                 var mesh = _root.Meshes![(int)meshID.ID];
@@ -2165,8 +2172,6 @@ namespace com.github.hkrn
                 primitive.Extensions.Add(gltf.extensions.KhrMaterialsVariants.Name,
                     gltf.Document.SaveAsNode(variantPrimitive));
             }
-
-            _extensionsUsed.Add(gltf.extensions.KhrMaterialsVariants.Name);
         }
 
         private bool HasEmptySourceConstraint()
@@ -4810,7 +4815,7 @@ namespace com.github.hkrn
 #if NVE_HAS_LILINV
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("jp.lilxyzw.lilycalinventory")
-                .Run("Retrieve Metadata", ctx =>
+                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants", ctx =>
                 {
                     var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
                     var costumeChangerType = typeof(CostumeChanger);
@@ -4822,6 +4827,12 @@ namespace com.github.hkrn
                     var variants = new List<MaterialVariant>();
                     foreach (var costumeChanger in costumeChangers)
                     {
+                        if (!costumeChanger.enabled)
+                        {
+                            Debug.Log($"LI CostumeChanger {costumeChanger.name} is disabled and will be skipped");
+                            continue;
+                        }
+
                         var costumes =
                             (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
                                 costumeChanger);
@@ -4870,7 +4881,7 @@ namespace com.github.hkrn
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Export VRM file", ctx =>
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ctx =>
                 {
                     if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
                     {
