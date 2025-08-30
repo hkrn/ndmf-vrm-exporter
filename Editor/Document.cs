@@ -1496,6 +1496,78 @@ namespace com.github.hkrn.gltf
                 };
             }
         }
+
+        public sealed class KhrMaterialsVariants : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_variants";
+            public IList<KhrMaterialsVariantsItem> Variants { get; init; } = new List<KhrMaterialsVariantsItem>();
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsVariants
+                {
+                    Variants = Variants,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsVariantsItem : ICloneable
+        {
+            public UnicodeString? Name { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsVariantsItem
+                {
+                    Name = Name,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsVariantsPrimitive : ICloneable
+        {
+            public IList<KhrMaterialsVariantsPrimitiveMapping> Mappings { get; init; } =
+                new List<KhrMaterialsVariantsPrimitiveMapping>();
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsVariantsPrimitive
+                {
+                    Mappings = Mappings,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsVariantsPrimitiveMapping : ICloneable
+        {
+            public ObjectID Material { get; set; }
+            public IList<ObjectID> Variants { get; init; } = new List<ObjectID>();
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsVariantsPrimitiveMapping
+                {
+                    Material = Material,
+                    Variants = Variants,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
     }
 
     namespace exporter
@@ -2664,6 +2736,16 @@ namespace com.github.hkrn.gltf
         }
 
         public static JToken SaveAsNode(extensions.KhrTextureBasisu value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsVariants value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsVariantsPrimitive value)
         {
             return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
         }
