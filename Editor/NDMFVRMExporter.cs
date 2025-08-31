@@ -38,14 +38,18 @@ using VRC.SDKBase.Editor.Api;
 using Anatawa12.AvatarOptimizer.API;
 #endif // NVE_HAS_AVATAR_OPTIMIZER
 
-#if NVE_HAS_LILINV
+#if NVE_HAS_LILYCAL_INVENTORY
 using jp.lilxyzw.lilycalinventory.runtime;
-#endif // NVE_HAS_LILINV
+#endif // NVE_HAS_LILYCAL_INVENTORY
 
 #if NVE_HAS_LILTOON
 using lilToon;
 using UnityEngine.Rendering;
 #endif // NVE_HAS_LILTOON
+
+#if NVE_HAS_MODULAR_AVATAR
+using nadena.dev.modular_avatar.core;
+#endif // NVE_HAS_MODULAR_AVATAR
 
 #if NVE_HAS_NDMF
 using nadena.dev.ndmf;
@@ -4826,7 +4830,9 @@ namespace com.github.hkrn
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
+                    RetrieveAllModularAvatarReactiveComponentsPass)
+                .Then.Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
         }
 
         private static void ExportVrmFilePass(BuildContext ctx)
@@ -4897,9 +4903,14 @@ namespace com.github.hkrn
             }
         }
 
+        private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext ctx)
+        {
+            // var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMaterialSetter>();
+        }
+
         private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
         {
-#if NVE_HAS_LILINV
+#if NVE_HAS_LILYCAL_INVENTORY
             var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
             var costumeChangerType = typeof(CostumeChanger);
             var menuFolderType = typeof(MenuFolder);
@@ -4994,7 +5005,7 @@ namespace com.github.hkrn
 
             ctx.GetState(_ => variants);
 #else
-#endif // NVE_HAS_LILINV
+#endif // NVE_HAS_LILYCAL_INVENTORY
         }
 
         private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
