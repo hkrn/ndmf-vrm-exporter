@@ -4818,176 +4818,83 @@ namespace com.github.hkrn
 
         protected override void Configure()
         {
-#if NVE_HAS_LILINV
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("jp.lilxyzw.lilycalinventory")
-                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants", ctx =>
-                {
-                    var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
-                    var costumeChangerType = typeof(CostumeChanger);
-                    var menuFolderType = typeof(MenuFolder);
-                    const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
-                    const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
-                    Type? costumeType = null;
-                    Type? materialReplacerType = null;
-                    Type? parametersPerMenuType = null;
-                    var variants = new List<MaterialVariant>();
-                    foreach (var costumeChanger in costumeChangers)
-                    {
-                        if (!costumeChanger.enabled)
-                        {
-                            Debug.Log($"LI CostumeChanger {costumeChanger.name} is disabled and will be skipped");
-                            continue;
-                        }
-
-                        var baseMenuName =
-                            (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
-                                .GetValue(costumeChanger);
-                        var baseParentOverride =
-                            (MenuFolder)costumeChangerType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
-                                costumeChanger);
-                        var costumes =
-                            (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
-                                costumeChanger);
-                        foreach (var costume in costumes)
-                        {
-                            costumeType ??= costume.GetType();
-                            var parentOverride =
-                                (MenuFolder)costumeType.GetField("parentOverride", bindingAttrPublic)!
-                                    .GetValue(costume);
-                            if (!parentOverride)
-                            {
-                                parentOverride = baseParentOverride;
-                            }
-                            var menuItemNameChain = new List<string>();
-                            while (parentOverride)
-                            {
-                                var menuItemNameInner =
-                                    (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
-                                        parentOverride);
-                                menuItemNameChain.Add(menuItemNameInner);
-                                parentOverride =
-                                    (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
-                                        parentOverride);
-                            }
-
-                            menuItemNameChain.Reverse();
-                            var menuItemName =
-                                (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
-                            var parametersPerMenu =
-                                costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
-                            parametersPerMenuType ??= parametersPerMenu.GetType();
-                            var materialReplaces =
-                                (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
-                                    .GetValue(parametersPerMenu);
-                            var mappings = new List<MaterialVariantMapping>();
-                            foreach (var materialReplace in materialReplaces)
-                            {
-                                materialReplacerType ??= materialReplace.GetType();
-                                var fields = materialReplacerType.GetFields();
-                                var renderer = (Renderer)fields.First(item => item.Name == "renderer")
-                                    .GetValue(materialReplace);
-                                var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
-                                    .GetValue(materialReplace);
-                                mappings.Add(new MaterialVariantMapping
-                                {
-                                    Renderer = renderer,
-                                    Materials = replaceTo,
-                                });
-                            }
-
-                            if (mappings.Count <= 0)
-                            {
-                                continue;
-                            }
-
-                            var menuItemNameChainInner = new List<string>(menuItemNameChain.AsReadOnly())
-                            {
-                                baseMenuName,
-                                menuItemName
-                            };
-                            variants.Add(new MaterialVariant
-                            {
-                                Name = string.Join("/", menuItemNameChainInner),
-                                Mappings = mappings.ToArray(),
-                            });
-                        }
-                    }
-
-                    ctx.GetState(_ => variants);
-                });
-#endif // NVE_HAS_LILINV
+                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
+                    RetrieveAllCostumeChangerComponentsPass);
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ctx =>
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmPass);
+        }
+
+        private static void ExportVrmPass(BuildContext ctx)
+        {
+            if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
+                return;
+            }
+
+            if (!component.enabled)
+            {
+                Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
+                return;
+            }
+
+            if (!component.HasAuthor)
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
+                return;
+            }
+
+            if (!component.HasLicenseUrl)
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
+                return;
+            }
+
+            var corrupted = new List<SkinnedMeshRenderer>();
+            CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
+            if (corrupted.Count > 0)
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                    "component.runtime.error.validation.smr", corrupted);
+                return;
+            }
+
+            var ro = ctx.AvatarRootObject;
+            var variants = ctx.GetState<List<MaterialVariant>>().AsReadOnly();
+            var basePath = AssetPathUtils.GetOutputPath(ro);
+            Directory.CreateDirectory(basePath);
+            using var stream = new MemoryStream();
+            using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver, variants);
+            var json = exporter.Export(stream);
+            var bytes = stream.GetBuffer();
+            File.WriteAllBytes($"{basePath}.vrm", bytes);
+            if (component.enableGenerateJsonFile)
+            {
+                File.WriteAllText($"{basePath}.json", json);
+            }
+
+            if (!component.deleteTemporaryObjects)
+            {
+                return;
+            }
+
+            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
+            {
+                try
                 {
-                    if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
-                        return;
-                    }
-
-                    if (!component.enabled)
-                    {
-                        Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
-                        return;
-                    }
-
-                    if (!component.HasAuthor)
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
-                        return;
-                    }
-
-                    if (!component.HasLicenseUrl)
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
-                        return;
-                    }
-
-                    var corrupted = new List<SkinnedMeshRenderer>();
-                    CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
-                    if (corrupted.Count > 0)
-                    {
-                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                            "component.runtime.error.validation.smr", corrupted);
-                        return;
-                    }
-
-                    var ro = ctx.AvatarRootObject;
-                    var variants = ctx.GetState<List<MaterialVariant>>().AsReadOnly();
-                    var basePath = AssetPathUtils.GetOutputPath(ro);
-                    Directory.CreateDirectory(basePath);
-                    using var stream = new MemoryStream();
-                    using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver, variants);
-                    var json = exporter.Export(stream);
-                    var bytes = stream.GetBuffer();
-                    File.WriteAllBytes($"{basePath}.vrm", bytes);
-                    if (component.enableGenerateJsonFile)
-                    {
-                        File.WriteAllText($"{basePath}.json", json);
-                    }
-
-                    if (!component.deleteTemporaryObjects)
-                    {
-                        return;
-                    }
-
-                    foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
-                    {
-                        try
-                        {
-                            var info = new DirectoryInfo(item);
-                            info.Delete(true);
-                        }
-                        catch (DirectoryNotFoundException)
-                        {
-                            /* this is ignorable */
-                        }
-                    }
-                });
+                    var info = new DirectoryInfo(item);
+                    info.Delete(true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    /* this is ignorable */
+                }
+            }
         }
 
         private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
@@ -5048,6 +4955,106 @@ namespace com.github.hkrn
             }
 
             return false;
+        }
+
+        private static void RetrieveAllCostumeChangerComponentsPass(BuildContext ctx)
+        {
+#if NVE_HAS_LILINV
+            var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
+            var costumeChangerType = typeof(CostumeChanger);
+            var menuFolderType = typeof(MenuFolder);
+            const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
+            Type? costumeType = null;
+            Type? materialReplacerType = null;
+            Type? parametersPerMenuType = null;
+            var variants = new List<MaterialVariant>();
+            foreach (var costumeChanger in costumeChangers)
+            {
+                if (!costumeChanger.enabled)
+                {
+                    Debug.Log($"LI CostumeChanger {costumeChanger.name} is disabled and will be skipped");
+                    continue;
+                }
+
+                var baseMenuName =
+                    (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
+                        .GetValue(costumeChanger);
+                var baseParentOverride =
+                    (MenuFolder)costumeChangerType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                var costumes =
+                    (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                foreach (var costume in costumes)
+                {
+                    costumeType ??= costume.GetType();
+                    var parentOverride =
+                        (MenuFolder)costumeType.GetField("parentOverride", bindingAttrPublic)!
+                            .GetValue(costume);
+                    if (!parentOverride)
+                    {
+                        parentOverride = baseParentOverride;
+                    }
+
+                    var menuItemNameChain = new List<string>();
+                    while (parentOverride)
+                    {
+                        var menuItemNameInner =
+                            (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                        menuItemNameChain.Add(menuItemNameInner);
+                        parentOverride =
+                            (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                    }
+
+                    menuItemNameChain.Reverse();
+                    var menuItemName =
+                        (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
+                    var parametersPerMenu =
+                        costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
+                    parametersPerMenuType ??= parametersPerMenu.GetType();
+                    var materialReplaces =
+                        (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
+                            .GetValue(parametersPerMenu);
+                    var mappings = new List<MaterialVariantMapping>();
+                    foreach (var materialReplace in materialReplaces)
+                    {
+                        materialReplacerType ??= materialReplace.GetType();
+                        var fields = materialReplacerType.GetFields();
+                        var renderer = (Renderer)fields.First(item => item.Name == "renderer")
+                            .GetValue(materialReplace);
+                        var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
+                            .GetValue(materialReplace);
+                        mappings.Add(new MaterialVariantMapping
+                        {
+                            Renderer = renderer,
+                            Materials = replaceTo,
+                        });
+                    }
+
+                    if (mappings.Count <= 0)
+                    {
+                        continue;
+                    }
+
+                    var menuItemNameChainInner = new List<string>(menuItemNameChain.AsReadOnly())
+                    {
+                        baseMenuName,
+                        menuItemName
+                    };
+                    variants.Add(new MaterialVariant
+                    {
+                        Name = string.Join("/", menuItemNameChainInner),
+                        Mappings = mappings.ToArray(),
+                    });
+                }
+            }
+
+            ctx.GetState(_ => variants);
+#else
+#endif // NVE_HAS_LILINV
         }
     }
 
