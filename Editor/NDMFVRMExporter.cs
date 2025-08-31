@@ -4836,6 +4836,9 @@ namespace com.github.hkrn
                             continue;
                         }
 
+                        var menuBaseItemName =
+                            (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
+                                .GetValue(costumeChanger);
                         var costumes =
                             (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
                                 costumeChanger);
@@ -4870,7 +4873,7 @@ namespace com.github.hkrn
                             {
                                 variants.Add(new MaterialVariant
                                 {
-                                    Name = menuItemName,
+                                    Name = $"{menuBaseItemName}/{menuItemName}",
                                     Mappings = mappings.ToArray(),
                                 });
                             }
