@@ -4821,15 +4821,15 @@ namespace com.github.hkrn
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("jp.lilxyzw.lilycalinventory")
                 .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
-                    RetrieveAllCostumeChangerComponentsPass);
+                    RetrieveAllLiCostumeChangerComponentsPass);
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmPass);
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
         }
 
-        private static void ExportVrmPass(BuildContext ctx)
+        private static void ExportVrmFilePass(BuildContext ctx)
         {
             if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
             {
@@ -4897,67 +4897,7 @@ namespace com.github.hkrn
             }
         }
 
-        private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
-        {
-            foreach (Transform child in parent)
-            {
-                if (!child.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) &&
-                    smr.sharedMesh && IsSharedMeshCorrupted(smr))
-                {
-                    corrupted.Add(smr);
-                }
-
-                CheckAllSkinnedMeshRenderers(child, ref corrupted);
-            }
-        }
-
-        private static bool IsSharedMeshCorrupted(SkinnedMeshRenderer smr)
-        {
-            var mesh = smr.sharedMesh;
-            var bones = smr.bones;
-            var numPositions = mesh.boneWeights.Length;
-            var numSubMeshes = mesh.subMeshCount;
-            var indexMapping = new Dictionary<uint, uint>();
-            for (var meshIndex = 0; meshIndex < numSubMeshes; meshIndex++)
-            {
-                var indices = mesh.GetIndices(meshIndex).Select(index => (uint)index).ToArray();
-                var indexSet = new HashSet<uint>(indices);
-                indexMapping.Clear();
-                for (uint i = 0; i < numPositions; i++)
-                {
-                    if (!indexSet.Contains(i))
-                    {
-                        continue;
-                    }
-
-                    var newIndex = (uint)indexMapping.Count;
-                    indexMapping.Add(i, newIndex);
-                }
-
-                if (indices.Any(index => !indexMapping.TryGetValue(index, out _)))
-                {
-                    return true;
-                }
-
-                var boneWeights = mesh.boneWeights;
-                if (boneWeights.Any(boneWeight => (boneWeight.weight0 > 0.0 && !bones[boneWeight.boneIndex0]) ||
-                                                  (boneWeight.weight1 > 0.0 && !bones[boneWeight.boneIndex1]) ||
-                                                  (boneWeight.weight2 > 0.0 && !bones[boneWeight.boneIndex2]) ||
-                                                  (boneWeight.weight3 > 0.0 && !bones[boneWeight.boneIndex3])))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static void RetrieveAllCostumeChangerComponentsPass(BuildContext ctx)
+        private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
         {
 #if NVE_HAS_LILINV
             var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
@@ -5055,6 +4995,66 @@ namespace com.github.hkrn
             ctx.GetState(_ => variants);
 #else
 #endif // NVE_HAS_LILINV
+        }
+
+        private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
+        {
+            foreach (Transform child in parent)
+            {
+                if (!child.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) &&
+                    smr.sharedMesh && IsSharedMeshCorrupted(smr))
+                {
+                    corrupted.Add(smr);
+                }
+
+                CheckAllSkinnedMeshRenderers(child, ref corrupted);
+            }
+        }
+
+        private static bool IsSharedMeshCorrupted(SkinnedMeshRenderer smr)
+        {
+            var mesh = smr.sharedMesh;
+            var bones = smr.bones;
+            var numPositions = mesh.boneWeights.Length;
+            var numSubMeshes = mesh.subMeshCount;
+            var indexMapping = new Dictionary<uint, uint>();
+            for (var meshIndex = 0; meshIndex < numSubMeshes; meshIndex++)
+            {
+                var indices = mesh.GetIndices(meshIndex).Select(index => (uint)index).ToArray();
+                var indexSet = new HashSet<uint>(indices);
+                indexMapping.Clear();
+                for (uint i = 0; i < numPositions; i++)
+                {
+                    if (!indexSet.Contains(i))
+                    {
+                        continue;
+                    }
+
+                    var newIndex = (uint)indexMapping.Count;
+                    indexMapping.Add(i, newIndex);
+                }
+
+                if (indices.Any(index => !indexMapping.TryGetValue(index, out _)))
+                {
+                    return true;
+                }
+
+                var boneWeights = mesh.boneWeights;
+                if (boneWeights.Any(boneWeight => (boneWeight.weight0 > 0.0 && !bones[boneWeight.boneIndex0]) ||
+                                                  (boneWeight.weight1 > 0.0 && !bones[boneWeight.boneIndex1]) ||
+                                                  (boneWeight.weight2 > 0.0 && !bones[boneWeight.boneIndex2]) ||
+                                                  (boneWeight.weight3 > 0.0 && !bones[boneWeight.boneIndex3])))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
