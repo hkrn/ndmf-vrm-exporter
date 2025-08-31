@@ -4825,14 +4825,16 @@ namespace com.github.hkrn
             InPhase(BuildPhase.Transforming)
                 .BeforePlugin("jp.lilxyzw.lilycalinventory")
                 .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
-                    RetrieveAllLiCostumeChangerComponentsPass);
+                    RetrieveAllLiCostumeChangerComponentsPass)
+                .Then
+                .BeforePlugin("nadena.dev.modular-avatar")
+                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
+                    RetrieveAllModularAvatarReactiveComponentsPass);
             InPhase(BuildPhase.Optimizing)
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
-                    RetrieveAllModularAvatarReactiveComponentsPass)
-                .Then.Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
         }
 
         private static void ExportVrmFilePass(BuildContext ctx)
@@ -4905,7 +4907,40 @@ namespace com.github.hkrn
 
         private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext ctx)
         {
-            // var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMaterialSetter>();
+            var variants = new List<MaterialVariant>();
+            var materialSetters = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMaterialSetter>();
+            foreach (var materialSetter in materialSetters)
+            {
+                var variantName = materialSetter.gameObject.name;
+                if (materialSetter.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+                {
+                    variantName = menuItem.name;
+                }
+
+                var mappings = new Dictionary<Renderer, List<Material>>();
+                foreach (var item in materialSetter.Objects)
+                {
+                    var go = item.Object.Get(materialSetter);
+                    var renderer = go.GetComponent<Renderer>();
+                    if (mappings.TryGetValue(renderer, out var materials))
+                    {
+                        materials.Add(item.Material);
+                    }
+                    else
+                    {
+                        mappings.Add(renderer, new List<Material>(new[]{item.Material}));
+                    }
+                }
+
+                variants.Add(new MaterialVariant
+                {
+                    Name = variantName,
+                    Mappings = mappings.Select(item => new MaterialVariantMapping
+                        { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+                });
+            }
+
+            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
         }
 
         private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
@@ -5003,7 +5038,7 @@ namespace com.github.hkrn
                 }
             }
 
-            ctx.GetState(_ => variants);
+            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
 #else
 #endif // NVE_HAS_LILYCAL_INVENTORY
         }
