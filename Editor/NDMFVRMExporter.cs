@@ -36,8 +36,11 @@ using VRC.SDKBase.Editor.Api;
 
 #if NVE_HAS_AVATAR_OPTIMIZER
 using Anatawa12.AvatarOptimizer.API;
-using jp.lilxyzw.lilycalinventory.runtime;
 #endif // NVE_HAS_AVATAR_OPTIMIZER
+
+#if NVE_HAS_LILINV
+using jp.lilxyzw.lilycalinventory.runtime;
+#endif // NVE_HAS_LILINV
 
 #if NVE_HAS_LILTOON
 using lilToon;
@@ -4822,6 +4825,7 @@ namespace com.github.hkrn
                 {
                     var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
                     var costumeChangerType = typeof(CostumeChanger);
+                    var menuFolderType = typeof(MenuFolder);
                     const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
                     const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
                     Type? costumeType = null;
@@ -4836,15 +4840,38 @@ namespace com.github.hkrn
                             continue;
                         }
 
-                        var menuBaseItemName =
+                        var baseMenuName =
                             (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
                                 .GetValue(costumeChanger);
+                        var baseParentOverride =
+                            (MenuFolder)costumeChangerType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                                costumeChanger);
                         var costumes =
                             (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
                                 costumeChanger);
                         foreach (var costume in costumes)
                         {
                             costumeType ??= costume.GetType();
+                            var parentOverride =
+                                (MenuFolder)costumeType.GetField("parentOverride", bindingAttrPublic)!
+                                    .GetValue(costume);
+                            if (!parentOverride)
+                            {
+                                parentOverride = baseParentOverride;
+                            }
+                            var menuItemNameChain = new List<string>();
+                            while (parentOverride)
+                            {
+                                var menuItemNameInner =
+                                    (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
+                                        parentOverride);
+                                menuItemNameChain.Add(menuItemNameInner);
+                                parentOverride =
+                                    (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                                        parentOverride);
+                            }
+
+                            menuItemNameChain.Reverse();
                             var menuItemName =
                                 (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
                             var parametersPerMenu =
@@ -4869,14 +4896,21 @@ namespace com.github.hkrn
                                 });
                             }
 
-                            if (mappings.Count > 0)
+                            if (mappings.Count <= 0)
                             {
-                                variants.Add(new MaterialVariant
-                                {
-                                    Name = $"{menuBaseItemName}/{menuItemName}",
-                                    Mappings = mappings.ToArray(),
-                                });
+                                continue;
                             }
+
+                            var menuItemNameChainInner = new List<string>(menuItemNameChain.AsReadOnly())
+                            {
+                                baseMenuName,
+                                menuItemName
+                            };
+                            variants.Add(new MaterialVariant
+                            {
+                                Name = string.Join("/", menuItemNameChainInner),
+                                Mappings = mappings.ToArray(),
+                            });
                         }
                     }
 
