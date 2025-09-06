@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.0.14] - 2025-09-06
+
+### Fixed
+
+- [exporter] Fixed a bug where hidden bones are referenced ([#69](https://github.com/hkrn/ndmf-vrm-exporter/pull/69))
+
 ## [1.0.13] - 2025-08-26
 
 ### Fixed
@@ -113,7 +119,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.14...HEAD
+[1.0.14]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...1.0.14
 [1.0.13]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...1.0.13
 [1.0.12]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...1.0.12
 [1.0.11]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.10...1.0.11
