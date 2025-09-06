@@ -4907,40 +4907,144 @@ namespace com.github.hkrn
 
         private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext ctx)
         {
+#if NVE_HAS_MODULAR_AVATAR
             var variants = new List<MaterialVariant>();
-            var materialSetters = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMaterialSetter>();
-            foreach (var materialSetter in materialSetters)
+            var installers = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
+            foreach (var installer in installers)
             {
-                var variantName = materialSetter.gameObject.name;
-                if (materialSetter.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+                if (!installer.enabled || !installer.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
                 {
-                    variantName = menuItem.name;
+                    Debug.Log($"MA menu installer {installer.name} is not enabled or MA menu item is not attached");
+                    continue;
                 }
 
-                var mappings = new Dictionary<Renderer, List<Material>>();
-                foreach (var item in materialSetter.Objects)
+                if (!menuItem.enabled)
                 {
-                    var go = item.Object.Get(materialSetter);
-                    var renderer = go.GetComponent<Renderer>();
-                    if (mappings.TryGetValue(renderer, out var materials))
-                    {
-                        materials.Add(item.Material);
-                    }
-                    else
-                    {
-                        mappings.Add(renderer, new List<Material>(new[]{item.Material}));
-                    }
+                    Debug.Log($"MA menu item {menuItem.name} is not enabled");
+                    continue;
                 }
 
-                variants.Add(new MaterialVariant
+                if (menuItem.PortableControl.Type == PortableControlType.SubMenu)
                 {
-                    Name = variantName,
-                    Mappings = mappings.Select(item => new MaterialVariantMapping
-                        { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
-                });
+                    var name = menuItem.name;
+                    foreach (Transform child in menuItem.transform)
+                    {
+                        if (child.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
+                        {
+                            MapMaterialSwapToVariants(ctx, materialSwap, name, ref variants);
+                        }
+                        else if (child.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
+                        {
+                            MapMaterialSetterToVariants(materialSetter, name, ref variants);
+                        }
+                    }
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
+                {
+                    MapMaterialSwapToVariants(ctx, materialSwap, null, ref variants);
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
+                {
+                    MapMaterialSetterToVariants(materialSetter, null, ref variants);
+                }
             }
 
             ctx.GetState<List<MaterialVariant>>().AddRange(variants);
+        }
+
+        private static void MapMaterialSwapToVariants(BuildContext ctx, ModularAvatarMaterialSwap materialSwap,
+            string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var reference = materialSwap.Root.Get(materialSwap);
+            var renderers = (reference ?? ctx.AvatarRootObject).GetComponentsInChildren<Renderer>();
+            var sourceMappings = renderers.ToDictionary(renderer => renderer, renderer => renderer.sharedMaterials);
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSwap.gameObject.name;
+            if (materialSwap.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var swap in materialSwap.Swaps)
+            {
+                var swapFrom = ObjectRegistry.GetReference(swap.From);
+                foreach (var (sourceRenderer, sourceMaterials) in sourceMappings)
+                {
+                    var materialIndex = 0;
+                    foreach (var sourceMaterial in sourceMaterials)
+                    {
+                        var sourceMaterialReference = ObjectRegistry.GetReference(sourceMaterial);
+                        if (swapFrom?.Object == sourceMaterialReference?.Object)
+                        {
+                            if (mappings.TryGetValue(sourceRenderer, out var materials))
+                            {
+                                materials[materialIndex] = swap.To;
+                            }
+                            else
+                            {
+                                var newMaterials = new Material[sourceMaterials.Length];
+                                newMaterials[materialIndex] = swap.To;
+                                mappings.Add(sourceRenderer, newMaterials);
+                            }
+                        }
+
+                        materialIndex++;
+                    }
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+        }
+
+        private static void MapMaterialSetterToVariants(ModularAvatarMaterialSetter materialSetter, string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSetter.gameObject.name;
+            if (materialSetter.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var item in materialSetter.Objects)
+            {
+                var go = item.Object.Get(materialSetter);
+                if (!go.TryGetComponent<Renderer>(out var renderer))
+                {
+                    Debug.Log($"{go} in MaterialSwitchObject has no renderer");
+                    continue;
+                }
+
+                if (mappings.TryGetValue(renderer, out var materials))
+                {
+                    if (item.MaterialIndex < materials.Length)
+                    {
+                        materials[item.MaterialIndex] = item.Material;
+                    }
+                }
+                else if (item.MaterialIndex < renderer.sharedMaterials.Length)
+                {
+                    var newMaterials = new Material[renderer.sharedMaterials.Length];
+                    newMaterials[item.MaterialIndex] = item.Material;
+                    mappings.Add(renderer, newMaterials);
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+#else
+            Debug.Log("Modular Avatar (>= 1.13) is not installed and will be skipped");
+#endif // NVE_HAS_MODULAR_AVATAR
         }
 
         private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
@@ -4949,6 +5053,7 @@ namespace com.github.hkrn
             var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
             var costumeChangerType = typeof(CostumeChanger);
             var menuFolderType = typeof(MenuFolder);
+            var menuItemNameChain = new List<string>();
             const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
             const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
             Type? costumeType = null;
@@ -4983,9 +5088,16 @@ namespace com.github.hkrn
                         parentOverride = baseParentOverride;
                     }
 
-                    var menuItemNameChain = new List<string>();
+                    var menuIsEnabled = true;
+                    menuItemNameChain.Clear();
                     while (parentOverride)
                     {
+                        if (!parentOverride.enabled)
+                        {
+                            menuIsEnabled = false;
+                            break;
+                        }
+
                         var menuItemNameInner =
                             (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
                                 parentOverride);
@@ -4993,6 +5105,12 @@ namespace com.github.hkrn
                         parentOverride =
                             (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
                                 parentOverride);
+                    }
+
+                    if (!menuIsEnabled)
+                    {
+                        Debug.Log($"LI MenuFolder {parentOverride.name} is disabled and will be skipped");
+                        continue;
                     }
 
                     menuItemNameChain.Reverse();
@@ -5040,6 +5158,7 @@ namespace com.github.hkrn
 
             ctx.GetState<List<MaterialVariant>>().AddRange(variants);
 #else
+            Debug.Log("lilycalInventory is not installed and will be skipped");
 #endif // NVE_HAS_LILYCAL_INVENTORY
         }
 
