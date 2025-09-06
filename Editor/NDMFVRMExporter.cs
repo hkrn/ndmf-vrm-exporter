@@ -2301,7 +2301,8 @@ namespace com.github.hkrn
 
                 foreach (var transform in bones)
                 {
-                    if (!transform || _transformMap.TryGetValue(transform, out var offset))
+                    if (!transform || !transform.gameObject.activeInHierarchy ||
+                        _transformMap.TryGetValue(transform, out var offset))
                     {
                         continue;
                     }
