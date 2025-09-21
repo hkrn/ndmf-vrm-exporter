@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.0.15] - 2025-09-21
+
+### Fixed
+
+- [exporter] Fixed a bug where NaN is output ([#71](https://github.com/hkrn/ndmf-vrm-exporter/pull/71))
+
 ## [1.0.14] - 2025-09-06
 
 ### Fixed
@@ -119,7 +125,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.14...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...HEAD
+[1.0.15]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.14...1.0.15
 [1.0.14]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...1.0.14
 [1.0.13]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...1.0.13
 [1.0.12]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.11...1.0.12
