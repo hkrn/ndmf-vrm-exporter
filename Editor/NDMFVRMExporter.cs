@@ -4189,7 +4189,8 @@ namespace com.github.hkrn
                         }
 
                         var (upperDepth, lowerDepth) = FindTransformDepth(transform, rootTransform);
-                        var depthRatio = upperDepth / (float)(upperDepth + lowerDepth);
+                        var totalDepth = upperDepth + lowerDepth;
+                        var depthRatio = totalDepth != 0 ? upperDepth / (float)totalDepth : 0;
                         var evaluate = new Func<float, AnimationCurve, float>((value, curve) =>
                             curve.length > 0
                                 ? curve.Evaluate(depthRatio) * value
