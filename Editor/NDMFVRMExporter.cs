@@ -3698,7 +3698,8 @@ namespace com.github.hkrn
                 var descriptor = _gameObject.GetComponent<VRCAvatarDescriptor>();
                 var animator = _gameObject.GetComponent<Animator>();
                 var head = animator.GetBoneTransform(HumanBodyBones.Head);
-                var offsetFromHeadBone = descriptor.ViewPosition - head.position;
+                var headPosition = head.position - _gameObject.transform.position;
+                var offsetFromHeadBone = descriptor.ViewPosition - headPosition;
                 core.LookAt = new vrm.core.LookAt
                 {
                     Type = vrm.core.LookAtType.Bone,
