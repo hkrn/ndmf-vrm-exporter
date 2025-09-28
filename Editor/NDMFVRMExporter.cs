@@ -18,6 +18,7 @@ using Newtonsoft.Json.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using VRC.SDK3.Editor;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
@@ -45,7 +46,9 @@ using UnityEngine.Rendering;
 #if NVE_HAS_NDMF
 using nadena.dev.ndmf;
 using nadena.dev.ndmf.localization;
+using nadena.dev.ndmf.platform;
 using nadena.dev.ndmf.runtime;
+using UnityEngine.UIElements;
 
 [assembly: ExportsPlugin(typeof(com.github.hkrn.NdmfVrmExporterPlugin))]
 #endif
@@ -4680,60 +4683,30 @@ namespace com.github.hkrn
                 .AfterPlugin("com.anatawa12.avatar-optimizer")
                 .AfterPlugin("nadena.dev.modular-avatar")
                 .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("VrmExportPlugin", ctx =>
+                .Run("VrmExportPlugin", buildContext =>
                 {
-                    if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+                    var avatarRootObject = buildContext.AvatarRootObject;
+                    if (!avatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
                     {
                         Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
                         return;
                     }
-
                     if (!component.enabled)
                     {
-                        Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
+                        Debug.LogWarning(Translator._("component.runtime.error.validation.not-enabled"));
                         return;
                     }
 
-                    if (!component.HasAuthor)
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
-                        return;
-                    }
-
-                    if (!component.HasLicenseUrl)
-                    {
-                        Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
-                        return;
-                    }
-
-                    var corrupted = new List<SkinnedMeshRenderer>();
-                    CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
-                    if (corrupted.Count > 0)
-                    {
-                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                            "component.runtime.error.validation.smr", corrupted);
-                        return;
-                    }
-
-                    var ro = ctx.AvatarRootObject;
-                    var basePath = AssetPathUtils.GetOutputPath(ro);
+                    var basePath = AssetPathUtils.GetOutputPath(avatarRootObject);
                     Directory.CreateDirectory(basePath);
-                    using var stream = new MemoryStream();
-                    using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver);
-                    var json = exporter.Export(stream);
-                    var bytes = stream.GetBuffer();
-                    File.WriteAllBytes($"{basePath}.vrm", bytes);
-                    if (component.enableGenerateJsonFile)
-                    {
-                        File.WriteAllText($"{basePath}.json", json);
-                    }
+                    ExportVrmFile(component, buildContext, basePath, key => { Debug.Log(Translator._(key)); });
 
                     if (!component.deleteTemporaryObjects)
                     {
                         return;
                     }
 
-                    foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
+                    foreach (var item in new[] { AssetPathUtils.GetTempPath(avatarRootObject), basePath })
                     {
                         try
                         {
@@ -4746,6 +4719,44 @@ namespace com.github.hkrn
                         }
                     }
                 });
+        }
+
+        internal static bool ExportVrmFile(NdmfVrmExporterComponent component, BuildContext buildContext,
+            string basePath, Action<string> validationCallback)
+        {
+            if (!component.HasAuthor)
+            {
+                validationCallback("component.runtime.error.validation.author");
+                return false;
+            }
+
+            if (!component.HasLicenseUrl)
+            {
+                validationCallback("component.runtime.error.validation.license-url");
+                return false;
+            }
+
+            var avatarRootObject = buildContext.AvatarRootObject;
+            var corrupted = new List<SkinnedMeshRenderer>();
+            CheckAllSkinnedMeshRenderers(buildContext.AvatarRootTransform, ref corrupted);
+            if (corrupted.Count > 0)
+            {
+                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                    "component.runtime.error.validation.smr", corrupted);
+                return false;
+            }
+
+            using var stream = new MemoryStream();
+            using var exporter = new NdmfVrmExporter(avatarRootObject, buildContext.AssetSaver);
+            var json = exporter.Export(stream);
+            var bytes = stream.GetBuffer();
+            File.WriteAllBytes($"{basePath}.vrm", bytes);
+            if (component.enableGenerateJsonFile)
+            {
+                File.WriteAllText($"{basePath}.json", json);
+            }
+
+            return true;
         }
 
         private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
@@ -4806,6 +4817,82 @@ namespace com.github.hkrn
             }
 
             return false;
+        }
+    }
+
+    [NDMFPlatformProvider]
+    internal class NdmfVrmExporterPlatform : INDMFPlatformProvider
+    {
+        public string QualifiedName => NdmfVrmExporterPlugin.Instance.QualifiedName;
+        public string DisplayName => "VRM 1.0 (NDMF VRM Exporter)";
+
+        public BuildUIElement CreateBuildUI() => new NdmfVrmExporterBuildUI();
+
+        internal static readonly NdmfVrmExporterPlatform Instance = new();
+        internal string LastBuildDirectory { get; set; } = "";
+        internal string LastBuildFileNameWithoutExtension { get; set; } = "Untitled";
+    }
+
+    internal class NdmfVrmExporterBuildUI : BuildUIElement
+    {
+        public override GameObject AvatarRoot { get; set; } = null!;
+
+        public NdmfVrmExporterBuildUI()
+        {
+            var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
+                $"Packages/{NdmfVrmExporter.PackageJson.Name}/Editor/UI/Resources/NDMFVRMExporter.uxml");
+            var rootContainer = visualTree.CloneTree();
+            Add(rootContainer);
+            var exportButton = rootContainer.Q<Button>("export");
+            var messageLabel = rootContainer.Q<Label>("message");
+            exportButton.clicked += () =>
+            {
+                messageLabel.SetVisible(false);
+                var platformInstance = NdmfVrmExporterPlatform.Instance;
+                var path = EditorUtility.SaveFilePanel("Export VRM File", platformInstance.LastBuildDirectory,
+                    platformInstance.LastBuildFileNameWithoutExtension, "vrm");
+                if (string.IsNullOrEmpty(path))
+                {
+                    Debug.Log("Exporting VRM has been cancelled");
+                    return;
+                }
+
+                var avatarRoot = Object.Instantiate(AvatarRoot);
+                avatarRoot.name = avatarRoot.name[..^"(clone)".Length];
+                try
+                {
+                    using var scope = new AmbientPlatform.Scope(platformInstance);
+                    using var scope2 = new OverrideTemporaryDirectoryScope(null);
+                    var buildContext = AvatarProcessor.ProcessAvatar(avatarRoot, platformInstance);
+                    if (!avatarRoot.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+                    {
+                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                            "component.runtime.error.validation.not-attached");
+                        return;
+                    }
+
+                    var buildDirectory = Path.GetDirectoryName(path) ?? string.Empty;
+                    var buildFileNameWithoutExtension = Path.GetFileNameWithoutExtension(path) ?? string.Empty;
+                    var fullPath = Path.Join(buildDirectory, buildFileNameWithoutExtension);
+                    if (!NdmfVrmExporterPlugin.ExportVrmFile(component, buildContext, fullPath,
+                            key =>
+                            {
+                                Debug.Log(key);
+                                messageLabel.SetVisible(true);
+                                messageLabel.text = Translator._(key);
+                            }))
+                    {
+                        return;
+                    }
+                    platformInstance.LastBuildDirectory = buildDirectory;
+                    platformInstance.LastBuildFileNameWithoutExtension = buildFileNameWithoutExtension;
+                    EditorUtility.DisplayDialog(NdmfVrmExporterPlugin.Instance.DisplayName, "Exporting VRM has been completed!", "OK");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(avatarRoot);
+                }
+            };
         }
     }
 
