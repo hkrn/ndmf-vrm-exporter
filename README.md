@@ -35,6 +35,22 @@ NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っ
 
 アップロードして確認する場合は [VRoid Hub](https://hub.vroid.com) の利用を推奨します。
 
+### NDMF の実験的な機能を有効にしている場合
+
+> [!IMPORTANT]
+> この方法で出力を行う場合は `VRM Export Description` コンポーネントが無効であっても機能します
+
+NDMF の実験的な機能を有効にしている場合はプラットフォーム毎のビルドが利用可能になるため、こちらの方法でも VRM 出力が可能です。その場合は毎回再生してビルドする方法と異なり、コンポーネントを無効にしても機能するため必要なタイミングで任意の場所に対して VRM ファイルの出力が可能となります。
+
+1. インスペクタ画面から `VRC Avatar Descriptor` があるところで `Add Component` から `VRM Export Description` コンポーネントを検索し設定
+2. `VRM Export Description` コンポーネント内にある `Retrieve Metadata via VRChat API` で自動設定
+  * アバターが未アップロードなどの理由で手動設定する場合は `Authors` の左横の ▶️ をクリックして 🔽 にしたのち、➕ ボタンで作者名を設定
+3. メニューから `Tools` > `NDM Framework` > `Show NDMF Console` を選択
+4. Avatar から出力するアバターを選択
+5. Avatar platform から `VRM 1.0 (NDMF VRM Exporter)` を選択
+6. Avatar platform の項目のすぐ下に出てくる `Export` ボタンを押す
+7. ファイルダイアログが開くので出力先を指定
+
 ## コンポーネントの説明
 
 NDMF VRM Exporter が提供するコンポーネントは `VRM Export Description` のひとつのみです。コンポーネントを有効にした状態（コンポーネント名の横にチェックボックス ✅ がついてる状態）で再生すると VRM ファイルが生成される仕組みとなっています。
