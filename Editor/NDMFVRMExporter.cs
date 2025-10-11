@@ -4193,7 +4193,7 @@ namespace com.github.hkrn
                         var totalDepth = upperDepth + lowerDepth;
                         var depthRatio = totalDepth != 0 ? upperDepth / (float)totalDepth : 0;
                         var evaluate = new Func<float, AnimationCurve, float>((value, curve) =>
-                            curve.length > 0
+                            curve is { length: > 0 }
                                 ? curve.Evaluate(depthRatio) * value
                                 : value);
                         var gravity = evaluate(pb.gravity, pb.gravityCurve);
