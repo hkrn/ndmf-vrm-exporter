@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.0.16] - 2025-10-15
+
+### Fixed
+
+- [exporter] Fixed to apply original values when AnimationCurve is null ([#76](https://github.com/hkrn/ndmf-vrm-exporter/pull/76))
+- [exporter] Fixed to exclude root influence from offsetFromHeadBone ([#74](https://github.com/hkrn/ndmf-vrm-exporter/pull/74))
+
 ## [1.0.15] - 2025-09-21
 
 ### Fixed
@@ -125,7 +132,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.16...HEAD
+[1.0.16]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.0.16
 [1.0.15]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.14...1.0.15
 [1.0.14]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...1.0.14
 [1.0.13]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.12...1.0.13
