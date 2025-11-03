@@ -450,6 +450,12 @@ XWear Packager と NDMF VRM Exporter は一緒に入れることができるた�
 
 利用制約は軽量化によって解決できることがあります。軽量化についての詳細は [VRChatアバター最適化・軽量化【脱Very Poor】](https://lilxyzw.github.io/matome/ja/avatar/optimization.html) を参照してください。
 
+### プラットフォームによる制限のためポリゴン数を減らしたいけど、どうすればよいですか？
+
+NDMF VRM Exporter 自体はポリゴン数を減らす機能を持っていませんが、NDMF プラグインとしても提供されている [Meshia Mesh Simplification](https://github.com/RamType0/Meshia.MeshSimplification/)（詳細な使い方とコツは [こちらの記事](https://vrnavi.jp/meshia-mesh-simplification/) が詳しい）を併用することでポリゴン数を減らすことが可能です。
+
+具体例として [Cluster](https://cluster.mu) での VRM 1.0 は全てのメッシュで [72000 ポリゴンの上限](https://help.cluster.mu/hc/ja/articles/360029465811-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%90%E3%82%BF%E3%83%BC%E3%81%AE%E5%88%B6%E9%99%90) がありますが、Meshia Mesh Simplification の `PC-Poor-Medium-Good` プリセットを使うことによりその制約を満たすことが可能です。
+
 [^1]: VRM の仕様でも個人情報を含めることについては [意図していません](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/meta.ja.md#metacontactinformation)
 [^2]: 厳密には [VRCPipelineManager](https://creators.vrchat.com/sdk/vrcpipelinemanager/) コンポーネントで管理されているブループリント ID が発行されている必要があります。これはアバターの初回アップロード後に自動的に発行されます
 [^3]: これは [VN3](https://www.vn3.org) のような法務的監修を受けたライセンスとは別の完全に独自運用のライセンスを想定しています。ただし独自ライセンスの運用は法務上の相談ができる環境でなければ原則として避けるべきです
