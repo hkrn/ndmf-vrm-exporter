@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-05
+
+- [exporter] implements `KHR_materials_variants` ([#86](https://github.com/hkrn/ndmf-vrm-exporter/pull/86))
+
 ## [1.0.16] - 2025-10-15
 
 ### Fixed
@@ -132,7 +136,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.16...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.1.0
 [1.0.16]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.0.16
 [1.0.15]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.14...1.0.15
 [1.0.14]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.13...1.0.14
