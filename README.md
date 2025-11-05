@@ -219,6 +219,14 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 利用目的は `Spring Bone Options` の `Excluded Spring Bone Colliders` および `Excluded Spring Bones` と同じです。
 
+## glTF Extension Options
+
+以下の設定が可能です。設定自体は 1.1.0 から導入されました。
+
+* `Enable KHR_materials_variants`
+  * マテリアルを動的に切り替えられるようにする公式の拡張である [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md) 拡張を有効にするかどうかを設定します
+  * 詳細は「材質（マテリアル）の切り替え」の章を確認してください
+
 ## Debug Options
 
 以下の設定が可能です。
@@ -314,7 +322,7 @@ Unity Constraint での `Constraint Settings` および VRC Constraint での `F
 
 スプリングボーンと同様に VRM Constraint と Unity/VRC Constraint は計算方法が異なるため結果は同一になりません。
 
-### 材質の変換
+### 材質（マテリアル）の変換
 
 lilToon シェーダが使われている場合は MToon 互換設定に変換します（MToon 未対応の環境のために `KHR_materials_unlit` も付与します）。その場合は以下の処理を行います。
 
@@ -337,6 +345,51 @@ lilToon シェーダが使われている場合は MToon 互換設定に変換�
 * リムライトの乗算テクスチャにマットキャップのマスクテクスチャを割り当て
 
 lilToon 以外のシェーダが使われている場合は MToon の変換は行われず、glTF 準拠の最低限の設定で変換します。
+
+### 材質（マテリアル）の切り替え
+
+材質（マテリアル）の切り替えについては [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) と [Modular Avatar](https://modular-avatar.nadena.dev) のコンポーネント設定に対応しており、両方設定している場合は両方とも適用されます。いずれの場合も公式の glTF 拡張である [KHR_materials_variants](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_variants) に変換します。
+
+> [!WARNING]
+> 切り替えに必要なマテリアル数及びテクスチャ数が増加する関係でその分出力される VRM のファイルサイズが大きくなるため、切り替えが不要であればコンポーネント設定の `glTF Extension Options` 内にある `Enable KHR_materials_variants` を無効にしてください。また `KHR_materials_variants` に対応しているかどうかは読み込み先アプリケーションに依存します
+
+#### lilycalInventory を利用している場合
+
+lilycalInventory の [LI CostumeChanger](https://lilxyzw.github.io/lilycalInventory/ja/docs/components/costumechanger.html) コンポーネントのうち「マテリアルの置き換え」を使っている場合に適用されます。
+
+* 名前は「メニュー・パラメーター名」とコスチューム側の「メニュー名」を利用
+  * 「メニューの親フォルダ」が設定されている場合はその名前を再帰的にたどります
+    * 「コスチューム」にある方と両方設定されている場合は「コスチューム」の方が優先されます
+    * 「メニューのオーバーライド」は使用されません
+    * 親フォルダがひとつでも無効化されている場合はスキップされます
+  * `${メニューの親フォルダ名}/${メニュー・パラメーター名}/${メニュー名}` の法則で名前が設定されます
+    * メニューの親フォルダ名は親フォルダの数だけ `/` が追加されます
+  * 例えば「メニューの親フォルダ」の設定なしで「メニュー・パラメーター名」が「衣装」で「メニュー名」が「派生」の場合は `衣装/派生` になります
+* 「メッシュ」と「置き換え先」は VRM に対応するものと直接マッピング
+  * 置き換え先が `None` の場合は元のマテリアルを参照します
+* それ以外の項目は全て無視される
+
+> [!NOTE]
+> [LI AutoDresser](https://lilxyzw.github.io/lilycalInventory/ja/docs/components/autodresser.html) コンポーネントは内部的に LI CostumeChanger に変換されますが、こちらは NDMF VRM Exporter としてサポート対象外です
+
+`LI CostumeChanger` がもつ機能であるオブジェクトのオンオフ、材質のプロパティ操作、アニメーション再生、ブレンドシェイプの切り替えその他諸々には対応していません。それらが設定されている場合でも全て無視されます。
+
+LI CostumeChanger コンポーネントをを無効化すると生成されなくなります。
+
+#### Modular Avatar を利用している場合
+
+以下の条件を **全て** 満たしている時に変換されます。もし全て満たしているにもかかわらず変換されていない場合は非対応条件に当てはまってないかと Unity の Console 画面を確認してください。
+
+* Modular Avatar 1.13 以上がインストールされていること
+  * これは Modular Avatar 1.13 に導入された API に依存しているためです
+* [Material Setter](https://modular-avatar.nadena.dev/dev/ja/docs/reference/reaction/material-setter) または [Material Swap](https://modular-avatar.nadena.dev/dev/ja/docs/reference/reaction/material-swap) コンポーネントを利用していること
+* [Menu Installer](https://modular-avatar.nadena.dev/dev/ja/docs/reference/menu-installer) と [Menu Item](https://modular-avatar.nadena.dev/dev/ja/docs/reference/menu-item) が両方とも有効かつ同じコンポーネント内に設定されていること
+* Menu Item コンポーネントに Material Setter または Material Swap コンポーネントが紐づけられていること
+  * サブメニューに対応していますが、2階層以上のネストされたサブメニューには対応していません
+
+名前はサブメニューが設定されている場合に lilycalInventory と同じよう `/` で区切られます。
+
+Menu Installer または Menu Item コンポーネントを無効化することで生成されなくなります。
 
 ## 設計思想
 
