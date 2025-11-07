@@ -19,6 +19,12 @@ msgstr "The component must be set on root of Avatar"
 msgid "component.validation.not-enabled"
 msgstr "VRM file will not be exported due to the component is not enabled"
 
+msgid "component.platform-build.suggestion"
+msgstr "VRM can be exported by clicking below \"Open NDMF Console to export VRM file\" button"
+
+msgid "component.platform-build.open"
+msgstr "Open NDMF Console to export VRM file"
+
 msgid "component.validation.avatar-thumbnail"
 msgstr "Avatar thumbnail image must be square"
 
@@ -228,9 +234,6 @@ msgstr "KTX Tool Path"
 
 msgid "component.runtime.error.validation.not-attached"
 msgstr "Building VRM file will be skipped due to the component is not attached"
-
-msgid "component.runtime.error.validation.not-enabled"
-msgstr "Building VRM file will be skipped due to the component is not enabled"
 
 msgid "component.runtime.error.validation.author"
 msgstr "Building VRM file will be skipped due to required authors property is empty"
