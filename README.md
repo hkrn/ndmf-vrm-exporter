@@ -31,7 +31,7 @@ NDMF VRM Exporter には以下の特徴を持っています。
 4. `Assets/NDMF VRM Exporter/${シーン名}` 内にアバター名のついた VRM ファイルが出力されていることを確認
   * シーンが未保存の状態で実行した場合はシーン名が `Untitled` になります
 
-NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っていません。そのため出力された VRM ファイルを手元環境で確認する場合は [VRMファイルが使えるアプリケーションは？](https://vrm.dev/showcase) から「ビューワー」を選択して適宜アプリケーションを導入して読み込んでください。その際は必ず VRM 1.0 対応のものを利用してください（VRM 0.x のみ対応の場合は読み込めません）。
+NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っていません。そのため出力された VRM ファイルを手元環境で確認する場合は [VRoid Playground](https://hub.vroid.com/playground)（要 Pixiv アカウント）を利用するか、[VRMファイルが使えるアプリケーションは？](https://vrm.dev/showcase) から「ビューワー」を選択して適宜アプリケーションを導入して読み込んでください。その際は必ず VRM 1.0 対応のものを利用してください（VRM 0.x のみ対応の場合は読み込めません）。
 
 アップロードして確認する場合は [VRoid Hub](https://hub.vroid.com) の利用を推奨します。
 
@@ -425,9 +425,12 @@ NDMF VRM Exporter は「最小限の労力でおおむね１００点満点中�
 
 既知の問題でモデルによっては該当のエラーが表示されることがあります。これの直接的な原因はインデックスからの頂点あるいは頂点からのボーンに対する不正参照によるもので、そのまま出力すると読み込めないあるいは異常表示の VRM が出来上がってしまうことを防ぐための措置です。
 
+> [!IMPORTANT]
+> NDMF VRM Exporter 1.0.13 以降から破損検知処理を厳格化したので 1.0.12 以前を利用している場合はアップグレードしてください
+
 変換元モデルに対する問題であり NDMF VRM Exporter で対処できる問題の範疇を超えるため、プロジェクトを作り直すか、エラーが出ている部分を MeshRenderer に変換するか、該当のオブジェクトを非表示にするかの対処療法でしか提示できないのが現状です。
 
-### VRM が出力されていない
+### VRM ファイルが出力されていない
 
 以下のいずれかに当てはまっていないかどうかを確認してください。これらは全てコンポーネント上に事前に警告またはエラーメッセージが入ります。特に１番目は起こりやすいです。
 
@@ -436,21 +439,31 @@ NDMF VRM Exporter は「最小限の労力でおおむね１００点満点中�
 * `Authors` 設定が入っていない
 * `License URL` 設定が URL 形式として不正
 
-ただし [Skinned Mesh Renderer](https://docs.unity3d.com/ja/2022.3/Manual/class-SkinnedMeshRenderer.html) の実行時破損検出処理で NDMF のコンソールにエラーとして表示されることがあります。その場合は該当する Skinned Mesh Renderer を [Mesh Renderer](https://docs.unity3d.com/ja/2022.3/Manual/class-MeshRenderer.html) に変更するか、プロジェクトの作り直しが必要になります。
+ただし [Skinned Mesh Renderer](https://docs.unity3d.com/ja/2022.3/Manual/class-SkinnedMeshRenderer.html) の実行時破損検出処理で NDMF のコンソールにエラーとして表示されることがあります。詳細は「`Building VRM file will be skipped due to corrupted SkinnedMeshRenderer found` と出る」を確認してください。
+
+### lilToon が使われているにも関わらず出力された VRM 1.0 アバターの見た目が明らかに一致しない
+
+[VRCQuestTools](https://kurotu.github.io/VRCQuestTools) を利用して Android/iOS 向けに同時出力している場合に特有の事情によってこの問題に該当する可能性があります。お手数ですが PC 向けの方で出力をお願いします。
+
+VRChat Android/iOS 版ではシェーダの制限により lilToon が利用できず、ToonLit もしくはその高機能版の ToonStandard が利用可能となっています。このため NDMF VRM Exporter に処理が渡される前 [^12] に VRCQuestTools によって lilToon から ToonLit または ToonStandard に自動的に変換されます。その結果 lilToon を検知できず MToon 変換が行われないため、見た目が一致しない状態で出力されます。
+
+なお ToonLit への対応予定はなく、ToonStandard に対する変換の対応予定についても今のところありませんが、需要次第では対応する可能性があります。
 
 ### 出力した VRM 1.0 アバターを 0.x にダウングレードできますか？
 
-このツールではそのような機能を持っていませんが、[VrmDowngrader](https://github.com/saturday06/VrmDowngrader) と [VRMRemaker](https://fujisunflower.fanbox.cc/posts/7313957) がありますのでそちらを使いください。ただし 0.x に変換して 1.0 に戻す形の再変換を行った場合は原則としてサポート対象外となりますのでご注意ください。
+NDMF VRM Exporter としてそのような機能を持っていませんが、0.x にダウングレードするツールとして [VrmDowngrader](https://github.com/saturday06/VrmDowngrader) と [VRMRemaker](https://fujisunflower.fanbox.cc/posts/7313957) がありますのでどちらかをお使いください。ただし 0.x に変換して 1.0 に戻す形の再変換を行った場合は原則としてサポート対象外となりますのでご注意ください。
 
 ### VRM 1.0 アバターを VRChat アバターとして変換してアップロードする機能はありますか？
 
-ありません。また実装予定もありません。
+ありません。また NDMF VRM Exporter として実装する予定もありません。
+
+ただし方法が全くないわけでなく [VRoid Studio が VRM から XAvatar を通じて VRChat アバターへの変換に対応している](https://vroid.pixiv.help/hc/ja/articles/38728373457561-VRChat%E3%81%A7%E4%BD%BF%E3%81%86%E3%81%AB%E3%81%AF) のでそれをご利用ください。
 
 ### VRM Converter for VRChat の違いはなんですか？
 
 VRChat アバターを VRM に変換（またはその逆）するツールとして定番である [VRM Converter for VRChat](https://github.com/esperecyan/VRMConverterForVRChat) は VRM 0.x の仕様準拠で変換するのに対して NDMF VRM Exporter は VRM 1.0 の仕様準拠で変換するという点にあります。
 
-そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^12]。
+そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^13]。
 
 |項目|VRM Converter for VRChat|NDMF VRM Exporter|
 |---|---|---|
@@ -479,13 +492,15 @@ VRM 1.0 を出力できる点は同じですが、出力するまでの過程が
   * Modular Avatar で着せ替えしたアバターにコンポーネントを付与
   * Unity から再生し、出力したファイルを取得
 
-VRoid Studio の場合は VRM の出力に XAvatar を利用する関係で VRoid Studio の導入が別途必要で、作業自体は Unity 単体で完結しません。くわえて Modular Avatar を使って着せ替えを行なっている場合 VRoid Studio 向けに XAvatar の作業行程を新たに構築する必要があるため、その構築を NDMF VRM Exporter では不要とする点が強みとなります。
+VRoid Studio の場合は VRM の出力に XAvatar を利用する関係で VRoid Studio の導入が別途必要で、作業自体は Unity 単体で完結しません。一方で NDMF VRM Exporter は Unity 内で完結します。
+
+また Modular Avatar を使って着せ替えを行なっている場合 VRoid Studio 向けに XAvatar の作業行程を新たに構築する必要がありますが、その構築を NDMF VRM Exporter では不要とする点も強みとなります。
 
 XWear Packager と NDMF VRM Exporter は一緒に入れることができるため、XWear/XAvatar が必要な場合は XWear Package 経由で VRoid Studio を、Modular Avatar を使っている場合は NDMF VRM Exporter を使い分けることが可能です。
 
 ### NDMF VRM Exporter で生成した VRM ファイルで部分的に黒い箇所が出る
 
-材質の色が黒の場合は既定で無効に設定されているマットキャップが使われている可能性があるため、`MToon Options` の `Enable Matcap` を有効にして再度出力すると正しく表示される可能性があります。
+材質色として既定で無効に設定されているマットキャップが出力する色に依存している可能性があるため、`MToon Options` の `Enable Matcap` を有効にして再度出力すると正しく表示される可能性があります。
 
 ### NDMF VRM Exporter で生成した VRM ファイルを利用しようとしたらエラーになります
 
@@ -507,6 +522,9 @@ XWear Packager と NDMF VRM Exporter は一緒に入れることができるた�
 
 NDMF VRM Exporter 自体はポリゴン数を減らす機能を持っていませんが、NDMF プラグインとしても提供されている [Meshia Mesh Simplification](https://github.com/RamType0/Meshia.MeshSimplification/)（詳細な使い方とコツは [こちらの記事](https://vrnavi.jp/meshia-mesh-simplification/) が詳しい）を併用することでポリゴン数を減らすことが可能です。
 
+> [!IMPORTANT]
+> ポリゴン数の削減はアバターの見た目に直接影響するため、まず Avatar Optimizer で削減を行った上でどうしてもそれだけで達成ができない場合にのみ Meshia Mesh Simplification を利用するようにしてください
+
 具体例として [Cluster](https://cluster.mu) での VRM 1.0 は全てのメッシュで [72000 ポリゴンの上限](https://help.cluster.mu/hc/ja/articles/360029465811-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%90%E3%82%BF%E3%83%BC%E3%81%AE%E5%88%B6%E9%99%90) がありますが、Meshia Mesh Simplification の `PC-Poor-Medium-Good` プリセットを使うことによりその制約を満たすことが可能です。
 
 [^1]: VRM の仕様でも個人情報を含めることについては [意図していません](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/meta.ja.md#metacontactinformation)
@@ -520,4 +538,5 @@ NDMF VRM Exporter 自体はポリゴン数を減らす機能を持っていま�
 [^9]: 1.0.5 以前は枝分かれに考慮されていなかったため、枝分かれも繋がったひとつのスプリングボーンとして出力されていました
 [^10]: Position Constraint (実質的に Parent Constraint も同様) は未対応ですが https://github.com/vrm-c/vrm-specification/issues/468 で要望があがっています
 [^11]: VRM Constraint が glTF のノードの拡張として実装されており、ひとつのノード（＝ゲームオブジェクト）につきひとつの VRM Constraint しか持つことができないためです
-[^12]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
+[^12]: Avatar Optimizer 導入前提で NDMF VRM Exporter は Avatar Optimizer の「後」に実施するのに対して VRCQuestTools が Avatar Optimizer の「前」に実施するため。Avatar Optimizer 未導入の場合の扱いは未定義です
+[^13]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
