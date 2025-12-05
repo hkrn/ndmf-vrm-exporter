@@ -22,7 +22,9 @@ NDMF VRM Exporter には以下の特徴を持っています。
 
 レポジトリ導入後は `NDMF VRM Exporter` を検索してインストールすることで利用可能になります。
 
-## 使い方
+## 使い方その１
+
+Unity を再生あるいは VRChat にアップロードする際にビルドと共に書き出す方法です。
 
 1. インスペクタ画面から `VRC Avatar Descriptor` があるところで `Add Component` から `VRM Export Description` コンポーネントを検索し設定
 2. `VRM Export Description` コンポーネント内にある `Retrieve Metadata via VRChat API` で自動設定
@@ -35,12 +37,34 @@ NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っ
 
 アップロードして確認する場合は [VRoid Hub](https://hub.vroid.com) の利用を推奨します。
 
+### 使い方その２
+
+> [!IMPORTANT]
+> NDMF 1.8 以上 (Modular Avatar では 1.13 以上が対応) が導入されている必要があります
+
+NDMF に組み込まれているアバタープラットフォーム機能を利用する方法です。「使い方その１」と異なり、コンポーネントを無効にしても機能し必要なタイミングで任意の場所に対して VRM ファイルの出力が可能となります。
+
+1. インスペクタ画面から `VRC Avatar Descriptor` があるところで `Add Component` から `VRM Export Description` コンポーネントを検索し設定
+2. `VRM Export Description` コンポーネント内にある `Retrieve Metadata via VRChat API` で自動設定
+  * アバターが未アップロードなどの理由で手動設定する場合は `Authors` の左横の ▶️ をクリックして 🔽 にしたのち、➕ ボタンで作者名を設定
+3. `VRM Export Description` 左横のチェックボタンを外して無効化
+  * 有効化したままの場合はメニューの `Tools > NDM Framework > Show NDMF Console` でウィンドウを開く必要があります
+4. 無効にした際に現れる `Open NDMF Console to export VRM file` ボタンを押す
+5. `Avatar platform` から `VRM 1.0 (NDMF VRM Exporter)` を選択
+6. `Avatar platform` の項目のすぐ下に出てくる `Export` ボタンを押す
+7. ファイルダイアログが開くので出力先を指定
+
 ## コンポーネントの説明
 
-NDMF VRM Exporter が提供するコンポーネントは `VRM Export Description` のひとつのみです。コンポーネントを有効にした状態（コンポーネント名の横にチェックボックス ✅ がついてる状態）で再生すると VRM ファイルが生成される仕組みとなっています。
+NDMF VRM Exporter が提供するコンポーネントは `VRM Export Description` のひとつのみです。
+
+* コンポーネントを有効にした状態（コンポーネント名の横にチェックボックス ✅ がついてる状態）で再生
+* コンポーネントの有効無効にかかわらず NDMF Console からプラットフォーム選択で `NDMF VRM Exporter` を選び Export した場合
+
+上記のいずれかによって VRM ファイルが生成される仕組みとなっています。
 
 > [!TIP]
-> 処理の性質上 VRM ファイルの生成は最低でも数秒、場合によっては数分と時間がかかるため、[AV3 Emulator](https://github.com/lyuma/Av3Emulator) などを使ってアバターをデバッグする際はコンポーネントを無効にすることを推奨します
+> 処理の性質上 VRM ファイルの生成は最低でも数秒、場合によっては数分と時間がかかるため、時間がかかる場合はコンポーネントを無効化して NDMF Console 経由でファイル書き出しをしてください
 
 ### Metadata
 
@@ -200,7 +224,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 > [!TIP]
 > NDMF VRM Exporter においてリムライトを無効にしていることが条件ですが、マットキャップのマスクテクスチャを使う形でマットキャップの乗算モードを擬似的に実現可能です
 
-ただしマットキャップが「有効」かつリムライトが「無効」の場合は MToon の実装の関係でリムライトのパラメータを上書きします。詳細は「出力互換性の情報」の「材質の変換」を確認してください。
+ただしマットキャップが「有効」かつリムライトが「無効」の場合は MToon の実装の関係でリムライトのパラメータを上書きします。詳細は「出力互換性の情報」の「材質（マテリアル）の変換」を確認してください。
 
 ## Spring Bone Options
 
@@ -490,7 +514,7 @@ VRM 1.0 を出力できる点は同じですが、出力するまでの過程が
 * NDMF VRM Exporter
   * VPM 経由で NDMF VRM Exporter を導入
   * Modular Avatar で着せ替えしたアバターにコンポーネントを付与
-  * Unity から再生し、出力したファイルを取得
+  * Unity から再生または NDMF コンソール経由で書き出し、出力したファイルを取得
 
 VRoid Studio の場合は VRM の出力に XAvatar を利用する関係で VRoid Studio の導入が別途必要で、作業自体は Unity 単体で完結しません。一方で NDMF VRM Exporter は Unity 内で完結します。
 

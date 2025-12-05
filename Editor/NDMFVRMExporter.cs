@@ -55,6 +55,9 @@ using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf;
 using nadena.dev.ndmf.localization;
 using nadena.dev.ndmf.runtime;
+#if NVE_HAS_NDMF_PLATFORM_SUPPORT
+using nadena.dev.ndmf.ui;
+#endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
 
 [assembly: ExportsPlugin(typeof(com.github.hkrn.NdmfVrmExporterPlugin))]
 #endif
@@ -64,10 +67,7 @@ namespace com.github.hkrn
     [AddComponentMenu("NDMF VRM Exporter/VRM Export Description")]
     [DisallowMultipleComponent]
     [HelpURL("https://github.com/hkrn/ndmf-vrm-exporter")]
-    public sealed class NdmfVrmExporterComponent : MonoBehaviour
-#if NVE_HAS_VRCHAT_AVATAR_SDK
-        , IEditorOnly
-#endif // NVE_HAS_VRCHAT_AVATAR_SDK
+    public sealed class NdmfVrmExporterComponent : MonoBehaviour, INDMFEditorOnly
     {
         [NotKeyable] [SerializeField] internal bool metadataFoldout = true;
 
@@ -238,7 +238,9 @@ namespace com.github.hkrn
         private SerializedProperty _deleteTemporaryObjectsProp = null!;
         private SerializedProperty _ktxToolPathProp = null!;
         private SerializedProperty _metadataModeSelection = null!;
+
         private SerializedProperty _expressionModeSelection = null!;
+
         // from 1.1.0
         private SerializedProperty _extensionFoldoutProp = null!;
         private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
@@ -382,8 +384,17 @@ namespace com.github.hkrn
             }
             else
             {
+#if NVE_HAS_NDMF_PLATFORM_SUPPORT
+                EditorGUILayout.HelpBox(Translator._("component.platform-build.suggestion"),
+                    MessageType.Info);
+                if (GUILayout.Button(Translator._("component.platform-build.open")))
+                {
+                    ErrorReportWindow.ShowReport(component.gameObject);
+                }
+#else
                 EditorGUILayout.HelpBox(Translator._("component.validation.not-enabled"),
                     MessageType.Warning);
+#endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
             }
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
@@ -802,7 +813,8 @@ namespace com.github.hkrn
 
         private void DrawExtensionOptions()
         {
-            DrawToggleLeft(Translator._("component.extension.enable-khr-materials-variants"), _enableKhrMaterialsVariantsProp);
+            DrawToggleLeft(Translator._("component.extension.enable-khr-materials-variants"),
+                _enableKhrMaterialsVariantsProp);
         }
 
         private void DrawDebugOptions()
@@ -4875,9 +4887,10 @@ namespace com.github.hkrn
                 .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
         }
 
-        private static void ExportVrmFilePass(BuildContext ctx)
+        private static void ExportVrmFilePass(BuildContext buildContext)
         {
-            if (!ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+            var avatarRootObject = buildContext.AvatarRootObject;
+            if (!avatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
             {
                 Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
                 return;
@@ -4885,75 +4898,42 @@ namespace com.github.hkrn
 
             if (!component.enabled)
             {
-                Debug.Log(Translator._("component.runtime.error.validation..not-enabled"));
+                Debug.LogWarning(Translator._("component.runtime.error.validation.not-enabled"));
                 return;
             }
 
-            if (!component.HasAuthor)
-            {
-                Debug.LogWarning(Translator._("component.runtime.error.validation.author"));
-                return;
-            }
-
-            if (!component.HasLicenseUrl)
-            {
-                Debug.LogWarning(Translator._("component.runtime.error.validation.license-url"));
-                return;
-            }
-
-            var corrupted = new List<SkinnedMeshRenderer>();
-            CheckAllSkinnedMeshRenderers(ctx.AvatarRootTransform, ref corrupted);
-            if (corrupted.Count > 0)
-            {
-                ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
-                    "component.runtime.error.validation.smr", corrupted);
-                return;
-            }
-
-            var ro = ctx.AvatarRootObject;
-            var variants = ctx.GetState<List<MaterialVariant>>().AsReadOnly();
-            var basePath = AssetPathUtils.GetOutputPath(ro);
+            var basePath = AssetPathUtils.GetOutputPath(avatarRootObject);
             Directory.CreateDirectory(basePath);
-            using var stream = new MemoryStream();
-            using var exporter = new NdmfVrmExporter(ro, ctx.AssetSaver, variants);
-            var json = exporter.Export(stream);
-            var bytes = stream.GetBuffer();
-            File.WriteAllBytes($"{basePath}.vrm", bytes);
-            if (component.enableGenerateJsonFile)
+            try
             {
-                File.WriteAllText($"{basePath}.json", json);
+                ExportVrmFile(component, buildContext, basePath, basePath);
             }
-
-            if (!component.deleteTemporaryObjects)
+            catch (ValidationException e)
             {
-                return;
-            }
-
-            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), basePath })
-            {
-                try
+                if (e.Extras != null)
                 {
-                    var info = new DirectoryInfo(item);
-                    info.Delete(true);
+                    ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                        e.Key, e.Extras);
                 }
-                catch (DirectoryNotFoundException)
+                else
                 {
-                    /* this is ignorable */
+                    Debug.Log(e.Message);
                 }
             }
         }
 
-        private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext ctx)
+        private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext buildContext)
         {
 #if NVE_HAS_MODULAR_AVATAR
-            if (ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
                 !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
             {
                 Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
                 return;
             }
+
             var variants = new List<MaterialVariant>();
-            var installers = ctx.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
+            var installers = buildContext.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
             foreach (var installer in installers)
             {
                 if (!installer.enabled || !installer.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
@@ -4975,7 +4955,7 @@ namespace com.github.hkrn
                     {
                         if (child.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
                         {
-                            MapMaterialSwapToVariants(ctx, materialSwap, name, ref variants);
+                            MapMaterialSwapToVariants(buildContext, materialSwap, name, ref variants);
                         }
                         else if (child.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
                         {
@@ -4985,7 +4965,7 @@ namespace com.github.hkrn
                 }
                 else if (menuItem.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
                 {
-                    MapMaterialSwapToVariants(ctx, materialSwap, null, ref variants);
+                    MapMaterialSwapToVariants(buildContext, materialSwap, null, ref variants);
                 }
                 else if (menuItem.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
                 {
@@ -4993,15 +4973,15 @@ namespace com.github.hkrn
                 }
             }
 
-            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
+            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
         }
 
-        private static void MapMaterialSwapToVariants(BuildContext ctx, ModularAvatarMaterialSwap materialSwap,
+        private static void MapMaterialSwapToVariants(BuildContext buildContext, ModularAvatarMaterialSwap materialSwap,
             string? name,
             ref List<MaterialVariant> variants)
         {
             var reference = materialSwap.Root.Get(materialSwap);
-            var renderers = (reference ?? ctx.AvatarRootObject).GetComponentsInChildren<Renderer>();
+            var renderers = (reference ?? buildContext.AvatarRootObject).GetComponentsInChildren<Renderer>();
             var sourceMappings = renderers.ToDictionary(renderer => renderer, renderer => renderer.sharedMaterials);
             var mappings = new Dictionary<Renderer, Material[]>();
             var variantName = materialSwap.gameObject.name;
@@ -5091,16 +5071,17 @@ namespace com.github.hkrn
 #endif // NVE_HAS_MODULAR_AVATAR
         }
 
-        private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext ctx)
+        private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext buildContext)
         {
 #if NVE_HAS_LILYCAL_INVENTORY
-            if (ctx.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
                 !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
             {
                 Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
                 return;
             }
-            var costumeChangers = ctx.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
+
+            var costumeChangers = buildContext.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
             var costumeChangerType = typeof(CostumeChanger);
             var menuFolderType = typeof(MenuFolder);
             var menuItemNameChain = new List<string>();
@@ -5206,10 +5187,79 @@ namespace com.github.hkrn
                 }
             }
 
-            ctx.GetState<List<MaterialVariant>>().AddRange(variants);
+            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
 #else
             Debug.Log("lilycalInventory is not installed and will be skipped");
 #endif // NVE_HAS_LILYCAL_INVENTORY
+        }
+
+        internal class ValidationException : Exception
+        {
+            public string Key { get; init; } = null!;
+            public object? Extras { get; init; }
+
+            public override string Message => Translator._(Key);
+        }
+
+        internal static void ExportVrmFile(NdmfVrmExporterComponent component, BuildContext buildContext,
+            string baseOutputPath, string workingDirectoryPath)
+        {
+            if (!component.HasAuthor)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.author"
+                };
+            }
+
+            if (!component.HasLicenseUrl)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.license-url"
+                };
+            }
+
+            var corrupted = new List<SkinnedMeshRenderer>();
+            CheckAllSkinnedMeshRenderers(buildContext.AvatarRootTransform, ref corrupted);
+            if (corrupted.Count > 0)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.smr",
+                    Extras = corrupted,
+                };
+            }
+
+            var ro = buildContext.AvatarRootObject;
+            var variants = buildContext.GetState<List<MaterialVariant>>().AsReadOnly();
+            using var stream = new MemoryStream();
+            using var exporter = new NdmfVrmExporter(ro, buildContext.AssetSaver, variants);
+            var json = exporter.Export(stream);
+            var bytes = stream.GetBuffer();
+            File.WriteAllBytes($"{baseOutputPath}.vrm", bytes);
+            if (component.enableGenerateJsonFile)
+            {
+                File.WriteAllText($"{baseOutputPath}.json", json);
+            }
+
+            if (!component.deleteTemporaryObjects)
+            {
+                return;
+            }
+
+            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), workingDirectoryPath })
+            {
+                try
+                {
+                    var info = new DirectoryInfo(item);
+                    info.Delete(true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    /* this is ignorable */
+                }
+            }
         }
 
         private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
