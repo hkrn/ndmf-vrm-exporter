@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-12-06
+
+- Revert "[chore] split NDMFVRMExporter into several multiple classes" ([#95](https://github.com/hkrn/ndmf-vrm-exporter/pull/95))
+
 ## [1.2.0] - 2025-12-05
 
 - [exporter] adds support of NDMF platform API ([#92](https://github.com/hkrn/ndmf-vrm-exporter/pull/92))
@@ -141,7 +145,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.0...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...HEAD
+[1.2.1]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.1.0
 [1.0.16]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.0.16
