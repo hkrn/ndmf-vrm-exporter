@@ -2,37 +2,1130 @@
 // SPDX-License-Identifier: MPL
 
 #nullable enable
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
-using UnityEngine.Rendering;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
+using System.Net.Http;
+using System.Threading;
+using VRC.Core;
 using VRC.Dynamics;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Dynamics.Constraint.Components;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.SDKBase;
+using VRC.SDKBase.Editor.Api;
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
+#if NVE_HAS_AVATAR_OPTIMIZER
+using Anatawa12.AvatarOptimizer.API;
+#endif // NVE_HAS_AVATAR_OPTIMIZER
+
+#if NVE_HAS_LILYCAL_INVENTORY
+using jp.lilxyzw.lilycalinventory.runtime;
+#endif // NVE_HAS_LILYCAL_INVENTORY
+
+#if NVE_HAS_LILTOON
+using lilToon;
+using UnityEngine.Rendering;
+#endif // NVE_HAS_LILTOON
+
+#if NVE_HAS_MODULAR_AVATAR
+using nadena.dev.modular_avatar.core;
+#endif // NVE_HAS_MODULAR_AVATAR
+
+#if NVE_HAS_NDMF
 using nadena.dev.ndmf;
 using nadena.dev.ndmf.localization;
+using nadena.dev.ndmf.runtime;
+#if NVE_HAS_NDMF_PLATFORM_SUPPORT
+using nadena.dev.ndmf.ui;
+#endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
 
+[assembly: ExportsPlugin(typeof(com.github.hkrn.NdmfVrmExporterPlugin))]
+#endif
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
 {
+    [AddComponentMenu("NDMF VRM Exporter/VRM Export Description")]
+    [DisallowMultipleComponent]
+    [HelpURL("https://github.com/hkrn/ndmf-vrm-exporter")]
+    public sealed class NdmfVrmExporterComponent : MonoBehaviour, INDMFEditorOnly
+    {
+        [NotKeyable] [SerializeField] internal bool metadataFoldout = true;
+
+        [NotKeyable] [SerializeField] internal List<string> authors = new();
+
+        [NotKeyable] [SerializeField] internal string? version;
+
+        [NotKeyable] [SerializeField] internal string? copyrightInformation;
+
+        [NotKeyable] [SerializeField] internal string? contactInformation;
+
+        [NotKeyable] [SerializeField] internal List<string> references = new();
+
+        [NotKeyable] [SerializeField] internal bool enableContactInformationOnVRChatAutofill = true;
+
+        [NotKeyable] [SerializeField] internal string licenseUrl = vrm.core.Meta.DefaultLicenseUrl;
+
+        [NotKeyable] [SerializeField] internal string? thirdPartyLicenses;
+
+        [NotKeyable] [SerializeField] internal string? otherLicenseUrl;
+
+        [NotKeyable] [SerializeField] internal vrm.core.AvatarPermission avatarPermission;
+
+        [NotKeyable] [SerializeField] internal vrm.core.CommercialUsage commercialUsage;
+
+        [NotKeyable] [SerializeField] internal vrm.core.CreditNotation creditNotation;
+
+        [NotKeyable] [SerializeField] internal vrm.core.Modification modification;
+
+        [NotKeyable] [SerializeField] internal bool metadataAllowFoldout;
+
+        [NotKeyable] [SerializeField] internal VrmUsagePermission allowExcessivelyViolentUsage;
+
+        [NotKeyable] [SerializeField] internal VrmUsagePermission allowExcessivelySexualUsage;
+
+        [NotKeyable] [SerializeField] internal VrmUsagePermission allowPoliticalOrReligiousUsage;
+
+        [NotKeyable] [SerializeField] internal VrmUsagePermission allowAntisocialOrHateUsage;
+
+        [NotKeyable] [SerializeField] internal VrmUsagePermission allowRedistribution;
+
+        [NotKeyable] [SerializeField] internal Texture2D? thumbnail;
+
+        [NotKeyable] [SerializeField] internal bool expressionFoldout = true;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetHappyBlendShape = VrmExpressionProperty.Happy;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetAngryBlendShape = VrmExpressionProperty.Angry;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetSadBlendShape = VrmExpressionProperty.Sad;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetRelaxedBlendShape = VrmExpressionProperty.Relaxed;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetSurprisedBlendShape = VrmExpressionProperty.Surprised;
+
+        [NotKeyable] [SerializeField] internal bool expressionCustomBlendShapeNameFoldout;
+
+        [NotKeyable] [SerializeField] internal List<VrmExpressionProperty> expressionCustomBlendShapes = new();
+
+        [NotKeyable] [SerializeField] internal bool springBoneFoldout;
+
+        [NotKeyable] [SerializeField] internal List<Transform> excludedSpringBoneColliderTransforms = new();
+
+        [NotKeyable] [SerializeField] internal List<Transform> excludedSpringBoneTransforms = new();
+
+        [NotKeyable] [SerializeField] internal bool constraintFoldout;
+
+        [NotKeyable] [SerializeField] internal List<Transform> excludedConstraintTransforms = new();
+
+        [NotKeyable] [SerializeField] internal bool mtoonFoldout;
+
+        [NotKeyable] [SerializeField] internal bool enableMToonRimLight;
+
+        [NotKeyable] [SerializeField] internal bool enableMToonMatCap;
+
+        [NotKeyable] [SerializeField] internal bool enableMToonOutline = true;
+
+        [NotKeyable] [SerializeField] internal bool enableBakingAlphaMaskTexture = true;
+
+        [NotKeyable] [SerializeField] internal bool debugFoldout;
+
+        [NotKeyable] [SerializeField] internal bool makeAllNodeNamesUnique = true;
+
+        [NotKeyable] [SerializeField] internal bool enableVertexColorOutput = true;
+
+        [NotKeyable] [SerializeField] internal bool disableVertexColorOnLiltoon = true;
+
+        [NotKeyable] [SerializeField] internal bool enableGenerateJsonFile;
+
+        [NotKeyable] [SerializeField] internal bool deleteTemporaryObjects = true;
+
+        [NotKeyable] [SerializeField] internal string? ktxToolPath;
+
+        [NotKeyable] [SerializeField] internal int metadataModeSelection;
+
+        [NotKeyable] [SerializeField] internal int expressionModeSelection;
+
+        // from 1.1.0
+        [NotKeyable] [SerializeField] internal bool extensionFoldout;
+
+        [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
+
+        public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
+
+        public bool HasLicenseUrl =>
+            !string.IsNullOrWhiteSpace(licenseUrl) && Uri.TryCreate(licenseUrl, UriKind.Absolute, out _);
+
+        public bool HasAvatarRoot => RuntimeUtil.IsAvatarRoot(gameObject.transform);
+
+        // ReSharper disable once Unity.RedundantEventFunction
+        private void Start()
+        {
+            /*  do nothing to show checkbox */
+        }
+    }
+
+    [CustomEditor(typeof(NdmfVrmExporterComponent))]
+    public sealed class NdmfVrmExporterComponentEditor : Editor
+    {
+        private SerializedProperty _metadataFoldoutProp = null!;
+        private SerializedProperty _authorsProp = null!;
+        private SerializedProperty _versionProp = null!;
+        private SerializedProperty _copyrightInformationProp = null!;
+        private SerializedProperty _contactInformationProp = null!;
+        private SerializedProperty _referencesProp = null!;
+        private SerializedProperty _enableContactInformationOnVRChatAutofillProp = null!;
+        private SerializedProperty _licenseUrlProp = null!;
+        private SerializedProperty _thirdPartyLicensesProp = null!;
+        private SerializedProperty _otherLicenseUrlProp = null!;
+        private SerializedProperty _avatarPermissionProp = null!;
+        private SerializedProperty _commercialUsageProp = null!;
+        private SerializedProperty _creditNotationProp = null!;
+        private SerializedProperty _modificationProp = null!;
+        private SerializedProperty _metadataAllowFoldoutProp = null!;
+        private SerializedProperty _allowExcessivelyViolentUsageProp = null!;
+        private SerializedProperty _allowExcessivelySexualUsageProp = null!;
+        private SerializedProperty _allowPoliticalOrReligiousUsageProp = null!;
+        private SerializedProperty _allowAntisocialOrHateUsageProp = null!;
+        private SerializedProperty _allowRedistributionProp = null!;
+        private SerializedProperty _thumbnailProp = null!;
+        private SerializedProperty _expressionFoldoutProp = null!;
+        private SerializedProperty _expressionPresetHappyBlendShape = null!;
+        private SerializedProperty _expressionPresetAngryBlendShape = null!;
+        private SerializedProperty _expressionPresetSadBlendShape = null!;
+        private SerializedProperty _expressionPresetRelaxedBlendShape = null!;
+        private SerializedProperty _expressionPresetSurprisedBlendShape = null!;
+        private SerializedProperty _expressionCustomBlendShapes = null!;
+        private SerializedProperty _springBoneFoldoutProp = null!;
+        private SerializedProperty _excludedSpringBoneColliderTransformsProp = null!;
+        private SerializedProperty _excludedSpringBoneTransformsProp = null!;
+        private SerializedProperty _constraintFoldoutProp = null!;
+        private SerializedProperty _excludedConstraintTransformsProp = null!;
+        private SerializedProperty _mtoonFoldoutProp = null!;
+        private SerializedProperty _enableMToonRimLightProp = null!;
+        private SerializedProperty _enableMToonMatCapProp = null!;
+        private SerializedProperty _enableMToonOutlineProp = null!;
+        private SerializedProperty _enableBakingAlphaMaskProp = null!;
+        private SerializedProperty _debugFoldoutProp = null!;
+        private SerializedProperty _makeAllNodeNamesUniqueProp = null!;
+        private SerializedProperty _enableVertexColorOutputProp = null!;
+        private SerializedProperty _disableVertexColorOnLiltoonProp = null!;
+        private SerializedProperty _enableGenerateJsonFileProp = null!;
+        private SerializedProperty _deleteTemporaryObjectsProp = null!;
+        private SerializedProperty _ktxToolPathProp = null!;
+        private SerializedProperty _metadataModeSelection = null!;
+
+        private SerializedProperty _expressionModeSelection = null!;
+
+        // from 1.1.0
+        private SerializedProperty _extensionFoldoutProp = null!;
+        private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
+#if NVE_HAS_VRCHAT_AVATAR_SDK
+        private struct VRChatAvatarToMetadata
+        {
+            public string Author { get; init; }
+            public string CopyrightInformation { get; init; }
+            public string ContactInformation { get; init; }
+            public string Version { get; init; }
+            public string OriginThumbnailPath { get; init; }
+        };
+
+        private Task<VRChatAvatarToMetadata>? _retrieveAvatarTask;
+        private CancellationTokenSource _cancellationTokenSource = new();
+        private string? _retrieveAvatarTaskErrorMessage;
+#endif // NVE_HAS_VRCHAT_AVATAR_SDK
+
+        private void OnEnable()
+        {
+            _metadataFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.metadataFoldout));
+            _authorsProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.authors));
+            _versionProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.version));
+            _copyrightInformationProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.copyrightInformation));
+            _contactInformationProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.contactInformation));
+            _referencesProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.references));
+            _enableContactInformationOnVRChatAutofillProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent
+                    .enableContactInformationOnVRChatAutofill));
+            _licenseUrlProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.licenseUrl));
+            _thirdPartyLicensesProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.thirdPartyLicenses));
+            _otherLicenseUrlProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.otherLicenseUrl));
+            _avatarPermissionProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.avatarPermission));
+            _commercialUsageProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.commercialUsage));
+            _creditNotationProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.creditNotation));
+            _modificationProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.modification));
+            _metadataAllowFoldoutProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.metadataAllowFoldout));
+            _allowExcessivelyViolentUsageProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.allowExcessivelyViolentUsage));
+            _allowExcessivelySexualUsageProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.allowExcessivelySexualUsage));
+            _allowPoliticalOrReligiousUsageProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.allowPoliticalOrReligiousUsage));
+            _allowAntisocialOrHateUsageProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.allowAntisocialOrHateUsage));
+            _allowRedistributionProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.allowRedistribution));
+            _thumbnailProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.thumbnail));
+            _expressionFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionFoldout));
+            _expressionPresetHappyBlendShape =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionPresetHappyBlendShape));
+            _expressionPresetAngryBlendShape =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionPresetAngryBlendShape));
+            _expressionPresetSadBlendShape =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionPresetSadBlendShape));
+            _expressionPresetRelaxedBlendShape =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionPresetRelaxedBlendShape));
+            _expressionPresetSurprisedBlendShape =
+                serializedObject.FindProperty(
+                    nameof(NdmfVrmExporterComponent.expressionPresetSurprisedBlendShape));
+            _expressionCustomBlendShapes =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionCustomBlendShapes));
+            _springBoneFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.springBoneFoldout));
+            _excludedSpringBoneColliderTransformsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedSpringBoneColliderTransforms));
+            _excludedSpringBoneTransformsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedSpringBoneTransforms));
+            _constraintFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.constraintFoldout));
+            _excludedConstraintTransformsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.excludedConstraintTransforms));
+            _mtoonFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.mtoonFoldout));
+            _enableMToonRimLightProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableMToonRimLight));
+            _enableMToonMatCapProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableMToonMatCap));
+            _enableMToonOutlineProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableMToonOutline));
+            _enableBakingAlphaMaskProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableBakingAlphaMaskTexture));
+            _extensionFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.extensionFoldout));
+            _enableKhrMaterialsVariantsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableKhrMaterialsVariants));
+            _debugFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.debugFoldout));
+            _makeAllNodeNamesUniqueProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.makeAllNodeNamesUnique));
+            _enableVertexColorOutputProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableVertexColorOutput));
+            _disableVertexColorOnLiltoonProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.disableVertexColorOnLiltoon));
+            _enableGenerateJsonFileProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableGenerateJsonFile));
+            _deleteTemporaryObjectsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.deleteTemporaryObjects));
+            _ktxToolPathProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.ktxToolPath));
+            _metadataModeSelection =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.metadataModeSelection));
+            _expressionModeSelection =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionModeSelection));
+            var component = (NdmfVrmExporterComponent)target;
+            component.expressionPresetHappyBlendShape.gameObject = component.gameObject;
+            component.expressionPresetAngryBlendShape.gameObject = component.gameObject;
+            component.expressionPresetSadBlendShape.gameObject = component.gameObject;
+            component.expressionPresetRelaxedBlendShape.gameObject = component.gameObject;
+            component.expressionPresetSurprisedBlendShape.gameObject = component.gameObject;
+            foreach (var property in component.expressionCustomBlendShapes)
+            {
+                property.gameObject = component.gameObject;
+            }
+        }
+
+        public override void OnInspectorGUI()
+        {
+            serializedObject.UpdateIfRequiredOrScript();
+            var component = (NdmfVrmExporterComponent)target;
+            if (component.enabled)
+            {
+                if (!component.HasAvatarRoot)
+                {
+                    EditorGUILayout.HelpBox(Translator._("component.validation.avatar-root"),
+                        MessageType.Error);
+                }
+                else if (!component.HasAuthor)
+                {
+                    EditorGUILayout.HelpBox(Translator._("component.validation.author"),
+                        MessageType.Error);
+                }
+                else if (!component.HasLicenseUrl)
+                {
+                    EditorGUILayout.HelpBox(Translator._("component.validation.license-url"),
+                        MessageType.Error);
+                }
+                else
+                {
+                    var outputPath = $"{AssetPathUtils.GetOutputPath(component.gameObject)}.vrm";
+                    EditorGUILayout.HelpBox(string.Format(Translator._("component.output.path"), outputPath),
+                        MessageType.Info);
+                }
+            }
+            else
+            {
+#if NVE_HAS_NDMF_PLATFORM_SUPPORT
+                EditorGUILayout.HelpBox(Translator._("component.platform-build.suggestion"),
+                    MessageType.Info);
+                if (GUILayout.Button(Translator._("component.platform-build.open")))
+                {
+                    ErrorReportWindow.ShowReport(component.gameObject);
+                }
+#else
+                EditorGUILayout.HelpBox(Translator._("component.validation.not-enabled"),
+                    MessageType.Warning);
+#endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
+            }
+
+#if NVE_HAS_VRCHAT_AVATAR_SDK
+            if (_retrieveAvatarTask != null && _retrieveAvatarTask!.IsCompleted)
+            {
+                if (_retrieveAvatarTask.Exception != null)
+                {
+                    foreach (var exception in _retrieveAvatarTask.Exception.InnerExceptions)
+                    {
+                        if (exception is not ApiErrorException ae)
+                        {
+                            continue;
+                        }
+
+                        if (ae.StatusCode != HttpStatusCode.Unauthorized)
+                        {
+                            continue;
+                        }
+
+                        _retrieveAvatarTaskErrorMessage =
+                            Translator._("component.metadata.information.vrchat.error.authorization");
+                        break;
+                    }
+
+                    Debug.LogError($"Failed to retrieve metadata via VRChat: {_retrieveAvatarTask.Exception}");
+                }
+                else if (_retrieveAvatarTask.IsCanceled)
+                {
+                    Debug.Log("Cancelled to retrieve metadata via VRChat");
+                }
+                else
+                {
+                    var result = _retrieveAvatarTask.Result;
+                    if (component.HasAuthor)
+                    {
+                        component.authors[0] = result.Author;
+                    }
+                    else
+                    {
+                        component.authors = new List<string> { result.Author };
+                    }
+
+                    component.copyrightInformation = result.CopyrightInformation;
+                    if (_enableContactInformationOnVRChatAutofillProp.boolValue)
+                    {
+                        component.contactInformation = result.ContactInformation;
+                    }
+
+                    component.version = result.Version;
+                    if (!string.IsNullOrEmpty(result.OriginThumbnailPath))
+                    {
+                        var baseTexture = new Texture2D(2, 2);
+                        baseTexture.LoadImage(File.ReadAllBytes(result.OriginThumbnailPath));
+                        var lowerSize = Mathf.Min(baseTexture.width, baseTexture.height);
+                        var intermediateTexture = new Texture2D(lowerSize, lowerSize, baseTexture.format, false);
+                        var srcX = Math.Max(baseTexture.width - lowerSize, 0) / 2;
+                        var srcY = Math.Max(baseTexture.height - lowerSize, 0) / 2;
+                        Graphics.CopyTexture(baseTexture, 0, 0, srcX, srcY, lowerSize, lowerSize, intermediateTexture,
+                            0, 0, 0, 0);
+                        var filePath = result.OriginThumbnailPath.Replace(".origin.png", ".png");
+                        var destTexture =
+                            intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma, null);
+                        var bytes = destTexture.EncodeToPNG();
+                        DestroyImmediate(destTexture);
+                        File.WriteAllBytes(filePath, bytes);
+                        AssetDatabase.ImportAsset(filePath);
+                        component.thumbnail = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
+                    }
+
+                    Debug.Log("Succeeded to retrieve metadata via VRChat");
+                }
+
+                _cancellationTokenSource = new CancellationTokenSource();
+                _retrieveAvatarTask = null;
+            }
+#endif // NVE_HAS_VRCHAT_AVATAR_SDK
+
+            var thumbnail = _thumbnailProp.objectReferenceValue as Texture2D;
+            if (thumbnail && thumbnail is not null && thumbnail.width != thumbnail.height)
+            {
+                EditorGUILayout.HelpBox(Translator._("component.validation.avatar-thumbnail"), MessageType.Warning);
+            }
+
+            var metadataFoldout = EditorGUILayout.Foldout(_metadataFoldoutProp.boolValue,
+                Translator._("component.category.metadata"));
+            if (metadataFoldout)
+            {
+                DrawMetadata();
+            }
+
+            EditorGUILayout.Separator();
+            var expressionsFoldout = EditorGUILayout.Foldout(_expressionFoldoutProp.boolValue,
+                Translator._("component.category.expressions"));
+            if (expressionsFoldout)
+            {
+                DrawExpressions();
+            }
+
+            EditorGUILayout.Separator();
+            var mtoonFoldout =
+                EditorGUILayout.Foldout(_mtoonFoldoutProp.boolValue, Translator._("component.category.mtoon"));
+            if (mtoonFoldout)
+            {
+                DrawMToonOptions();
+            }
+
+            EditorGUILayout.Separator();
+            var springBoneFoldout = EditorGUILayout.Foldout(_springBoneFoldoutProp.boolValue,
+                Translator._("component.category.spring-bone"));
+            if (springBoneFoldout)
+            {
+                DrawSpringBoneOptions();
+            }
+
+            EditorGUILayout.Separator();
+            var constraintFoldout = EditorGUILayout.Foldout(_constraintFoldoutProp.boolValue,
+                Translator._("component.category.constraint"));
+            if (constraintFoldout)
+            {
+                DrawConstraintOptions();
+            }
+
+            EditorGUILayout.Separator();
+            var extensionFoldout =
+                EditorGUILayout.Foldout(_extensionFoldoutProp.boolValue, Translator._("component.category.extension"));
+            if (extensionFoldout)
+            {
+                DrawExtensionOptions();
+            }
+
+            EditorGUILayout.Separator();
+            var debugFoldout =
+                EditorGUILayout.Foldout(_debugFoldoutProp.boolValue, Translator._("component.category.debug"));
+            if (debugFoldout)
+            {
+                DrawDebugOptions();
+            }
+
+            _metadataFoldoutProp.boolValue = metadataFoldout;
+            _expressionFoldoutProp.boolValue = expressionsFoldout;
+            _mtoonFoldoutProp.boolValue = mtoonFoldout;
+            _springBoneFoldoutProp.boolValue = springBoneFoldout;
+            _constraintFoldoutProp.boolValue = constraintFoldout;
+            _extensionFoldoutProp.boolValue = extensionFoldout;
+            _debugFoldoutProp.boolValue = debugFoldout;
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawMetadata()
+        {
+            var value = GUILayout.Toolbar(_metadataModeSelection.intValue, new[]
+            {
+                Translator._("component.metadata.information"),
+                Translator._("component.metadata.licenses"),
+                Translator._("component.metadata.permissions"),
+            });
+            switch (value)
+            {
+                case 0:
+                {
+                    DrawInformation();
+                    break;
+                }
+                case 1:
+                {
+                    DrawLicenses();
+                    break;
+                }
+                case 2:
+                {
+                    DrawPermissions();
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            _metadataModeSelection.intValue = value;
+        }
+
+        private void DrawInformation()
+        {
+            DrawPropertyField(Translator._("component.metadata.information.avatar-thumbnail"), _thumbnailProp);
+            EditorGUILayout.PropertyField(_authorsProp,
+                new GUIContent(Translator._("component.metadata.information.authors")));
+            DrawPropertyField(Translator._("component.metadata.information.version"), _versionProp);
+            DrawPropertyField(Translator._("component.metadata.information.copyright-information"),
+                _copyrightInformationProp);
+            DrawPropertyField(Translator._("component.metadata.information.contact-information"),
+                _contactInformationProp);
+            EditorGUILayout.PropertyField(_referencesProp,
+                new GUIContent(Translator._("component.metadata.information.references")));
+#if NVE_HAS_VRCHAT_AVATAR_SDK
+            var component = (NdmfVrmExporterComponent)target;
+            if (!component.transform.TryGetComponent<PipelineManager>(out var pipelineManager) ||
+                string.IsNullOrEmpty(pipelineManager.blueprintId))
+                return;
+            EditorGUILayout.Separator();
+            if (_retrieveAvatarTask != null)
+            {
+                if (GUILayout.Button(Translator._("component.metadata.information.vrchat.cancel")))
+                {
+                    _cancellationTokenSource.Cancel();
+                    Debug.Log("Requested to cancel retrieving metadata task");
+                }
+            }
+            else if (GUILayout.Button(Translator._("component.metadata.information.vrchat.retrieve")))
+            {
+                async Task<VRChatAvatarToMetadata> RetrieveAvatarTask(string blueprintId, CancellationToken token)
+                {
+                    var packageJsonFile =
+                        await File.ReadAllTextAsync($"Packages/{NdmfVrmExporter.PackageJson.Name}/package.json", token);
+                    var packageJson = NdmfVrmExporter.PackageJson.LoadFromString(packageJsonFile);
+                    var avatar = await VRCApi.GetAvatar(blueprintId, cancellationToken: token);
+                    var client = new HttpClient();
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd($"{packageJson.DisplayName}/{packageJson.Version}");
+                    var result = await client.GetAsync(avatar.ImageUrl, token);
+                    var filePath = string.Empty;
+                    if (result.IsSuccessStatusCode)
+                    {
+                        var bytes = await result.Content.ReadAsByteArrayAsync();
+                        var basePath = $"{AssetPathUtils.BasePath}/VRChatSDKAvatarThumbnails";
+                        Directory.CreateDirectory(basePath);
+                        filePath = $"{basePath}/{avatar.ID}.origin.png";
+                        await File.WriteAllBytesAsync(filePath, bytes, token);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Cannot retrieve thumbnail: {result.ReasonPhrase}");
+                    }
+
+                    return new VRChatAvatarToMetadata
+                    {
+                        Author = avatar.AuthorName,
+                        CopyrightInformation = $"Copyright \u00a9 {avatar.CreatedAt.Year} {avatar.AuthorName}",
+                        ContactInformation = $"https://vrchat.com/home/user/{avatar.AuthorId}",
+                        Version =
+                            $"{avatar.UpdatedAt.Year}.{avatar.UpdatedAt.Month}.{avatar.UpdatedAt.Day}+{avatar.Version}",
+                        OriginThumbnailPath = filePath,
+                    };
+                }
+
+                _retrieveAvatarTaskErrorMessage = null;
+                _retrieveAvatarTask = RetrieveAvatarTask(pipelineManager.blueprintId, _cancellationTokenSource.Token);
+                Debug.Log("Start to retrieve metadata via VRChat API");
+            }
+
+            EditorGUILayout.Space();
+            DrawToggleLeft(Translator._("component.metadata.information.vrchat.enable-contact-information"),
+                _enableContactInformationOnVRChatAutofillProp);
+
+            if (!string.IsNullOrEmpty(_retrieveAvatarTaskErrorMessage))
+            {
+                EditorGUILayout.HelpBox(_retrieveAvatarTaskErrorMessage, MessageType.Error);
+            }
+
+#endif // NVE_HAS_VRCHAT_AVATAR_SDK
+        }
+
+        private void DrawLicenses()
+        {
+            DrawPropertyField(Translator._("component.metadata.licenses.license-url"), _licenseUrlProp);
+            DrawPropertyField(Translator._("component.metadata.licenses.third-party-license"), _thirdPartyLicensesProp);
+            DrawPropertyField(Translator._("component.metadata.licenses.other-license-url"), _otherLicenseUrlProp);
+        }
+
+        private void DrawPermissions()
+        {
+            DrawPropertyField(Translator._("component.metadata.permissions.avatar-permission"), _avatarPermissionProp);
+            DrawPropertyField(Translator._("component.metadata.permissions.commercial-usage"), _commercialUsageProp);
+            DrawPropertyField(Translator._("component.metadata.permissions.credit-notation"), _creditNotationProp);
+            DrawPropertyField(Translator._("component.metadata.permissions.modification"), _modificationProp);
+            var foldout = EditorGUILayout.Foldout(_metadataAllowFoldoutProp.boolValue,
+                Translator._("component.metadata.permissions.allow.header"));
+            if (foldout)
+            {
+                DrawPropertyField(Translator._("component.metadata.permissions.allow.redistribution"),
+                    _allowRedistributionProp);
+                DrawPropertyField(Translator._("component.metadata.permissions.allow.excessively-violent-usage"),
+                    _allowExcessivelyViolentUsageProp);
+                DrawPropertyField(Translator._("component.metadata.permissions.allow.excessively-sexual-usage"),
+                    _allowExcessivelySexualUsageProp);
+                DrawPropertyField(Translator._("component.metadata.permissions.allow.political-or-religious-usage"),
+                    _allowPoliticalOrReligiousUsageProp);
+                DrawPropertyField(Translator._("component.metadata.permissions.allow.antisocial-or-hate-usage"),
+                    _allowAntisocialOrHateUsageProp);
+            }
+
+            _metadataAllowFoldoutProp.boolValue = foldout;
+        }
+
+        private void DrawExpressions()
+        {
+            var value = GUILayout.Toolbar(_expressionModeSelection.intValue, new[]
+            {
+                Translator._("component.expression.preset"),
+                Translator._("component.expression.custom"),
+            });
+            switch (value)
+            {
+                case 0:
+                {
+                    DrawPresetExpressions();
+                    break;
+                }
+                case 1:
+                {
+                    DrawCustomExpression();
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            _expressionModeSelection.intValue = value;
+        }
+
+        private void DrawPresetExpressions()
+        {
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.happy"), _expressionPresetHappyBlendShape);
+            }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.angry"), _expressionPresetAngryBlendShape);
+            }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.sad"), _expressionPresetSadBlendShape);
+            }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.relaxed"),
+                    _expressionPresetRelaxedBlendShape);
+            }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.surprised"),
+                    _expressionPresetSurprisedBlendShape);
+            }
+            EditorGUILayout.Separator();
+            if (GUILayout.Button(Translator._("component.expression.preset.from-mmd")))
+            {
+                void SetFromMmdExpression(string targetBlendShapeName, SerializedProperty prop)
+                {
+                    var option = (VrmExpressionProperty)prop.boxedValue;
+                    option.SetFromMmdExpression(targetBlendShapeName);
+                    prop.boxedValue = option;
+                }
+
+                SetFromMmdExpression("笑い", _expressionPresetHappyBlendShape);
+                SetFromMmdExpression("怒り", _expressionPresetAngryBlendShape);
+                SetFromMmdExpression("困る", _expressionPresetSadBlendShape);
+                SetFromMmdExpression("なごみ", _expressionPresetRelaxedBlendShape);
+                SetFromMmdExpression("びっくり", _expressionPresetSurprisedBlendShape);
+            }
+
+            EditorGUILayout.Separator();
+            if (GUILayout.Button(Translator._("component.expression.preset.reset-all")))
+            {
+                var gameObject = ((NdmfVrmExporterComponent)target).gameObject;
+
+                VrmExpressionProperty WrapVrmExpression(VrmExpressionProperty property)
+                {
+                    property.gameObject = gameObject;
+                    return property;
+                }
+
+                _expressionPresetHappyBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Happy);
+                _expressionPresetAngryBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Angry);
+                _expressionPresetSadBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Sad);
+                _expressionPresetRelaxedBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Relaxed);
+                _expressionPresetSurprisedBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Surprised);
+            }
+        }
+
+        private void DrawCustomExpression()
+        {
+            var go = (NdmfVrmExporterComponent)target;
+            foreach (var property in go.expressionCustomBlendShapes)
+            {
+                property.gameObject = go.gameObject;
+            }
+
+            EditorGUILayout.PropertyField(_expressionCustomBlendShapes, GUIContent.none);
+        }
+
+        private void DrawMToonOptions()
+        {
+            DrawToggleLeft(Translator._("component.mtoon.enable.rim-light"), _enableMToonRimLightProp);
+            DrawToggleLeft(Translator._("component.mtoon.enable.mat-cap"), _enableMToonMatCapProp);
+            DrawToggleLeft(Translator._("component.mtoon.enable.outline"), _enableMToonOutlineProp);
+            DrawToggleLeft(Translator._("component.mtoon.enable.bake-alpha-mask"), _enableBakingAlphaMaskProp);
+        }
+
+        private void DrawSpringBoneOptions()
+        {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(
+                _excludedSpringBoneColliderTransformsProp,
+                new GUIContent(Translator._("component.spring-bone.exclude.colliders")));
+            EditorGUILayout.PropertyField(_excludedSpringBoneTransformsProp,
+                new GUIContent(Translator._("component.spring-bone.exclude.bones")));
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawConstraintOptions()
+        {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(
+                _excludedConstraintTransformsProp,
+                new GUIContent(Translator._("component.constraint.exclude.constraints")));
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawExtensionOptions()
+        {
+            DrawToggleLeft(Translator._("component.extension.enable-khr-materials-variants"),
+                _enableKhrMaterialsVariantsProp);
+        }
+
+        private void DrawDebugOptions()
+        {
+            DrawToggleLeft(Translator._("component.debug.make-all-node-names-unique"), _makeAllNodeNamesUniqueProp);
+            DrawToggleLeft(Translator._("component.debug.enable-vertex-color-output"), _enableVertexColorOutputProp);
+            DrawToggleLeft(Translator._("component.debug.disable-vertex-color-on-liltoon"),
+                _disableVertexColorOnLiltoonProp);
+            DrawToggleLeft(Translator._("component.debug.enable-generate-json"), _enableGenerateJsonFileProp);
+            DrawToggleLeft(Translator._("component.debug.delete-temporary-files"), _deleteTemporaryObjectsProp);
+            DrawPropertyField(Translator._("component.debug.ktx-tool-path"), _ktxToolPathProp);
+        }
+
+        private static void DrawPropertyField(string label, SerializedProperty prop)
+        {
+            GUILayout.Label(label);
+            EditorGUILayout.PropertyField(prop, GUIContent.none);
+        }
+
+        private static void DrawToggleLeft(string label, SerializedProperty prop)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.ToggleLeft(label, prop.boolValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                prop.boolValue = value;
+            }
+        }
+    }
+
+    public enum VrmUsagePermission
+    {
+        Disallow,
+        Allow,
+    }
+
+    [Serializable]
+    public sealed class VrmExpressionProperty
+    {
+        internal static VrmExpressionProperty Happy => new()
+        {
+            expressionName = "Happy",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty Angry => new()
+        {
+            expressionName = "Angry",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty Sad => new()
+        {
+            expressionName = "Sad",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty Relaxed => new()
+        {
+            expressionName = "Relaxed",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty Surprised => new()
+        {
+            expressionName = "Surprised",
+            isPreset = true,
+        };
+
+        [NotKeyable] [SerializeField] internal string? expressionName;
+        [NotKeyable] [SerializeField] internal BaseType baseType;
+        [NotKeyable] [SerializeField] internal GameObject? gameObject;
+        [NotKeyable] [SerializeField] internal string? blendShapeName;
+        [NotKeyable] [SerializeField] internal AnimationClip? blendShapeAnimationClip;
+        [NotKeyable] [SerializeField] internal bool optionsFoldout;
+        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideBlink;
+        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideLookAt;
+        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideMouth;
+        [NotKeyable] [SerializeField] internal bool isBinary;
+        [NotKeyable] [SerializeField] internal bool isPreset;
+
+        internal const string BlendShapeNamePrefix = "blendShape.";
+
+        internal enum BaseType
+        {
+            BlendShape,
+            AnimationClip,
+        };
+
+        internal List<string?> BlendShapeNames => baseType switch
+        {
+            BaseType.AnimationClip => ExtractAllBlendShapeNamesFromAnimationClip(),
+            BaseType.BlendShape => new List<string?> { blendShapeName },
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+
+        internal string CanonicalExpressionName
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(expressionName))
+                {
+                    return expressionName!;
+                }
+
+                return baseType switch
+                {
+                    BaseType.AnimationClip => blendShapeAnimationClip!.name,
+                    BaseType.BlendShape => blendShapeName!,
+                    _ => throw new ArgumentOutOfRangeException(),
+                };
+            }
+        }
+
+        internal bool IsValid => baseType switch
+        {
+            BaseType.AnimationClip => blendShapeAnimationClip,
+            BaseType.BlendShape => !string.IsNullOrEmpty(blendShapeName),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+
+        internal void SetFromMmdExpression(string targetName)
+        {
+            var blendShapeNames = new List<string>();
+            if (!gameObject || !gameObject!.transform)
+            {
+                return;
+            }
+
+            RetrieveAllBlendShapes(gameObject.transform, ref blendShapeNames);
+            var index = blendShapeNames.IndexOf(targetName);
+            if (index == -1)
+                return;
+            baseType = BaseType.BlendShape;
+            blendShapeName = blendShapeNames[index];
+            overrideBlink = vrm.core.ExpressionOverrideType.Block;
+            overrideLookAt = vrm.core.ExpressionOverrideType.Block;
+            overrideMouth = vrm.core.ExpressionOverrideType.Block;
+        }
+
+        internal static void RetrieveAllBlendShapes(Transform transform, ref List<string> blendShapeNames)
+        {
+            RetrieveAllBlendShapes(transform, (name, _, blendShapeNames) => { blendShapeNames.Add(name); },
+                ref blendShapeNames);
+        }
+
+        internal static void RetrieveAllBlendShapes<T>(Transform transform,
+            Action<string, SkinnedMeshRenderer, T> callback, ref T blendShapeNames)
+        {
+            for (var i = 0; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                if (!child || child is null || !child.TryGetComponent<SkinnedMeshRenderer>(out var smr))
+                    continue;
+                var mesh = smr.sharedMesh;
+                if (mesh)
+                {
+                    var numBlendShapes = mesh.blendShapeCount;
+                    for (var j = 0; j < numBlendShapes; j++)
+                    {
+                        callback(mesh.GetBlendShapeName(j), smr, blendShapeNames);
+                    }
+                }
+
+                RetrieveAllBlendShapes(child, callback, ref blendShapeNames);
+            }
+        }
+
+        private List<string?> ExtractAllBlendShapeNamesFromAnimationClip()
+        {
+            if (!blendShapeAnimationClip)
+                return new List<string?>();
+            return (from binding in AnimationUtility.GetCurveBindings(blendShapeAnimationClip)
+                where binding.propertyName.StartsWith(BlendShapeNamePrefix, StringComparison.Ordinal)
+                let name = binding.propertyName[BlendShapeNamePrefix.Length..]
+                let curve = AnimationUtility.GetEditorCurve(blendShapeAnimationClip, binding)
+                from keyframe in curve.keys
+                where !(keyframe.time > 0.0f) && !Mathf.Approximately(keyframe.value, 0.0f)
+                select name).ToList();
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(VrmExpressionProperty))]
+    public sealed class VrmExpressionPropertyDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var fieldRect = position;
+            fieldRect.height = LineHeight;
+
+            var expressionName = property.FindPropertyRelative(nameof(VrmExpressionProperty.expressionName));
+            if (!property.FindPropertyRelative(nameof(VrmExpressionProperty.isPreset)).boolValue)
+            {
+                expressionName.stringValue = EditorGUI.TextField(fieldRect, Translator._("component.expression.name"),
+                    expressionName.stringValue);
+                fieldRect.y += fieldRect.height;
+            }
+
+            var baseType = property.FindPropertyRelative(nameof(VrmExpressionProperty.baseType));
+            baseType.intValue = EditorGUI.Popup(
+                fieldRect,
+                Translator._("component.expression.type"),
+                baseType.intValue,
+                new[]
+                {
+                    Translator._("component.expression.type.blend-shape"),
+                    Translator._("component.expression.type.animation-clip")
+                });
+            fieldRect.y += fieldRect.height;
+
+            switch ((VrmExpressionProperty.BaseType)baseType.intValue)
+            {
+                case VrmExpressionProperty.BaseType.BlendShape:
+                {
+                    var gameObjectProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.gameObject));
+                    var gameObject = (GameObject)gameObjectProp.objectReferenceValue;
+                    if (_blendShapeNames.Count == 0 && gameObject)
+                    {
+                        VrmExpressionProperty.RetrieveAllBlendShapes(gameObject.transform, ref _blendShapeNames);
+                    }
+
+                    var blendShapeName = property.FindPropertyRelative(nameof(VrmExpressionProperty.blendShapeName));
+                    var selectedIndex = blendShapeName.stringValue != null
+                        ? _blendShapeNames.IndexOf(blendShapeName.stringValue)
+                        : -1;
+                    var newIndex = EditorGUI.Popup(fieldRect, selectedIndex, _blendShapeNames.ToArray());
+                    if (newIndex >= 0 && newIndex < _blendShapeNames.Count)
+                    {
+                        var targetBlendShapeName = _blendShapeNames[newIndex];
+                        blendShapeName.stringValue = targetBlendShapeName;
+                    }
+
+                    break;
+                }
+                case VrmExpressionProperty.BaseType.AnimationClip:
+                {
+                    var animationClipProp =
+                        property.FindPropertyRelative(nameof(VrmExpressionProperty.blendShapeAnimationClip));
+                    var animationClip = (AnimationClip)animationClipProp.objectReferenceValue;
+                    animationClipProp.objectReferenceValue =
+                        (AnimationClip)EditorGUI.ObjectField(fieldRect, animationClip, typeof(AnimationClip), false);
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            fieldRect.y += fieldRect.height;
+
+            EditorGUI.indentLevel++;
+            var optionsFoldoutProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.optionsFoldout));
+            var foldout = EditorGUI.Foldout(fieldRect, optionsFoldoutProp.boolValue,
+                Translator._("component.expression.property.header"));
+            fieldRect.y += fieldRect.height;
+            if (foldout)
+            {
+                var selections = new[]
+                {
+                    Translator._("component.expression.property.type.none"),
+                    Translator._("component.expression.property.type.block"),
+                    Translator._("component.expression.property.type.blend")
+                };
+                var overrideBlinkProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.overrideBlink));
+                overrideBlinkProp.intValue = EditorGUI.Popup(fieldRect,
+                    Translator._("component.expression.property.override.blink"),
+                    overrideBlinkProp.intValue,
+                    selections);
+                fieldRect.y += fieldRect.height;
+                var overrideLookAtProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.overrideLookAt));
+                overrideLookAtProp.intValue = EditorGUI.Popup(fieldRect,
+                    Translator._("component.expression.property.override.look-at"),
+                    overrideLookAtProp.intValue, selections);
+                fieldRect.y += fieldRect.height;
+                var overrideMouthProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.overrideMouth));
+                overrideMouthProp.intValue = EditorGUI.Popup(fieldRect,
+                    Translator._("component.expression.property.override.mouth"),
+                    overrideMouthProp.intValue,
+                    selections);
+                fieldRect.y += fieldRect.height;
+                var isBinaryProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.isBinary));
+                isBinaryProp.boolValue =
+                    EditorGUI.Toggle(fieldRect, Translator._("component.expression.property.is-binary"),
+                        isBinaryProp.boolValue);
+            }
+
+            EditorGUI.indentLevel--;
+
+            optionsFoldoutProp.boolValue = foldout;
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            var height = LineHeight * 3;
+            if (!property.FindPropertyRelative(nameof(VrmExpressionProperty.isPreset)).boolValue)
+            {
+                height += LineHeight;
+            }
+
+            if (property.FindPropertyRelative(nameof(VrmExpressionProperty.optionsFoldout)).boolValue)
+            {
+                height += LineHeight * 4;
+            }
+
+            return height;
+        }
+
+        private float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+
+        private List<string> _blendShapeNames = new();
+    }
+
     internal sealed class MaterialVariantMapping
     {
         public Renderer Renderer { get; init; } = null!;
@@ -43,6 +1136,665 @@ namespace com.github.hkrn
     {
         public string? Name { get; init; }
         public MaterialVariantMapping[] Mappings { get; init; } = { };
+    }
+
+    internal static class UnityExtensions
+    {
+        public static System.Numerics.Vector2 ToVector2(this Vector2 self)
+        {
+            return new System.Numerics.Vector2(self.x, self.y);
+        }
+
+        public static System.Numerics.Vector2 ToVector2WithCoordinateSpace(this Vector2 self)
+        {
+            return new System.Numerics.Vector2(self.x, 1.0f - self.y);
+        }
+
+        public static System.Numerics.Vector3 ToVector3(this Vector3 self)
+        {
+            return new System.Numerics.Vector3(self.x, self.y, self.z);
+        }
+
+        public static System.Numerics.Vector3 ToVector3WithCoordinateSpace(this Vector3 self)
+        {
+            return new System.Numerics.Vector3(-self.x, self.y, self.z);
+        }
+
+        public static System.Numerics.Vector4 ToVector4WithTangentSpace(this Vector4 self)
+        {
+            var v = (new Vector3(-self.x, self.y, self.z)).normalized;
+            var w = Mathf.Sign(-self.w);
+            return new System.Numerics.Vector4(v.x, v.y, v.z, w);
+        }
+
+        public static System.Numerics.Vector3 ToVector3(this Color self)
+        {
+            return new System.Numerics.Vector3(self.r, self.g, self.b);
+        }
+
+        public static System.Numerics.Vector3 ToVector3(this Color self, ColorSpace src, ColorSpace dst)
+        {
+            var color = ConvertColor(self, src, dst);
+            return new System.Numerics.Vector3(color.r, color.g, color.b);
+        }
+
+        public static System.Numerics.Vector4 ToVector4(this Color self, ColorSpace src, ColorSpace dst)
+        {
+            var color = ConvertColor(self, src, dst);
+            return new System.Numerics.Vector4(color.r, color.g, color.b, color.a);
+        }
+
+        public static System.Numerics.Quaternion ToQuaternionWithCoordinateSpace(this Quaternion self)
+        {
+            self.ToAngleAxis(out var angle, out var axis);
+            var newAxis = axis.ToVector3WithCoordinateSpace();
+            return System.Numerics.Quaternion.CreateFromAxisAngle(newAxis, -angle * Mathf.Deg2Rad);
+        }
+
+        private static System.Numerics.Matrix4x4 ToMatrix4(this Matrix4x4 self)
+        {
+            return new System.Numerics.Matrix4x4(
+                self.m00, self.m01, self.m02, self.m03,
+                self.m10, self.m11, self.m12, self.m13,
+                self.m20, self.m21, self.m22, self.m23,
+                self.m30, self.m31, self.m32, self.m33);
+        }
+
+        public static System.Numerics.Matrix4x4 ToNormalizedMatrix(this Matrix4x4 self)
+        {
+            var t = new Vector3(-self.m03, self.m13, self.m23);
+            self.rotation.ToAngleAxis(out var angle, out var axis);
+            var r = Quaternion.AngleAxis(-angle, new Vector3(-axis.x, axis.y, axis.z));
+            var s = new Vector3
+            {
+                x = new Vector4(self.m00, self.m10, self.m20, self.m30).magnitude,
+                y = new Vector4(self.m01, self.m11, self.m21, self.m31).magnitude,
+                z = new Vector4(self.m02, self.m12, self.m22, self.m32).magnitude,
+            };
+            return Matrix4x4.TRS(t, r, s).ToMatrix4();
+        }
+
+        public static gltf.material.TextureFilterMode ToTextureFilterMode(this FilterMode self)
+        {
+            return self switch
+            {
+                FilterMode.Point => gltf.material.TextureFilterMode.Nearest,
+                FilterMode.Bilinear => gltf.material.TextureFilterMode.Linear,
+                FilterMode.Trilinear => gltf.material.TextureFilterMode.LinearMipmapLinear,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
+
+        public static gltf.material.TextureWrapMode ToTextureWrapMode(this TextureWrapMode self)
+        {
+            return self switch
+            {
+                TextureWrapMode.Clamp => gltf.material.TextureWrapMode.ClampToEdge,
+                TextureWrapMode.Mirror => gltf.material.TextureWrapMode.MirroredRepeat,
+                TextureWrapMode.Repeat => gltf.material.TextureWrapMode.Repeat,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
+
+        internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
+            Material? material = null)
+        {
+            return Blit(sourceTexture, sourceTexture.width, sourceTexture.height, textureFormat, cs, material);
+        }
+
+        internal static Texture2D Blit(this Texture sourceTexture, int width, int height, TextureFormat textureFormat,
+            ColorSpace cs, Material? material)
+        {
+            var rw = cs == ColorSpace.Gamma ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
+            var activeRenderTexture = RenderTexture.active;
+            var destRenderTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.Default, rw);
+            if (material)
+            {
+                Graphics.Blit(sourceTexture, destRenderTexture, material);
+            }
+            else
+            {
+                Graphics.Blit(sourceTexture, destRenderTexture);
+            }
+
+            RenderTexture.active = destRenderTexture;
+            var outputTexture = new Texture2D(width, height, textureFormat, false, cs == ColorSpace.Linear)
+            {
+                name = sourceTexture.name
+            };
+            outputTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            RenderTexture.active = activeRenderTexture;
+            RenderTexture.ReleaseTemporary(destRenderTexture);
+            return outputTexture;
+        }
+
+        private static Color ConvertColor(Color self, ColorSpace src, ColorSpace dst)
+        {
+            var color = (src, dst) switch
+            {
+                (ColorSpace.Gamma, ColorSpace.Linear) => self.linear,
+                (ColorSpace.Linear, ColorSpace.Gamma) => self.gamma,
+                _ => self
+            };
+            return color;
+        }
+    }
+
+    internal static class Translator
+    {
+        internal static readonly Localizer Instance = new("en-us", () =>
+        {
+            var path = AssetDatabase.GUIDToAssetPath("9d1da1be88b74198955d08e38cddf4b4");
+            var english = AssetDatabase.LoadAssetAtPath<LocalizationAsset>($"{path}/en-us.po");
+            return new List<LocalizationAsset> { english };
+        });
+
+        public static string _(string key) => Instance.GetLocalizedString(key);
+    }
+
+#if NVE_HAS_LILTOON
+    // Based on lilMaterialBaker
+    // https://github.com/lilxyzw/lilToon/blob/f80e1f13f385c1774a6626cb585a4ab6f5728caa/Assets/lilToon/Editor/lilMaterialBaker.cs
+    internal static class MaterialBaker
+    {
+        public static Texture? AutoBakeMainTexture(IAssetSaver assetSaver, Material material)
+        {
+            var dictionaries = GetProps(material);
+            var mainColor = dictionaries.GetColor("_Color");
+            var mainTexHsvg = dictionaries.GetVector("_MainTexHSVG");
+            var mainGradationStrength = dictionaries.GetFloat("_MainGradationStrength");
+            var useMainSecondTex = dictionaries.GetFloat("_UseMain2ndTex");
+            var useMainThirdTex = dictionaries.GetFloat("_UseMain3rdTex");
+            var mainTex = dictionaries.GetTexture("_MainTex");
+            var shouldNotBakeAll = mainColor == Color.white && mainTexHsvg == lilConstants.defaultHSVG &&
+                                   mainGradationStrength == 0.0 && useMainSecondTex == 0.0 && useMainThirdTex == 0.0;
+            if (shouldNotBakeAll)
+                return null;
+            var bakeSecond = useMainSecondTex != 0.0;
+            var bakeThird = useMainThirdTex != 0.0;
+            // run bake
+            var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
+
+            var mainTexName = mainTex ? mainTex!.name : AssetPathUtils.TrimCloneSuffix(material.name);
+            var srcTexture = new Texture2D(2, 2);
+            var srcMain2 = new Texture2D(2, 2);
+            var srcMain3 = new Texture2D(2, 2);
+            var srcMask2 = new Texture2D(2, 2);
+            var srcMask3 = new Texture2D(2, 2);
+
+            hsvgMaterial.SetColor(PropertyColor, Color.white);
+            hsvgMaterial.SetVector(PropertyMainTexHsvg, mainTexHsvg);
+            hsvgMaterial.SetFloat(PropertyMainGradationStrength, mainGradationStrength);
+            hsvgMaterial.CopyTexture(dictionaries, "_MainGradationTex");
+            hsvgMaterial.CopyTexture(dictionaries, "_MainColorAdjustMask");
+
+            AssignMaterialTexture(assetSaver, mainTex, hsvgMaterial, PropertyMainTex, ref srcTexture);
+            if (bakeSecond)
+            {
+                hsvgMaterial.CopyFloat(dictionaries, "_UseMain2ndTex");
+                hsvgMaterial.CopyColor(dictionaries, "_MainColor2nd");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexAngle");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsDecal");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsLeftOnly");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsRightOnly");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldCopy");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldFlipMirror");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldFlipCopy");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsMSDF");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexBlendMode");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexAlphaMode");
+                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main2ndTex");
+                hsvgMaterial.CopyTextureScale(dictionaries, "_Main2ndTex");
+                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main2ndBlendMask");
+                hsvgMaterial.CopyTextureScale(dictionaries, "_Main2ndBlendMask");
+
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndTex"), hsvgMaterial,
+                    PropertyMainSecondTex, ref srcMain2);
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndBlendMask"), hsvgMaterial,
+                    PropertyMainSecondBlendMask, ref srcMask2);
+            }
+
+            if (bakeThird)
+            {
+                hsvgMaterial.CopyFloat(dictionaries, "_UseMain3rdTex");
+                hsvgMaterial.CopyColor(dictionaries, "_MainColor3rd");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexAngle");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsDecal");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsLeftOnly");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsRightOnly");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldCopy");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldFlipMirror");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldFlipCopy");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsMSDF");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexBlendMode");
+                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexAlphaMode");
+                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main3rdTex");
+                hsvgMaterial.CopyTextureScale(dictionaries, "_Main3rdTex");
+                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main3rdBlendMask");
+                hsvgMaterial.CopyTextureScale(dictionaries, "_Main3rdBlendMask");
+
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdTex"), hsvgMaterial,
+                    PropertyMainThirdTex, ref srcMain3);
+                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdBlendMask"), hsvgMaterial,
+                    PropertyMainThirdBlendMask, ref srcMask3);
+            }
+
+            var outTexture = RunBake(srcTexture, hsvgMaterial);
+            outTexture.name = $"{mainTexName}_{nameof(AutoBakeMainTexture)}";
+            assetSaver.SaveAsset(outTexture);
+
+            Object.DestroyImmediate(hsvgMaterial);
+            Object.DestroyImmediate(srcTexture);
+            Object.DestroyImmediate(srcMain2);
+            Object.DestroyImmediate(srcMain3);
+            Object.DestroyImmediate(srcMask2);
+            Object.DestroyImmediate(srcMask3);
+
+            return outTexture;
+        }
+
+        public static Texture? AutoBakeShadowTexture(IAssetSaver assetSaver, Material material,
+            Texture? baseMainTexture, int shadowType = 0)
+        {
+            var dictionaries = GetProps(material);
+            var useShadow = dictionaries.GetFloat("_UseShadow");
+            var shadowColor = dictionaries.GetColor("_ShadowColor");
+            var shadowColorTex = dictionaries.GetTexture("_ShadowColorTex");
+            var shadowStrength = dictionaries.GetFloat("_ShadowStrength");
+            var shadowStrengthMask = dictionaries.GetTexture("_ShadowStrengthMask");
+            var mainTex = dictionaries.GetTexture("_MainTex");
+
+            var shouldNotBakeAll = useShadow == 0.0 && shadowColor == Color.white && !shadowColorTex &&
+                                   !shadowStrengthMask;
+            if (shouldNotBakeAll)
+                return null;
+            // run bake
+            var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
+
+            var mainTexName = mainTex ? mainTex!.name : AssetPathUtils.TrimCloneSuffix(material.name);
+            var srcTexture = new Texture2D(2, 2);
+            var srcMain2 = new Texture2D(2, 2);
+            var srcMask2 = new Texture2D(2, 2);
+
+            hsvgMaterial.SetColor(PropertyColor, Color.white);
+            hsvgMaterial.SetVector(PropertyMainTexHsvg, lilConstants.defaultHSVG);
+            hsvgMaterial.SetFloat(PropertyUseMainSecondTex, 1.0f);
+            hsvgMaterial.SetFloat(PropertyUseMainThirdTex, 1.0f);
+            hsvgMaterial.SetColor(PropertyMainColorThird,
+                new Color(1.0f, 1.0f, 1.0f, dictionaries.GetFloat("_ShadowMainStrength")));
+            hsvgMaterial.SetFloat(PropertyMainThirdTexBlendMode, 3.0f);
+
+            Texture? shadowTex;
+            switch (shadowType)
+            {
+                case 2:
+                {
+                    var shadowSecondColor = dictionaries.GetColor("_Shadow2ndColor");
+                    hsvgMaterial.SetColor(PropertyMainColorSecond,
+                        new Color(shadowSecondColor.r, shadowSecondColor.g, shadowSecondColor.b,
+                            shadowSecondColor.a * shadowStrength));
+                    hsvgMaterial.SetFloat(PropertyMainSecondTexBlendMode, 0.0f);
+                    hsvgMaterial.SetFloat(PropertyMainSecondTexAlphaMode, 0.0f);
+                    shadowTex = dictionaries.GetTexture("_Shadow2ndColorTex");
+                    break;
+                }
+                case 3:
+                {
+                    var shadowThirdColor = dictionaries.GetColor("_Shadow3rdColor");
+                    hsvgMaterial.SetColor(PropertyMainColorThird,
+                        new Color(shadowThirdColor.r, shadowThirdColor.g, shadowThirdColor.b,
+                            shadowThirdColor.a * shadowStrength));
+                    hsvgMaterial.SetFloat(PropertyMainThirdTexBlendMode, 0.0f);
+                    hsvgMaterial.SetFloat(PropertyMainThirdTexAlphaMode, 0.0f);
+                    shadowTex = dictionaries.GetTexture("_Shadow3rdColorTex");
+                    break;
+                }
+                default:
+                    hsvgMaterial.SetColor(PropertyMainColorSecond,
+                        new Color(shadowColor.r, shadowColor.g, shadowColor.b, shadowStrength));
+                    hsvgMaterial.SetFloat(PropertyMainSecondTexBlendMode, 0.0f);
+                    hsvgMaterial.SetFloat(PropertyMainSecondTexAlphaMode, 0.0f);
+                    shadowTex = dictionaries.GetTexture("_ShadowColorTex");
+                    break;
+            }
+
+            var referenceMainTexture =
+                LoadTexture(assetSaver, baseMainTexture, ref srcTexture) ? srcTexture : Texture2D.whiteTexture;
+            var referenceMainSecondTexture =
+                LoadTexture(assetSaver, shadowTex, ref srcMain2) ? srcMain2 : referenceMainTexture;
+            hsvgMaterial.SetTexture(PropertyMainTex, referenceMainTexture);
+            hsvgMaterial.SetTexture(PropertyMainSecondTex, referenceMainSecondTexture);
+            hsvgMaterial.SetTexture(PropertyMainThirdTex, referenceMainTexture);
+
+            var referenceMaskTexture =
+                LoadTexture(assetSaver, shadowStrengthMask, ref srcMask2) ? srcMask2 : Texture2D.whiteTexture;
+            hsvgMaterial.SetTexture(PropertyMainSecondBlendMask, referenceMaskTexture);
+            hsvgMaterial.SetTexture(PropertyMainThirdBlendMask, referenceMaskTexture);
+
+            var outTexture = RunBake(srcTexture, hsvgMaterial);
+            outTexture.name = $"{mainTexName}_{nameof(AutoBakeShadowTexture)}";
+            assetSaver.SaveAsset(outTexture);
+
+            Object.DestroyImmediate(hsvgMaterial);
+            Object.DestroyImmediate(srcTexture);
+            Object.DestroyImmediate(srcMain2);
+            Object.DestroyImmediate(srcMask2);
+
+            return outTexture;
+        }
+
+        public static Texture? AutoBakeMatCap(IAssetSaver assetSaver, Material material)
+        {
+            var dictionaries = GetProps(material);
+            var matcapColor = dictionaries.GetColor("_MatCapColor");
+            var matcapTex = dictionaries.GetTexture("_MatCapTex");
+            var shouldNotBakeAll = matcapColor == Color.white;
+            if (shouldNotBakeAll)
+                return matcapTex;
+            // run bake
+            var bufMainTexture = matcapTex as Texture2D;
+            var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
+
+            var matcapTexName = matcapTex ? matcapTex!.name : AssetPathUtils.TrimCloneSuffix(material.name);
+            var srcTexture = new Texture2D(2, 2);
+
+            hsvgMaterial.SetColor(PropertyColor, matcapColor);
+            hsvgMaterial.SetVector(PropertyMainTexHsvg, lilConstants.defaultHSVG);
+            AssignMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
+
+            var outTexture = RunBake(srcTexture, hsvgMaterial);
+            outTexture.name = $"{matcapTexName}_{nameof(AutoBakeMatCap)}";
+            assetSaver.SaveAsset(outTexture);
+
+            Object.DestroyImmediate(hsvgMaterial);
+            Object.DestroyImmediate(srcTexture);
+
+            return outTexture;
+        }
+
+        public static Texture? AutoBakeAlphaMask(IAssetSaver assetSaver, Material material)
+        {
+            var dictionaries = GetProps(material);
+            var mainTex = dictionaries.GetTexture("_MainTex");
+            // run bake
+            var bufMainTexture = mainTex as Texture2D;
+            var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
+
+            var mainTexName = mainTex ? mainTex!.name : AssetPathUtils.TrimCloneSuffix(material.name);
+            var srcTexture = new Texture2D(2, 2);
+            var srcAlphaMask = new Texture2D(2, 2);
+
+            hsvgMaterial.EnableKeyword("_ALPHAMASK");
+            hsvgMaterial.SetColor(PropertyColor, Color.white);
+            hsvgMaterial.SetVector(PropertyMainTexHsvg, lilConstants.defaultHSVG);
+            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskMode");
+            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskScale");
+            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskValue");
+
+            var baseTex = dictionaries.GetTexture("_AlphaMask");
+            Texture2D? outTexture = null;
+            if (LoadTexture(assetSaver, baseTex, ref srcAlphaMask))
+            {
+                hsvgMaterial.SetTexture(PropertyAlphaMask, srcAlphaMask);
+                AssignMaterialTexture(assetSaver, bufMainTexture, hsvgMaterial, PropertyMainTex, ref srcTexture);
+                outTexture = RunBake(srcTexture, hsvgMaterial);
+                outTexture.name = $"{mainTexName}_{nameof(AutoBakeAlphaMask)}";
+                assetSaver.SaveAsset(outTexture);
+            }
+
+            Object.DestroyImmediate(hsvgMaterial);
+            Object.DestroyImmediate(srcTexture);
+
+            return outTexture;
+        }
+
+        private static Texture2D RunBake(Texture2D srcTexture, Material material,
+            Texture2D? referenceTexture = null)
+        {
+            int width = 4096, height = 4096;
+            if (referenceTexture)
+            {
+                width = referenceTexture!.width;
+                height = referenceTexture.height;
+            }
+            else if (srcTexture)
+            {
+                width = srcTexture.width;
+                height = srcTexture.height;
+            }
+
+            var outTexture = new Texture2D(width, height);
+            var bufRT = RenderTexture.active;
+            var dstTexture = RenderTexture.GetTemporary(width, height);
+            Graphics.Blit(srcTexture, dstTexture, material);
+            RenderTexture.active = dstTexture;
+            outTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            RenderTexture.active = bufRT;
+            RenderTexture.ReleaseTemporary(dstTexture);
+            return outTexture;
+        }
+
+        private static void AssignMaterialTexture(IAssetSaver assetSaver, Texture? baseTex, Material material,
+            int propertyID, ref Texture2D srcTexture)
+        {
+            var result = LoadTexture(assetSaver, baseTex, ref srcTexture);
+            material.SetTexture(propertyID, result ? srcTexture : Texture2D.whiteTexture);
+        }
+
+        private static bool LoadTexture(IAssetSaver assetSaver, Texture? baseTexture, ref Texture2D srcTexture)
+        {
+            if (baseTexture is Texture2D { isReadable: true } readableTexture)
+            {
+                srcTexture.LoadImage(readableTexture.EncodeToPNG());
+            }
+            else if (baseTexture && assetSaver.IsTemporaryAsset(baseTexture))
+            {
+                Object.Destroy(srcTexture);
+                var innerBaseTexture = baseTexture!;
+                srcTexture = new Texture2D(innerBaseTexture.width, innerBaseTexture.height);
+                Graphics.ConvertTexture(innerBaseTexture, srcTexture);
+            }
+            else
+            {
+                var path = AssetDatabase.GetAssetPath(baseTexture);
+                if (string.IsNullOrEmpty(path))
+                {
+                    return false;
+                }
+
+                lilTextureUtils.LoadTexture(ref srcTexture, path);
+            }
+
+            return true;
+        }
+
+        private static (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+            Dictionary<string, SerializedProperty> cs) GetProps(Material material)
+        {
+            var so = new SerializedObject(material);
+            so.Update();
+            var props = so.FindProperty("m_SavedProperties");
+            return (GetProps(props.FindPropertyRelative("m_TexEnvs")),
+                GetProps(props.FindPropertyRelative("m_Floats")),
+                GetProps(props.FindPropertyRelative("m_Colors")));
+        }
+
+        public static (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+            Dictionary<string, SerializedProperty> cs) GetProps(SerializedObject so)
+        {
+            var props = so.FindProperty("m_SavedProperties");
+            return (GetProps(props.FindPropertyRelative("m_TexEnvs")),
+                GetProps(props.FindPropertyRelative("m_Floats")),
+                GetProps(props.FindPropertyRelative("m_Colors")));
+        }
+
+        public static Dictionary<string, SerializedProperty> GetProps(SerializedProperty props)
+        {
+            var dic = new Dictionary<string, SerializedProperty>();
+            props.DoAllElements((p, _) =>
+            {
+                dic[p.FindPropertyRelative("first").stringValue] = p.FindPropertyRelative("second");
+            });
+            return dic;
+        }
+
+        private static void DoAllElements(this SerializedProperty property, Action<SerializedProperty, int> function)
+        {
+            if (property.arraySize == 0)
+                return;
+            var i = 0;
+            var prop = property.GetArrayElementAtIndex(0);
+            var end = property.GetEndProperty();
+            function.Invoke(prop, i);
+            while (prop.NextVisible(false) && !SerializedProperty.EqualContents(prop, end))
+            {
+                i++;
+                function.Invoke(prop, i);
+            }
+        }
+
+        private static float GetFloat(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            return dictionaries.fs.TryGetValue(key, out var f) ? f.floatValue : 0f;
+        }
+
+        private static Color GetColor(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            return dictionaries.cs.TryGetValue(key, out var c) ? c.colorValue : Color.black;
+        }
+
+        private static Vector4 GetVector(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            return dictionaries.GetColor(key);
+        }
+
+        private static Texture? GetTexture(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            if (dictionaries.ts.ContainsKey(key))
+                return dictionaries.ts[key].FindPropertyRelative("m_Texture").objectReferenceValue as Texture;
+            else return null;
+        }
+
+        private static Vector2 GetTextureScale(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            return dictionaries.ts.ContainsKey(key)
+                ? dictionaries.ts[key].FindPropertyRelative("m_Scale").vector2Value
+                : Vector2.one;
+        }
+
+        private static Vector2 GetTextureOffset(
+            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            return dictionaries.ts.ContainsKey(key)
+                ? dictionaries.ts[key].FindPropertyRelative("m_Offset").vector2Value
+                : Vector2.zero;
+        }
+
+        private static void CopyFloat(this Material material,
+            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            material.SetFloat(key, dictionaries.GetFloat(key));
+        }
+
+        private static void CopyColor(this Material material,
+            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            material.SetColor(key, dictionaries.GetColor(key));
+        }
+
+        private static void CopyTexture(this Material material,
+            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            material.SetTexture(key, dictionaries.GetTexture(key));
+        }
+
+        private static void CopyTextureScale(this Material material,
+            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            material.SetTextureScale(key, dictionaries.GetTextureScale(key));
+        }
+
+        private static void CopyTextureOffset(this Material material,
+            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
+                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        {
+            material.SetTextureOffset(key, dictionaries.GetTextureOffset(key));
+        }
+
+        private static readonly int PropertyColor = Shader.PropertyToID("_Color");
+        private static readonly int PropertyMainTexHsvg = Shader.PropertyToID("_MainTexHSVG");
+        private static readonly int PropertyMainGradationStrength = Shader.PropertyToID("_MainGradationStrength");
+        private static readonly int PropertyMainTex = Shader.PropertyToID("_MainTex");
+        private static readonly int PropertyMainSecondTex = Shader.PropertyToID("_Main2ndTex");
+        private static readonly int PropertyMainSecondBlendMask = Shader.PropertyToID("_Main2ndBlendMask");
+        private static readonly int PropertyMainThirdTex = Shader.PropertyToID("_Main3rdTex");
+        private static readonly int PropertyMainThirdBlendMask = Shader.PropertyToID("_Main3rdBlendMask");
+        private static readonly int PropertyUseMainSecondTex = Shader.PropertyToID("_UseMain2ndTex");
+        private static readonly int PropertyUseMainThirdTex = Shader.PropertyToID("_UseMain3rdTex");
+        private static readonly int PropertyMainColorThird = Shader.PropertyToID("_MainColor3rd");
+        private static readonly int PropertyMainThirdTexBlendMode = Shader.PropertyToID("_Main3rdTexBlendMode");
+        private static readonly int PropertyMainColorSecond = Shader.PropertyToID("_MainColor2nd");
+        private static readonly int PropertyMainSecondTexBlendMode = Shader.PropertyToID("_Main2ndTexBlendMode");
+        private static readonly int PropertyMainSecondTexAlphaMode = Shader.PropertyToID("_Main2ndTexAlphaMode");
+        private static readonly int PropertyMainThirdTexAlphaMode = Shader.PropertyToID("_Main3rdTexAlphaMode");
+        private static readonly int PropertyAlphaMask = Shader.PropertyToID("_AlphaMask");
+    }
+#endif // NVE_HAS_LILTOON
+
+    internal static class AssetPathUtils
+    {
+        private const string CloneSuffix = "(Clone)";
+
+        public static string BasePath => "Assets/NDMF VRM Exporter";
+
+        public static string GetOutputPath(GameObject gameObject)
+        {
+            return GetBasePath(gameObject, BasePath);
+        }
+
+        public static string GetTempPath(GameObject gameObject)
+        {
+            return GetBasePath(gameObject, FileUtil.GetUniqueTempPathInProject());
+        }
+
+        public static string TrimCloneSuffix(string name)
+        {
+            while (name.EndsWith(CloneSuffix, StringComparison.Ordinal))
+            {
+                name = name[..^CloneSuffix.Length];
+            }
+
+            return name;
+        }
+
+        private static string GetBasePath(GameObject gameObject, string basePath)
+        {
+            var sceneName = !string.IsNullOrEmpty(gameObject.scene.name)
+                ? StripInvalidFileNameCharacters(gameObject.scene.name)
+                : "Untitled";
+            var gameObjectName = TrimCloneSuffix(StripInvalidFileNameCharacters(gameObject.name));
+            return $"{basePath}/{sceneName}/{gameObjectName}";
+        }
+
+        private static string StripInvalidFileNameCharacters(string name)
+        {
+            return string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        }
     }
 
     internal sealed class NdmfVrmExporter : IDisposable
@@ -3111,4 +4863,534 @@ namespace com.github.hkrn
         private readonly IReadOnlyList<MaterialVariant> _materialVariants;
         private readonly GltfMaterialExporter _materialExporter;
     }
+
+    internal sealed class NdmfVrmExporterPlugin : Plugin<NdmfVrmExporterPlugin>
+    {
+        public override string QualifiedName => NdmfVrmExporter.PackageJson.Name;
+
+        public override string DisplayName => "NDMF VRM Exporter";
+
+        protected override void Configure()
+        {
+            InPhase(BuildPhase.Transforming)
+                .BeforePlugin("jp.lilxyzw.lilycalinventory")
+                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
+                    RetrieveAllLiCostumeChangerComponentsPass)
+                .Then
+                .BeforePlugin("nadena.dev.modular-avatar")
+                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
+                    RetrieveAllModularAvatarReactiveComponentsPass);
+            InPhase(BuildPhase.Optimizing)
+                .AfterPlugin("com.anatawa12.avatar-optimizer")
+                .AfterPlugin("nadena.dev.modular-avatar")
+                .AfterPlugin("net.rs64.tex-trans-tool")
+                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+        }
+
+        private static void ExportVrmFilePass(BuildContext buildContext)
+        {
+            var avatarRootObject = buildContext.AvatarRootObject;
+            if (!avatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var component))
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.not-attached"));
+                return;
+            }
+
+            if (!component.enabled)
+            {
+                Debug.LogWarning(Translator._("component.runtime.error.validation.not-enabled"));
+                return;
+            }
+
+            var basePath = AssetPathUtils.GetOutputPath(avatarRootObject);
+            Directory.CreateDirectory(basePath);
+            try
+            {
+                ExportVrmFile(component, buildContext, basePath, basePath);
+            }
+            catch (ValidationException e)
+            {
+                if (e.Extras != null)
+                {
+                    ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                        e.Key, e.Extras);
+                }
+                else
+                {
+                    Debug.Log(e.Message);
+                }
+            }
+        }
+
+        private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext buildContext)
+        {
+#if NVE_HAS_MODULAR_AVATAR
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+                !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
+            {
+                Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
+                return;
+            }
+
+            var variants = new List<MaterialVariant>();
+            var installers = buildContext.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
+            foreach (var installer in installers)
+            {
+                if (!installer.enabled || !installer.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+                {
+                    Debug.Log($"MA menu installer {installer.name} is not enabled or MA menu item is not attached");
+                    continue;
+                }
+
+                if (!menuItem.enabled)
+                {
+                    Debug.Log($"MA menu item {menuItem.name} is not enabled");
+                    continue;
+                }
+
+                if (menuItem.PortableControl.Type == PortableControlType.SubMenu)
+                {
+                    var name = menuItem.name;
+                    foreach (Transform child in menuItem.transform)
+                    {
+                        if (child.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
+                        {
+                            MapMaterialSwapToVariants(buildContext, materialSwap, name, ref variants);
+                        }
+                        else if (child.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
+                        {
+                            MapMaterialSetterToVariants(materialSetter, name, ref variants);
+                        }
+                    }
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSwap>(out var materialSwap))
+                {
+                    MapMaterialSwapToVariants(buildContext, materialSwap, null, ref variants);
+                }
+                else if (menuItem.TryGetComponent<ModularAvatarMaterialSetter>(out var materialSetter))
+                {
+                    MapMaterialSetterToVariants(materialSetter, null, ref variants);
+                }
+            }
+
+            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
+        }
+
+        private static void MapMaterialSwapToVariants(BuildContext buildContext, ModularAvatarMaterialSwap materialSwap,
+            string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var reference = materialSwap.Root.Get(materialSwap);
+            var renderers = (reference ?? buildContext.AvatarRootObject).GetComponentsInChildren<Renderer>();
+            var sourceMappings = renderers.ToDictionary(renderer => renderer, renderer => renderer.sharedMaterials);
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSwap.gameObject.name;
+            if (materialSwap.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var swap in materialSwap.Swaps)
+            {
+                var swapFrom = ObjectRegistry.GetReference(swap.From);
+                foreach (var (sourceRenderer, sourceMaterials) in sourceMappings)
+                {
+                    var materialIndex = 0;
+                    foreach (var sourceMaterial in sourceMaterials)
+                    {
+                        var sourceMaterialReference = ObjectRegistry.GetReference(sourceMaterial);
+                        if (swapFrom?.Object == sourceMaterialReference?.Object)
+                        {
+                            if (mappings.TryGetValue(sourceRenderer, out var materials))
+                            {
+                                materials[materialIndex] = swap.To;
+                            }
+                            else
+                            {
+                                var newMaterials = new Material[sourceMaterials.Length];
+                                newMaterials[materialIndex] = swap.To;
+                                mappings.Add(sourceRenderer, newMaterials);
+                            }
+                        }
+
+                        materialIndex++;
+                    }
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+        }
+
+        private static void MapMaterialSetterToVariants(ModularAvatarMaterialSetter materialSetter, string? name,
+            ref List<MaterialVariant> variants)
+        {
+            var mappings = new Dictionary<Renderer, Material[]>();
+            var variantName = materialSetter.gameObject.name;
+            if (materialSetter.gameObject.TryGetComponent<ModularAvatarMenuItem>(out var menuItem))
+            {
+                variantName = menuItem.name;
+            }
+
+            foreach (var item in materialSetter.Objects)
+            {
+                var go = item.Object.Get(materialSetter);
+                if (!go.TryGetComponent<Renderer>(out var renderer))
+                {
+                    Debug.Log($"{go} in MaterialSwitchObject has no renderer");
+                    continue;
+                }
+
+                if (mappings.TryGetValue(renderer, out var materials))
+                {
+                    if (item.MaterialIndex < materials.Length)
+                    {
+                        materials[item.MaterialIndex] = item.Material;
+                    }
+                }
+                else if (item.MaterialIndex < renderer.sharedMaterials.Length)
+                {
+                    var newMaterials = new Material[renderer.sharedMaterials.Length];
+                    newMaterials[item.MaterialIndex] = item.Material;
+                    mappings.Add(renderer, newMaterials);
+                }
+            }
+
+            variants.Add(new MaterialVariant
+            {
+                Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
+                Mappings = mappings.Select(item => new MaterialVariantMapping
+                    { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
+            });
+#else
+            Debug.Log("Modular Avatar (>= 1.13) is not installed and will be skipped");
+#endif // NVE_HAS_MODULAR_AVATAR
+        }
+
+        private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext buildContext)
+        {
+#if NVE_HAS_LILYCAL_INVENTORY
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+                !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
+            {
+                Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
+                return;
+            }
+
+            var costumeChangers = buildContext.AvatarRootObject.GetComponentsInChildren<CostumeChanger>();
+            var costumeChangerType = typeof(CostumeChanger);
+            var menuFolderType = typeof(MenuFolder);
+            var menuItemNameChain = new List<string>();
+            const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingAttrPublic = BindingFlags.Public | BindingFlags.Instance;
+            Type? costumeType = null;
+            Type? materialReplacerType = null;
+            Type? parametersPerMenuType = null;
+            var variants = new List<MaterialVariant>();
+            foreach (var costumeChanger in costumeChangers)
+            {
+                if (!costumeChanger.enabled)
+                {
+                    Debug.Log($"LI CostumeChanger {costumeChanger.name} is disabled and will be skipped");
+                    continue;
+                }
+
+                var baseMenuName =
+                    (string)costumeChangerType.GetField("menuName", bindingAttrPrivate)!
+                        .GetValue(costumeChanger);
+                var baseParentOverride =
+                    (MenuFolder)costumeChangerType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                var costumes =
+                    (object[])costumeChangerType.GetField("costumes", bindingAttrPrivate)!.GetValue(
+                        costumeChanger);
+                foreach (var costume in costumes)
+                {
+                    costumeType ??= costume.GetType();
+                    var parentOverride =
+                        (MenuFolder)costumeType.GetField("parentOverride", bindingAttrPublic)!
+                            .GetValue(costume);
+                    if (!parentOverride)
+                    {
+                        parentOverride = baseParentOverride;
+                    }
+
+                    var menuIsEnabled = true;
+                    menuItemNameChain.Clear();
+                    while (parentOverride)
+                    {
+                        if (!parentOverride.enabled)
+                        {
+                            menuIsEnabled = false;
+                            break;
+                        }
+
+                        var menuItemNameInner =
+                            (string)menuFolderType.GetField("menuName", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                        menuItemNameChain.Add(menuItemNameInner);
+                        parentOverride =
+                            (MenuFolder)menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.GetValue(
+                                parentOverride);
+                    }
+
+                    if (!menuIsEnabled)
+                    {
+                        Debug.Log($"LI MenuFolder {parentOverride.name} is disabled and will be skipped");
+                        continue;
+                    }
+
+                    menuItemNameChain.Reverse();
+                    var menuItemName =
+                        (string)costumeType.GetField("menuName", bindingAttrPublic)!.GetValue(costume);
+                    var parametersPerMenu =
+                        costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.GetValue(costume);
+                    parametersPerMenuType ??= parametersPerMenu.GetType();
+                    var materialReplaces =
+                        (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
+                            .GetValue(parametersPerMenu);
+                    var mappings = new List<MaterialVariantMapping>();
+                    foreach (var materialReplace in materialReplaces)
+                    {
+                        materialReplacerType ??= materialReplace.GetType();
+                        var fields = materialReplacerType.GetFields();
+                        var renderer = (Renderer)fields.First(item => item.Name == "renderer")
+                            .GetValue(materialReplace);
+                        var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
+                            .GetValue(materialReplace);
+                        mappings.Add(new MaterialVariantMapping
+                        {
+                            Renderer = renderer,
+                            Materials = replaceTo,
+                        });
+                    }
+
+                    if (mappings.Count <= 0)
+                    {
+                        continue;
+                    }
+
+                    var menuItemNameChainInner = new List<string>(menuItemNameChain.AsReadOnly())
+                    {
+                        baseMenuName,
+                        menuItemName
+                    };
+                    variants.Add(new MaterialVariant
+                    {
+                        Name = string.Join("/", menuItemNameChainInner),
+                        Mappings = mappings.ToArray(),
+                    });
+                }
+            }
+
+            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
+#else
+            Debug.Log("lilycalInventory is not installed and will be skipped");
+#endif // NVE_HAS_LILYCAL_INVENTORY
+        }
+
+        internal class ValidationException : Exception
+        {
+            public string Key { get; init; } = null!;
+            public object? Extras { get; init; }
+
+            public override string Message => Translator._(Key);
+        }
+
+        internal static void ExportVrmFile(NdmfVrmExporterComponent component, BuildContext buildContext,
+            string baseOutputPath, string workingDirectoryPath)
+        {
+            if (!component.HasAuthor)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.author"
+                };
+            }
+
+            if (!component.HasLicenseUrl)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.license-url"
+                };
+            }
+
+            var corrupted = new List<SkinnedMeshRenderer>();
+            CheckAllSkinnedMeshRenderers(buildContext.AvatarRootTransform, ref corrupted);
+            if (corrupted.Count > 0)
+            {
+                throw new ValidationException
+                {
+                    Key = "component.runtime.error.validation.smr",
+                    Extras = corrupted,
+                };
+            }
+
+            var ro = buildContext.AvatarRootObject;
+            var variants = buildContext.GetState<List<MaterialVariant>>().AsReadOnly();
+            using var stream = new MemoryStream();
+            using var exporter = new NdmfVrmExporter(ro, buildContext.AssetSaver, variants);
+            var json = exporter.Export(stream);
+            var bytes = stream.GetBuffer();
+            File.WriteAllBytes($"{baseOutputPath}.vrm", bytes);
+            if (component.enableGenerateJsonFile)
+            {
+                File.WriteAllText($"{baseOutputPath}.json", json);
+            }
+
+            if (!component.deleteTemporaryObjects)
+            {
+                return;
+            }
+
+            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), workingDirectoryPath })
+            {
+                try
+                {
+                    var info = new DirectoryInfo(item);
+                    info.Delete(true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    /* this is ignorable */
+                }
+            }
+        }
+
+        private static void CheckAllSkinnedMeshRenderers(Transform parent, ref List<SkinnedMeshRenderer> corrupted)
+        {
+            foreach (Transform child in parent)
+            {
+                if (!child.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (child.gameObject.TryGetComponent<SkinnedMeshRenderer>(out var smr) &&
+                    smr.sharedMesh && IsSharedMeshCorrupted(smr))
+                {
+                    corrupted.Add(smr);
+                }
+
+                CheckAllSkinnedMeshRenderers(child, ref corrupted);
+            }
+        }
+
+        private static bool IsSharedMeshCorrupted(SkinnedMeshRenderer smr)
+        {
+            var mesh = smr.sharedMesh;
+            var bones = smr.bones;
+            var numPositions = mesh.boneWeights.Length;
+            var numSubMeshes = mesh.subMeshCount;
+            var indexMapping = new Dictionary<uint, uint>();
+            for (var meshIndex = 0; meshIndex < numSubMeshes; meshIndex++)
+            {
+                var indices = mesh.GetIndices(meshIndex).Select(index => (uint)index).ToArray();
+                var indexSet = new HashSet<uint>(indices);
+                indexMapping.Clear();
+                for (uint i = 0; i < numPositions; i++)
+                {
+                    if (!indexSet.Contains(i))
+                    {
+                        continue;
+                    }
+
+                    var newIndex = (uint)indexMapping.Count;
+                    indexMapping.Add(i, newIndex);
+                }
+
+                if (indices.Any(index => !indexMapping.TryGetValue(index, out _)))
+                {
+                    return true;
+                }
+
+                var boneWeights = mesh.boneWeights;
+                if (boneWeights.Any(boneWeight => (boneWeight.weight0 > 0.0 && !bones[boneWeight.boneIndex0]) ||
+                                                  (boneWeight.weight1 > 0.0 && !bones[boneWeight.boneIndex1]) ||
+                                                  (boneWeight.weight2 > 0.0 && !bones[boneWeight.boneIndex2]) ||
+                                                  (boneWeight.weight3 > 0.0 && !bones[boneWeight.boneIndex3])))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+#if NVE_HAS_AVATAR_OPTIMIZER
+    namespace aao
+    {
+        [ComponentInformation(typeof(NdmfVrmExporterComponent))]
+        internal sealed class NdmfVrmExporterComponentInformation : ComponentInformation<NdmfVrmExporterComponent>
+        {
+            protected override void CollectMutations(NdmfVrmExporterComponent component,
+                ComponentMutationsCollector collector)
+            {
+                var blendShapeNameToSmr = new Dictionary<string, SkinnedMeshRenderer>();
+                VrmExpressionProperty.RetrieveAllBlendShapes(component.transform, (name, smr, props) =>
+                {
+                    if (props.TryGetValue(name, out var foundSmr))
+                    {
+                        if (smr != foundSmr)
+                        {
+                            Debug.LogWarning($"Different SMR found: left={smr}, right={foundSmr}");
+                        }
+                    }
+                    else
+                    {
+                        props.Add(name, smr);
+                    }
+                }, ref blendShapeNameToSmr);
+                var allExpressionUsedBlendShapeNames = new List<string?>();
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetHappyBlendShape.BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetAngryBlendShape.BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSadBlendShape.BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetRelaxedBlendShape.BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSurprisedBlendShape
+                    .BlendShapeNames);
+                foreach (var property in component.expressionCustomBlendShapes)
+                {
+                    allExpressionUsedBlendShapeNames.AddRange(property.BlendShapeNames);
+                }
+
+                var collectorProperties = new Dictionary<SkinnedMeshRenderer, IList<string>>();
+                foreach (var name in allExpressionUsedBlendShapeNames)
+                {
+                    if (string.IsNullOrEmpty(name) || !blendShapeNameToSmr.TryGetValue(name!, out var smr))
+                    {
+                        continue;
+                    }
+
+                    if (collectorProperties.TryGetValue(smr, out var names))
+                    {
+                        names.Add($"blendShape.{name}");
+                    }
+                    else
+                    {
+                        collectorProperties.Add(smr, new List<string>());
+                    }
+                }
+
+                foreach (var (smr, names) in collectorProperties)
+                {
+                    collector.ModifyProperties(smr, names);
+                }
+            }
+
+            protected override void CollectDependency(NdmfVrmExporterComponent component,
+                ComponentDependencyCollector collector)
+            {
+                collector.MarkEntrypoint();
+            }
+        }
+    }
+#endif // NVE_HAS_AVATAR_OPTIMIZER
 }
+
+#endif // NVE_HAS_NDMF
