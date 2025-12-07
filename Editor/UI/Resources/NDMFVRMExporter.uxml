@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.github.hkrn.ndmf-vrm-exporter/Editor/UI/Resources/NDMFVRMExporter.uss?fileID=7433441132597879392&amp;guid=8876c1f1b130819418aaaa1401de7ec8&amp;type=3#NDMFVRMExporter" />
     <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
         <ui:Button text="Export" parse-escape-sequences="true" display-tooltip-when-elided="true" name="export" />
-        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="message" style="display: none;" />
+        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="message" focusable="true" style="display: none; white-space: normal; text-overflow: ellipsis;" />
     </ui:VisualElement>
 </ui:UXML>
