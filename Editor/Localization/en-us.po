@@ -25,6 +25,12 @@ msgstr "VRM can be exported by clicking below \"Open NDMF Console to export VRM 
 msgid "component.platform-build.open"
 msgstr "Open NDMF Console to export VRM file"
 
+msgid "component.platform-build.disabled"
+msgstr "VRM Export Description Component is not attached to the avatar and cannot be exported."
+
+msgid "component.platform-build.success"
+msgstr "Exporting VRM has been completed!"
+
 msgid "component.validation.avatar-thumbnail"
 msgstr "Avatar thumbnail image must be square"
 
