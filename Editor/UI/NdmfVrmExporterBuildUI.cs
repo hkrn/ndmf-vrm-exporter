@@ -8,7 +8,6 @@ using nadena.dev.ndmf.platform;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEngine;
-using VRC.SDK3.Editor;
 
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn.ui
@@ -26,7 +25,7 @@ namespace com.github.hkrn.ui
             _exportButton.clicked += () =>
             {
                 _exportButton.SetEnabled(false);
-                _messageLabel.SetVisible(false);
+                _messageLabel.style.display = DisplayStyle.None;
                 var platformInstance = NdmfVrmExporterPlatform.Instance;
                 var path = EditorUtility.SaveFilePanel("Export VRM File", platformInstance.LastBuildDirectory,
                     platformInstance.LastBuildFileNameWithoutExtension, "vrm");
@@ -80,7 +79,7 @@ namespace com.github.hkrn.ui
                     }
                     else
                     {
-                        _messageLabel.SetVisible(true);
+                        _messageLabel.style.display = DisplayStyle.Flex;
                         _messageLabel.text = e.Message;
                     }
                 }
