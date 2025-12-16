@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.2.2] - 2025-12-16
+
+- [exporter] Fixed a bug with unintended dependency on VRChat SDK extension method ([#99](https://github.com/hkrn/ndmf-vrm-exporter/pull/99))
+
 ## [1.2.1] - 2025-12-06
 
 - Revert "[chore] split NDMFVRMExporter into several multiple classes" ([#95](https://github.com/hkrn/ndmf-vrm-exporter/pull/95))
@@ -145,7 +149,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...HEAD
+[1.2.2]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.0.15...1.1.0
