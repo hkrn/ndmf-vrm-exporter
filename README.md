@@ -42,7 +42,7 @@ NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っ
 > [!IMPORTANT]
 > NDMF 1.8 以上 (Modular Avatar では 1.13 以上が対応) が導入されている必要があります
 
-NDMF に組み込まれているアバタープラットフォーム機能を利用する方法です。「使い方その１」と異なり、コンポーネントを無効にしても機能し必要なタイミングで任意の場所に対して VRM ファイルの出力が可能となります。
+NDMF に組み込まれているアバタープラットフォーム機能を利用する方法です。
 
 1. インスペクタ画面から `VRC Avatar Descriptor` があるところで `Add Component` から `VRM Export Description` コンポーネントを検索し設定
 2. `VRM Export Description` コンポーネント内にある `Retrieve Metadata via VRChat API` で自動設定
@@ -53,6 +53,12 @@ NDMF に組み込まれているアバタープラットフォーム機能を利
 5. `Avatar platform` から `VRM 1.0 (NDMF VRM Exporter)` を選択
 6. `Avatar platform` の項目のすぐ下に出てくる `Export` ボタンを押す
 7. ファイルダイアログが開くので出力先を指定
+
+こちらの方法を利用する際に「使い方その１」にないメリットとして以下が挙げられます
+
+* コンポーネントを無効にしても機能するため「その１」と比較してビルド時間を短縮できる
+* 必要なタイミングで任意の場所に対して VRM ファイルの出力が可能
+* Modular Avatar を利用している場合は [プラットフォームフィルター](https://modular-avatar.nadena.dev/ja/docs/reference/platform-filter) コンポーネントによる表示の切り替えが利用可能
 
 ## コンポーネントの説明
 
