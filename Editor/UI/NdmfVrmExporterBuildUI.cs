@@ -40,6 +40,22 @@ namespace com.github.hkrn.ui
             };
         }
 
+        public override GameObject AvatarRoot
+        {
+            get => _avatarRoot;
+            set
+            {
+                var enabled = value && value.TryGetComponent<NdmfVrmExporterComponent>(out _);
+                _exportButton.SetEnabled(enabled);
+                _messageLabel.style.display = enabled ? DisplayStyle.Flex : DisplayStyle.None;
+                if (!enabled)
+                {
+                    _messageLabel.text = Translator._("component.platform-build.disabled");
+                }
+                _avatarRoot = value;
+            }
+        }
+
         private void Build(NdmfVrmExporterPlatform platform, string path)
         {
             GameObject avatarRoot = null;
@@ -68,7 +84,7 @@ namespace com.github.hkrn.ui
                     platform.LastBuildDirectory = outputDirectory;
                     platform.LastBuildFileNameWithoutExtension = outputFileNameWithoutExtension;
                     EditorUtility.DisplayDialog(NdmfVrmExporterPlugin.Instance.DisplayName,
-                        "Exporting VRM has been completed!", "OK");
+                        Translator._("component.platform-build.success"), "OK");
                 }
                 catch (NdmfVrmExporterPlugin.ValidationException e)
                 {
@@ -96,6 +112,7 @@ namespace com.github.hkrn.ui
 
         private readonly Button _exportButton;
         private readonly Label _messageLabel;
+        private GameObject _avatarRoot;
     }
 }
 #endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
