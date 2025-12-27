@@ -52,7 +52,7 @@ namespace com.github.hkrn.ui
             {
                 var enabled = value && value.TryGetComponent<NdmfVrmExporterComponent>(out _);
                 _exportButton.SetEnabled(enabled);
-                _messageLabel.style.display = enabled ? DisplayStyle.Flex : DisplayStyle.None;
+                _messageLabel.style.display = enabled ? DisplayStyle.None : DisplayStyle.Flex;
                 if (!enabled)
                 {
                     _messageLabel.text = Translator._("component.platform-build.disabled");
