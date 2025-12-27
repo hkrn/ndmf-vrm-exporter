@@ -18,7 +18,7 @@ namespace com.github.hkrn
 
         internal static readonly NdmfVrmExporterPlatform Instance = new();
         internal string LastBuildDirectory { get; set; } = string.Empty;
-        internal string LastBuildFileNameWithoutExtension { get; set; } = "Untitled";
+        internal string LastBuildFileNameWithoutExtension { get; set; } = string.Empty;
 
         public void InitBuildFromCommonAvatarInfo(BuildContext context, CommonAvatarInfo info)
         {

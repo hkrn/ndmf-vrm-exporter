@@ -56,7 +56,6 @@ using nadena.dev.ndmf;
 using nadena.dev.ndmf.localization;
 using nadena.dev.ndmf.runtime;
 #if NVE_HAS_NDMF_PLATFORM_SUPPORT
-using nadena.dev.ndmf.platform;
 using nadena.dev.ndmf.ui;
 #endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
 

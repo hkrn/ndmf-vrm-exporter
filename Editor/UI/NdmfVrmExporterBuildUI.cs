@@ -27,8 +27,13 @@ namespace com.github.hkrn.ui
                 _exportButton.SetEnabled(false);
                 _messageLabel.style.display = DisplayStyle.None;
                 var platformInstance = NdmfVrmExporterPlatform.Instance;
+                var filename = platformInstance.LastBuildFileNameWithoutExtension;
+                if (string.IsNullOrEmpty(filename))
+                {
+                    filename = AvatarRoot.name;
+                }
                 var path = EditorUtility.SaveFilePanel("Export VRM File", platformInstance.LastBuildDirectory,
-                    platformInstance.LastBuildFileNameWithoutExtension, "vrm");
+                    filename, "vrm");
                 if (string.IsNullOrEmpty(path))
                 {
                     Debug.Log("Exporting VRM has been cancelled");
