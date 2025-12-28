@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.2.3] - 2025-12-28
+
+- [exporter] Changed to use avatar name as filename ([#105](https://github.com/hkrn/ndmf-vrm-exporter/pull/105))
+- [export] Implemented export disabling process ([#103](https://github.com/hkrn/ndmf-vrm-exporter/pull/103))
+
 ## [1.2.2] - 2025-12-16
 
 - [exporter] Fixed a bug with unintended dependency on VRChat SDK extension method ([#99](https://github.com/hkrn/ndmf-vrm-exporter/pull/99))
@@ -149,7 +154,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...HEAD
+[1.2.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.1.0...1.2.0
