@@ -126,6 +126,8 @@ Metadata のうち Authors と License URL が必須項目となっています�
 |ThirdParty Licenses|第三者のライセンス情報|||
 |Other License URL|その他のライセンスのURL|||
 
+`Uses VRM Public License` ボタンを押すと `License URL` を初期設定である VRM Public License 1.0 の URL に戻すことができます。それ以外の値は変更されません。
+
 #### Permissions
 
 メタデータのうちアバターに対する利用許諾の部分を設定します。
@@ -556,6 +558,15 @@ NDMF VRM Exporter 自体はポリゴン数を減らす機能を持っていま�
 > ポリゴン数の削減はアバターの見た目に直接影響するため、まず Avatar Optimizer で削減を行った上でどうしてもそれだけで達成ができない場合にのみ Meshia Mesh Simplification を利用するようにしてください
 
 具体例として [Cluster](https://cluster.mu) での VRM 1.0 は全てのメッシュで [72000 ポリゴンの上限](https://help.cluster.mu/hc/ja/articles/360029465811-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%90%E3%82%BF%E3%83%BC%E3%81%AE%E5%88%B6%E9%99%90) がありますが、Meshia Mesh Simplification の `PC-Poor-Medium-Good` プリセットを使うことによりその制約を満たすことが可能です。
+
+### NDMF VRM Exporter に出力するときだけ表示または非表示にしたいオブジェクトがあるけどどうすればよいですか？
+
+> [!IMPORTANT]
+> Modular Avatar を導入した上でセットアップされていることが前提となります
+
+Modular Avatar の [プラットフォームフィルター](https://modular-avatar.nadena.dev/ja/docs/reference/platform-filter) コンポーネントを表示または非表示にしたいゲームオブジェクトに付与します。このときプラットフォームを `VRM 1.0 (NDMF VRM Exporter)` にし「含める（表示）」または「除外する（非表示）」を設定します。その後に「使い方その２」の方法であるアバタープラットフォームから `VRM 1.0 (NDMF VRM Exporter)` を選択して書き出してください。
+
+なお「使い方その１」の方法だと NDMF VRM Exporter のアバターとしてではなく、VRChat のアバターとして書き出されるためプラットフォームフィルターが機能しません。
 
 [^1]: VRM の仕様でも個人情報を含めることについては [意図していません](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/meta.ja.md#metacontactinformation)
 [^2]: 厳密には [VRCPipelineManager](https://creators.vrchat.com/sdk/vrcpipelinemanager/) コンポーネントで管理されているブループリント ID が発行されている必要があります。これはアバターの初回アップロード後に自動的に発行されます
