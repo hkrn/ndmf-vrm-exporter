@@ -2,25 +2,44 @@
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-01-05
+
+### Fixed
+
+- [exporter] Implemented minor improvements ([#108](https://github.com/hkrn/ndmf-vrm-exporter/pull/108))
+
 ## [1.2.3] - 2025-12-28
+
+### Fixed
 
 - [exporter] Changed to use avatar name as filename ([#105](https://github.com/hkrn/ndmf-vrm-exporter/pull/105))
 - [export] Implemented export disabling process ([#103](https://github.com/hkrn/ndmf-vrm-exporter/pull/103))
 
 ## [1.2.2] - 2025-12-16
 
+### Fixed
+
 - [exporter] Fixed a bug with unintended dependency on VRChat SDK extension method ([#99](https://github.com/hkrn/ndmf-vrm-exporter/pull/99))
 
 ## [1.2.1] - 2025-12-06
+
+### Fixed
 
 - Revert "[chore] split NDMFVRMExporter into several multiple classes" ([#95](https://github.com/hkrn/ndmf-vrm-exporter/pull/95))
 
 ## [1.2.0] - 2025-12-05
 
+### Aded
+
 - [exporter] adds support of NDMF platform API ([#92](https://github.com/hkrn/ndmf-vrm-exporter/pull/92))
+
+### Fixed
+
 - [chore] updates README to be more descriptive ([#89](https://github.com/hkrn/ndmf-vrm-exporter/pull/89))
 
 ## [1.1.0] - 2025-11-05
+
+### Aded
 
 - [exporter] implements `KHR_materials_variants` ([#86](https://github.com/hkrn/ndmf-vrm-exporter/pull/86))
 
@@ -154,7 +173,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...HEAD
+[1.2.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.0...1.2.1
