@@ -8,6 +8,7 @@ using nadena.dev.ndmf.platform;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn.ui
@@ -26,14 +27,18 @@ namespace com.github.hkrn.ui
             {
                 _exportButton.SetEnabled(false);
                 _messageLabel.style.display = DisplayStyle.None;
+                var buildLocationKey = GetBuildLocationKey();
                 var platformInstance = NdmfVrmExporterPlatform.Instance;
-                var filename = platformInstance.LastBuildFileNameWithoutExtension;
-                if (string.IsNullOrEmpty(filename))
+                if (!platformInstance.LastBuildLocations.TryGetValue(buildLocationKey, out var buildLocationValue))
                 {
-                    filename = AvatarRoot.name;
+                    buildLocationValue = new NdmfVrmExporterPlatform.BuildLocationValue()
+                    {
+                        Filename = AvatarRoot.name
+                    };
                 }
-                var path = EditorUtility.SaveFilePanel("Export VRM File", platformInstance.LastBuildDirectory,
-                    filename, "vrm");
+
+                var path = EditorUtility.SaveFilePanel("Export VRM File", buildLocationValue.Directory,
+                    buildLocationValue.Filename, "vrm");
                 if (string.IsNullOrEmpty(path))
                 {
                     Debug.Log("Exporting VRM has been cancelled");
@@ -50,13 +55,30 @@ namespace com.github.hkrn.ui
             get => _avatarRoot;
             set
             {
-                var enabled = value && value.TryGetComponent<NdmfVrmExporterComponent>(out _);
+                NdmfVrmExporterComponent component = null;
+                var enabled = value && value.TryGetComponent(out component)
+                                    && component.HasAuthor && component.HasLicenseUrl;
                 _exportButton.SetEnabled(enabled);
                 _messageLabel.style.display = enabled ? DisplayStyle.None : DisplayStyle.Flex;
                 if (!enabled)
                 {
-                    _messageLabel.text = Translator._("component.platform-build.disabled");
+                    if (component)
+                    {
+                        if (!component.HasAuthor)
+                        {
+                            _messageLabel.text = Translator._("component.validation.author");
+                        }
+                        else if (!component.HasLicenseUrl)
+                        {
+                            _messageLabel.text = Translator._("component.validation.license-url");
+                        }
+                    }
+                    else
+                    {
+                        _messageLabel.text = Translator._("component.platform-build.disabled");
+                    }
                 }
+
                 _avatarRoot = value;
             }
         }
@@ -86,8 +108,12 @@ namespace com.github.hkrn.ui
                 {
                     NdmfVrmExporterPlugin.ExportVrmFile(component, buildContext, baseOutputPath,
                         workingDirectoryPath);
-                    platform.LastBuildDirectory = outputDirectory;
-                    platform.LastBuildFileNameWithoutExtension = outputFileNameWithoutExtension;
+                    var buildLocationKey = GetBuildLocationKey();
+                    platform.LastBuildLocations[buildLocationKey] = new NdmfVrmExporterPlatform.BuildLocationValue
+                    {
+                        Directory = outputDirectory,
+                        Filename = outputFileNameWithoutExtension,
+                    };
                     EditorUtility.DisplayDialog(NdmfVrmExporterPlugin.Instance.DisplayName,
                         Translator._("component.platform-build.success"), "OK");
                 }
@@ -111,8 +137,18 @@ namespace com.github.hkrn.ui
                 {
                     Object.DestroyImmediate(avatarRoot);
                 }
+
                 _exportButton.SetEnabled(true);
             }
+        }
+
+        private NdmfVrmExporterPlatform.BuildLocationKey GetBuildLocationKey()
+        {
+            return new NdmfVrmExporterPlatform.BuildLocationKey
+            {
+                AvatarId = AvatarRoot.GetInstanceID(),
+                SceneBuildId = SceneManager.GetActiveScene().buildIndex,
+            };
         }
 
         private readonly Button _exportButton;

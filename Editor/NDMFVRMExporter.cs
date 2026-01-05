@@ -659,6 +659,11 @@ namespace com.github.hkrn
             DrawPropertyField(Translator._("component.metadata.licenses.license-url"), _licenseUrlProp);
             DrawPropertyField(Translator._("component.metadata.licenses.third-party-license"), _thirdPartyLicensesProp);
             DrawPropertyField(Translator._("component.metadata.licenses.other-license-url"), _otherLicenseUrlProp);
+            EditorGUILayout.Space();
+            if (GUILayout.Button("Uses VRM Public License"))
+            {
+                _licenseUrlProp.stringValue = vrm.core.Meta.DefaultLicenseUrl;
+            }
         }
 
         private void DrawPermissions()
