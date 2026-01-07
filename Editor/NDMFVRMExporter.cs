@@ -1304,13 +1304,12 @@ namespace com.github.hkrn
     {
         public static Texture? AutoBakeMainTexture(IAssetSaver assetSaver, Material material)
         {
-            var dictionaries = GetProps(material);
-            var mainColor = dictionaries.GetColor("_Color");
-            var mainTexHsvg = dictionaries.GetVector("_MainTexHSVG");
-            var mainGradationStrength = dictionaries.GetFloat("_MainGradationStrength");
-            var useMainSecondTex = dictionaries.GetFloat("_UseMain2ndTex");
-            var useMainThirdTex = dictionaries.GetFloat("_UseMain3rdTex");
-            var mainTex = dictionaries.GetTexture("_MainTex");
+            var mainColor = material.GetColor(PropertyColor);
+            var mainTexHsvg = material.GetVector(PropertyMainTexHsvg);
+            var mainGradationStrength = material.GetFloat(PropertyMainGradationStrength);
+            var useMainSecondTex = material.GetFloat(PropertyUseMainSecondTex);
+            var useMainThirdTex = material.GetFloat(PropertyUseMainThirdTex);
+            var mainTex = material.GetTexture(PropertyMainTex);
             var shouldNotBakeAll = mainColor == Color.white && mainTexHsvg == lilConstants.defaultHSVG &&
                                    mainGradationStrength == 0.0 && useMainSecondTex == 0.0 && useMainThirdTex == 0.0;
             if (shouldNotBakeAll)
@@ -1330,57 +1329,57 @@ namespace com.github.hkrn
             hsvgMaterial.SetColor(PropertyColor, Color.white);
             hsvgMaterial.SetVector(PropertyMainTexHsvg, mainTexHsvg);
             hsvgMaterial.SetFloat(PropertyMainGradationStrength, mainGradationStrength);
-            hsvgMaterial.CopyTexture(dictionaries, "_MainGradationTex");
-            hsvgMaterial.CopyTexture(dictionaries, "_MainColorAdjustMask");
+            CopyTexture(hsvgMaterial, material, PropertyMainGradationTex);
+            CopyTexture(hsvgMaterial, material, PropertyMainColorAdjustMask);
 
             AssignMaterialTexture(assetSaver, mainTex, hsvgMaterial, PropertyMainTex, ref srcTexture);
             if (bakeSecond)
             {
-                hsvgMaterial.CopyFloat(dictionaries, "_UseMain2ndTex");
-                hsvgMaterial.CopyColor(dictionaries, "_MainColor2nd");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexAngle");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsDecal");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsLeftOnly");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsRightOnly");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldCopy");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldFlipMirror");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexShouldFlipCopy");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexIsMSDF");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexBlendMode");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main2ndTexAlphaMode");
-                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main2ndTex");
-                hsvgMaterial.CopyTextureScale(dictionaries, "_Main2ndTex");
-                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main2ndBlendMask");
-                hsvgMaterial.CopyTextureScale(dictionaries, "_Main2ndBlendMask");
+                CopyFloat(hsvgMaterial, material, PropertyUseMainSecondTex);
+                CopyColor(hsvgMaterial, material, PropertyMainColorSecond);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexAngle);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexIsDecal);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexIsLeftOnly);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexIsRightOnly);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexShouldCopy);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexShouldFlipMirror);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexShouldFlipCopy);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexIsMsdf);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexBlendMode);
+                CopyFloat(hsvgMaterial, material, PropertyMainSecondTexAlphaMode);
+                CopyTextureOffset(hsvgMaterial, material, PropertyMainSecondTex);
+                CopyTextureScale(hsvgMaterial, material, PropertyMainSecondTex);
+                CopyTextureOffset(hsvgMaterial, material, PropertyMainSecondBlendMask);
+                CopyTextureScale(hsvgMaterial, material, PropertyMainSecondBlendMask);
 
-                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndTex"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, material.GetTexture(PropertyMainSecondTex), hsvgMaterial,
                     PropertyMainSecondTex, ref srcMain2);
-                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main2ndBlendMask"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, material.GetTexture(PropertyMainSecondBlendMask), hsvgMaterial,
                     PropertyMainSecondBlendMask, ref srcMask2);
             }
 
             if (bakeThird)
             {
-                hsvgMaterial.CopyFloat(dictionaries, "_UseMain3rdTex");
-                hsvgMaterial.CopyColor(dictionaries, "_MainColor3rd");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexAngle");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsDecal");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsLeftOnly");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsRightOnly");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldCopy");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldFlipMirror");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexShouldFlipCopy");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexIsMSDF");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexBlendMode");
-                hsvgMaterial.CopyFloat(dictionaries, "_Main3rdTexAlphaMode");
-                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main3rdTex");
-                hsvgMaterial.CopyTextureScale(dictionaries, "_Main3rdTex");
-                hsvgMaterial.CopyTextureOffset(dictionaries, "_Main3rdBlendMask");
-                hsvgMaterial.CopyTextureScale(dictionaries, "_Main3rdBlendMask");
+                CopyFloat(hsvgMaterial, material, PropertyUseMainThirdTex);
+                CopyColor(hsvgMaterial, material, PropertyMainColorThird);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexAngle);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexIsDecal);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexIsLeftOnly);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexIsRightOnly);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexShouldCopy);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexShouldFlipMirror);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexShouldFlipCopy);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexIsMsdf);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexBlendMode);
+                CopyFloat(hsvgMaterial, material, PropertyMainThirdTexAlphaMode);
+                CopyTextureOffset(hsvgMaterial, material, PropertyMainThirdTex);
+                CopyTextureScale(hsvgMaterial, material, PropertyMainThirdTex);
+                CopyTextureOffset(hsvgMaterial, material, PropertyMainThirdBlendMask);
+                CopyTextureScale(hsvgMaterial, material, PropertyMainThirdBlendMask);
 
-                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdTex"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, material.GetTexture(PropertyMainThirdTex), hsvgMaterial,
                     PropertyMainThirdTex, ref srcMain3);
-                AssignMaterialTexture(assetSaver, dictionaries.GetTexture("_Main3rdBlendMask"), hsvgMaterial,
+                AssignMaterialTexture(assetSaver, material.GetTexture(PropertyMainThirdBlendMask), hsvgMaterial,
                     PropertyMainThirdBlendMask, ref srcMask3);
             }
 
@@ -1401,13 +1400,12 @@ namespace com.github.hkrn
         public static Texture? AutoBakeShadowTexture(IAssetSaver assetSaver, Material material,
             Texture? baseMainTexture, int shadowType = 0)
         {
-            var dictionaries = GetProps(material);
-            var useShadow = dictionaries.GetFloat("_UseShadow");
-            var shadowColor = dictionaries.GetColor("_ShadowColor");
-            var shadowColorTex = dictionaries.GetTexture("_ShadowColorTex");
-            var shadowStrength = dictionaries.GetFloat("_ShadowStrength");
-            var shadowStrengthMask = dictionaries.GetTexture("_ShadowStrengthMask");
-            var mainTex = dictionaries.GetTexture("_MainTex");
+            var useShadow = material.GetFloat(PropertyUseShadow);
+            var shadowColor = material.GetColor(PropertyShadowColor);
+            var shadowColorTex = material.GetTexture(PropertyShadowColorTex);
+            var shadowStrength = material.GetFloat(PropertyShadowStrength);
+            var shadowStrengthMask = material.GetTexture(PropertyShadowStrengthMask);
+            var mainTex = material.GetTexture(PropertyMainTex);
 
             var shouldNotBakeAll = useShadow == 0.0 && shadowColor == Color.white && !shadowColorTex &&
                                    !shadowStrengthMask;
@@ -1426,7 +1424,7 @@ namespace com.github.hkrn
             hsvgMaterial.SetFloat(PropertyUseMainSecondTex, 1.0f);
             hsvgMaterial.SetFloat(PropertyUseMainThirdTex, 1.0f);
             hsvgMaterial.SetColor(PropertyMainColorThird,
-                new Color(1.0f, 1.0f, 1.0f, dictionaries.GetFloat("_ShadowMainStrength")));
+                new Color(1.0f, 1.0f, 1.0f, material.GetFloat(PropertyShadowMainStrength)));
             hsvgMaterial.SetFloat(PropertyMainThirdTexBlendMode, 3.0f);
 
             Texture? shadowTex;
@@ -1434,24 +1432,24 @@ namespace com.github.hkrn
             {
                 case 2:
                 {
-                    var shadowSecondColor = dictionaries.GetColor("_Shadow2ndColor");
+                    var shadowSecondColor = material.GetColor(PropertyShadowSecondColor);
                     hsvgMaterial.SetColor(PropertyMainColorSecond,
                         new Color(shadowSecondColor.r, shadowSecondColor.g, shadowSecondColor.b,
                             shadowSecondColor.a * shadowStrength));
                     hsvgMaterial.SetFloat(PropertyMainSecondTexBlendMode, 0.0f);
                     hsvgMaterial.SetFloat(PropertyMainSecondTexAlphaMode, 0.0f);
-                    shadowTex = dictionaries.GetTexture("_Shadow2ndColorTex");
+                    shadowTex = material.GetTexture(PropertyShadowSecondColorTex);
                     break;
                 }
                 case 3:
                 {
-                    var shadowThirdColor = dictionaries.GetColor("_Shadow3rdColor");
+                    var shadowThirdColor = material.GetColor(PropertyShadowThirdColor);
                     hsvgMaterial.SetColor(PropertyMainColorThird,
                         new Color(shadowThirdColor.r, shadowThirdColor.g, shadowThirdColor.b,
                             shadowThirdColor.a * shadowStrength));
                     hsvgMaterial.SetFloat(PropertyMainThirdTexBlendMode, 0.0f);
                     hsvgMaterial.SetFloat(PropertyMainThirdTexAlphaMode, 0.0f);
-                    shadowTex = dictionaries.GetTexture("_Shadow3rdColorTex");
+                    shadowTex = material.GetTexture(PropertyShadowThirdColorTex);
                     break;
                 }
                 default:
@@ -1459,7 +1457,7 @@ namespace com.github.hkrn
                         new Color(shadowColor.r, shadowColor.g, shadowColor.b, shadowStrength));
                     hsvgMaterial.SetFloat(PropertyMainSecondTexBlendMode, 0.0f);
                     hsvgMaterial.SetFloat(PropertyMainSecondTexAlphaMode, 0.0f);
-                    shadowTex = dictionaries.GetTexture("_ShadowColorTex");
+                    shadowTex = material.GetTexture(PropertyShadowColorTex);
                     break;
             }
 
@@ -1490,9 +1488,8 @@ namespace com.github.hkrn
 
         public static Texture? AutoBakeMatCap(IAssetSaver assetSaver, Material material)
         {
-            var dictionaries = GetProps(material);
-            var matcapColor = dictionaries.GetColor("_MatCapColor");
-            var matcapTex = dictionaries.GetTexture("_MatCapTex");
+            var matcapColor = material.GetColor(PropertyMatCapColor);
+            var matcapTex = material.GetTexture(PropertyMatCapTex);
             var shouldNotBakeAll = matcapColor == Color.white;
             if (shouldNotBakeAll)
                 return matcapTex;
@@ -1519,8 +1516,7 @@ namespace com.github.hkrn
 
         public static Texture? AutoBakeAlphaMask(IAssetSaver assetSaver, Material material)
         {
-            var dictionaries = GetProps(material);
-            var mainTex = dictionaries.GetTexture("_MainTex");
+            var mainTex = material.GetTexture(PropertyMainTex);
             // run bake
             var bufMainTexture = mainTex as Texture2D;
             var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
@@ -1532,11 +1528,11 @@ namespace com.github.hkrn
             hsvgMaterial.EnableKeyword("_ALPHAMASK");
             hsvgMaterial.SetColor(PropertyColor, Color.white);
             hsvgMaterial.SetVector(PropertyMainTexHsvg, lilConstants.defaultHSVG);
-            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskMode");
-            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskScale");
-            hsvgMaterial.CopyFloat(dictionaries, "_AlphaMaskValue");
+            CopyFloat(hsvgMaterial, material, PropertyAlphaMaskMode);
+            CopyFloat(hsvgMaterial, material, PropertyAlphaMaskScale);
+            CopyFloat(hsvgMaterial, material, PropertyAlphaMaskValue);
 
-            var baseTex = dictionaries.GetTexture("_AlphaMask");
+            var baseTex = material.GetTexture(PropertyAlphaMask);
             Texture2D? outTexture = null;
             if (LoadTexture(assetSaver, baseTex, ref srcAlphaMask))
             {
@@ -1613,132 +1609,44 @@ namespace com.github.hkrn
             return true;
         }
 
-        private static (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-            Dictionary<string, SerializedProperty> cs) GetProps(Material material)
+        private static void CopyFloat(Material dest, Material source, int name)
         {
-            var so = new SerializedObject(material);
-            so.Update();
-            var props = so.FindProperty("m_SavedProperties");
-            return (GetProps(props.FindPropertyRelative("m_TexEnvs")),
-                GetProps(props.FindPropertyRelative("m_Floats")),
-                GetProps(props.FindPropertyRelative("m_Colors")));
-        }
-
-        public static (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-            Dictionary<string, SerializedProperty> cs) GetProps(SerializedObject so)
-        {
-            var props = so.FindProperty("m_SavedProperties");
-            return (GetProps(props.FindPropertyRelative("m_TexEnvs")),
-                GetProps(props.FindPropertyRelative("m_Floats")),
-                GetProps(props.FindPropertyRelative("m_Colors")));
-        }
-
-        public static Dictionary<string, SerializedProperty> GetProps(SerializedProperty props)
-        {
-            var dic = new Dictionary<string, SerializedProperty>();
-            props.DoAllElements((p, _) =>
+            if (source.HasProperty(name))
             {
-                dic[p.FindPropertyRelative("first").stringValue] = p.FindPropertyRelative("second");
-            });
-            return dic;
-        }
-
-        private static void DoAllElements(this SerializedProperty property, Action<SerializedProperty, int> function)
-        {
-            if (property.arraySize == 0)
-                return;
-            var i = 0;
-            var prop = property.GetArrayElementAtIndex(0);
-            var end = property.GetEndProperty();
-            function.Invoke(prop, i);
-            while (prop.NextVisible(false) && !SerializedProperty.EqualContents(prop, end))
-            {
-                i++;
-                function.Invoke(prop, i);
+                dest.SetFloat(name, source.GetFloat(name));
             }
         }
 
-        private static float GetFloat(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        private static void CopyColor(Material dest, Material source, int name)
         {
-            return dictionaries.fs.TryGetValue(key, out var f) ? f.floatValue : 0f;
+            if (source.HasProperty(name))
+            {
+                dest.SetColor(name, source.GetColor(name));
+            }
         }
 
-        private static Color GetColor(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        private static void CopyTexture(Material dest, Material source, int name)
         {
-            return dictionaries.cs.TryGetValue(key, out var c) ? c.colorValue : Color.black;
+            if (source.HasProperty(name))
+            {
+                dest.SetTexture(name, source.GetTexture(name));
+            }
         }
 
-        private static Vector4 GetVector(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        private static void CopyTextureOffset(Material dest, Material source, int name)
         {
-            return dictionaries.GetColor(key);
+            if (source.HasProperty(name))
+            {
+                dest.SetTextureOffset(name, source.GetTextureOffset(name));
+            }
         }
 
-        private static Texture? GetTexture(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
+        private static void CopyTextureScale(Material dest, Material source, int name)
         {
-            if (dictionaries.ts.ContainsKey(key))
-                return dictionaries.ts[key].FindPropertyRelative("m_Texture").objectReferenceValue as Texture;
-            else return null;
-        }
-
-        private static Vector2 GetTextureScale(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            return dictionaries.ts.ContainsKey(key)
-                ? dictionaries.ts[key].FindPropertyRelative("m_Scale").vector2Value
-                : Vector2.one;
-        }
-
-        private static Vector2 GetTextureOffset(
-            this (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            return dictionaries.ts.ContainsKey(key)
-                ? dictionaries.ts[key].FindPropertyRelative("m_Offset").vector2Value
-                : Vector2.zero;
-        }
-
-        private static void CopyFloat(this Material material,
-            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            material.SetFloat(key, dictionaries.GetFloat(key));
-        }
-
-        private static void CopyColor(this Material material,
-            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            material.SetColor(key, dictionaries.GetColor(key));
-        }
-
-        private static void CopyTexture(this Material material,
-            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            material.SetTexture(key, dictionaries.GetTexture(key));
-        }
-
-        private static void CopyTextureScale(this Material material,
-            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            material.SetTextureScale(key, dictionaries.GetTextureScale(key));
-        }
-
-        private static void CopyTextureOffset(this Material material,
-            (Dictionary<string, SerializedProperty> ts, Dictionary<string, SerializedProperty> fs,
-                Dictionary<string, SerializedProperty> cs) dictionaries, string key)
-        {
-            material.SetTextureOffset(key, dictionaries.GetTextureOffset(key));
+            if (source.HasProperty(name))
+            {
+                dest.SetTextureScale(name, source.GetTextureScale(name));
+            }
         }
 
         private static readonly int PropertyColor = Shader.PropertyToID("_Color");
@@ -1758,6 +1666,49 @@ namespace com.github.hkrn
         private static readonly int PropertyMainSecondTexAlphaMode = Shader.PropertyToID("_Main2ndTexAlphaMode");
         private static readonly int PropertyMainThirdTexAlphaMode = Shader.PropertyToID("_Main3rdTexAlphaMode");
         private static readonly int PropertyAlphaMask = Shader.PropertyToID("_AlphaMask");
+        private static readonly int PropertyMatCapColor = Shader.PropertyToID("_MatCapColor");
+        private static readonly int PropertyMatCapTex = Shader.PropertyToID("_MatCapTex");
+        private static readonly int PropertyUseShadow = Shader.PropertyToID("_UseShadow");
+        private static readonly int PropertyShadowColor = Shader.PropertyToID("_ShadowColor");
+        private static readonly int PropertyShadowColorTex = Shader.PropertyToID("_ShadowColorTex");
+        private static readonly int PropertyShadowStrength = Shader.PropertyToID("_ShadowStrength");
+        private static readonly int PropertyShadowStrengthMask = Shader.PropertyToID("_ShadowStrengthMask");
+        private static readonly int PropertyShadowMainStrength = Shader.PropertyToID("_ShadowMainStrength");
+        private static readonly int PropertyShadowSecondColor = Shader.PropertyToID("_Shadow2ndColor");
+        private static readonly int PropertyShadowSecondColorTex = Shader.PropertyToID("_Shadow2ndColorTex");
+        private static readonly int PropertyShadowThirdColor = Shader.PropertyToID("_Shadow3rdColor");
+        private static readonly int PropertyShadowThirdColorTex = Shader.PropertyToID("_Shadow3rdColorTex");
+        private static readonly int PropertyMainGradationTex = Shader.PropertyToID("_MainGradationTex");
+        private static readonly int PropertyMainColorAdjustMask = Shader.PropertyToID("_MainColorAdjustMask");
+        private static readonly int PropertyMainSecondTexAngle = Shader.PropertyToID("_Main2ndTexAngle");
+        private static readonly int PropertyMainSecondTexIsDecal = Shader.PropertyToID("_Main2ndTexIsDecal");
+        private static readonly int PropertyMainSecondTexIsLeftOnly = Shader.PropertyToID("_Main2ndTexIsLeftOnly");
+        private static readonly int PropertyMainSecondTexIsRightOnly = Shader.PropertyToID("_Main2ndTexIsRightOnly");
+        private static readonly int PropertyMainSecondTexShouldCopy = Shader.PropertyToID("_Main2ndTexShouldCopy");
+
+        private static readonly int PropertyMainSecondTexShouldFlipMirror =
+            Shader.PropertyToID("_Main2ndTexShouldFlipMirror");
+
+        private static readonly int PropertyMainSecondTexShouldFlipCopy =
+            Shader.PropertyToID("_Main2ndTexShouldFlipCopy");
+
+        private static readonly int PropertyMainSecondTexIsMsdf = Shader.PropertyToID("_Main2ndTexIsMSDF");
+        private static readonly int PropertyMainThirdTexAngle = Shader.PropertyToID("_Main3rdTexAngle");
+        private static readonly int PropertyMainThirdTexIsDecal = Shader.PropertyToID("_Main3rdTexIsDecal");
+        private static readonly int PropertyMainThirdTexIsLeftOnly = Shader.PropertyToID("_Main3rdTexIsLeftOnly");
+        private static readonly int PropertyMainThirdTexIsRightOnly = Shader.PropertyToID("_Main3rdTexIsRightOnly");
+        private static readonly int PropertyMainThirdTexShouldCopy = Shader.PropertyToID("_Main3rdTexShouldCopy");
+
+        private static readonly int PropertyMainThirdTexShouldFlipMirror =
+            Shader.PropertyToID("_Main3rdTexShouldFlipMirror");
+
+        private static readonly int PropertyMainThirdTexShouldFlipCopy =
+            Shader.PropertyToID("_Main3rdTexShouldFlipCopy");
+
+        private static readonly int PropertyMainThirdTexIsMsdf = Shader.PropertyToID("_Main3rdTexIsMSDF");
+        private static readonly int PropertyAlphaMaskMode = Shader.PropertyToID("_AlphaMaskMode");
+        private static readonly int PropertyAlphaMaskScale = Shader.PropertyToID("_AlphaMaskScale");
+        private static readonly int PropertyAlphaMaskValue = Shader.PropertyToID("_AlphaMaskValue");
     }
 #endif // NVE_HAS_LILTOON
 
@@ -1815,6 +1766,24 @@ namespace com.github.hkrn
         private static readonly int PropertyEmissionBlendMask = Shader.PropertyToID("_EmissionBlendMask");
         private static readonly int PropertyUseBumpMap = Shader.PropertyToID("_UseBumpMap");
         private static readonly int PropertyAlphaMaskMode = Shader.PropertyToID("_AlphaMaskMode");
+        private static readonly int PropertyMainTexScrollRotate = Shader.PropertyToID("_MainTex_ScrollRotate");
+        private static readonly int PropertyUseShadow = Shader.PropertyToID("_UseShadow");
+        private static readonly int PropertyShadowBorder = Shader.PropertyToID("_ShadowBorder");
+        private static readonly int PropertyShadowBlur = Shader.PropertyToID("_ShadowBlur");
+        private static readonly int PropertyShadowMainStrength = Shader.PropertyToID("_ShadowMainStrength");
+        private static readonly int PropertyShadowColor = Shader.PropertyToID("_ShadowColor");
+        private static readonly int PropertyShadowStrength = Shader.PropertyToID("_ShadowStrength");
+        private static readonly int PropertyUseRim = Shader.PropertyToID("_UseRim");
+        private static readonly int PropertyRimBorder = Shader.PropertyToID("_RimBorder");
+        private static readonly int PropertyRimBlur = Shader.PropertyToID("_RimBlur");
+        private static readonly int PropertyRimFresnelPower = Shader.PropertyToID("_RimFresnelPower");
+        private static readonly int PropertyRimColor = Shader.PropertyToID("_RimColor");
+        private static readonly int PropertyRimBlendMode = Shader.PropertyToID("_RimBlendMode");
+        private static readonly int PropertyUseMatCap = Shader.PropertyToID("_UseMatCap");
+        private static readonly int PropertyMatCapBlendMode = Shader.PropertyToID("_MatCapBlendMode");
+        private static readonly int PropertyOutlineWidth = Shader.PropertyToID("_OutlineWidth");
+        private static readonly int PropertyOutlineColor = Shader.PropertyToID("_OutlineColor");
+        private static readonly int PropertyZWrite = Shader.PropertyToID("_ZWrite");
 
         public sealed class PackageJson
         {
@@ -3301,33 +3270,24 @@ namespace com.github.hkrn
                     MatcapFactor = System.Numerics.Vector3.Zero
                 };
 #if NVE_HAS_LILTOON
-                var so = new SerializedObject(material);
-                so.Update();
-                var props = so.FindProperty("m_SavedProperties");
-                var textures = MaterialBaker.GetProps(props.FindPropertyRelative("m_TexEnvs"));
-                var floats = MaterialBaker.GetProps(props.FindPropertyRelative("m_Floats"))
-                    .ToDictionary(kv => kv.Key, kv => kv.Value.floatValue);
-                var colors = MaterialBaker.GetProps(props.FindPropertyRelative("m_Colors"))
-                    .ToDictionary(kv => kv.Key, kv => kv.Value.colorValue);
-                var scrollRotate = colors.GetValueOrDefault("_MainTex_ScrollRotate", Color.clear);
+                var scrollRotate = material.GetColor(PropertyMainTexScrollRotate);
 
                 Texture2D? LocalRetrieveTexture2D(string name)
                 {
-                    var prop = textures!.GetValueOrDefault(name, null);
-                    return prop?.FindPropertyRelative("m_Texture").objectReferenceValue as Texture2D;
+                    return material.HasProperty(name) ? material.GetTexture(name) as Texture2D : null;
                 }
 
-                if (Mathf.Approximately(floats.GetValueOrDefault("_UseShadow", 0.0f), 1.0f))
+                if (Mathf.Approximately(material.GetFloat(PropertyUseShadow), 1.0f))
                 {
-                    var shadowBorder = floats.GetValueOrDefault("_ShadowBorder", 0.5f);
-                    var shadowBlur = floats.GetValueOrDefault("_ShadowBlur", 0.1f);
+                    var shadowBorder = material.GetFloat(PropertyShadowBorder);
+                    var shadowBlur = material.GetFloat(PropertyShadowBlur);
                     var shadeShift = Mathf.Clamp01(shadowBorder - (shadowBlur * 0.5f)) * 2.0f - 1.0f;
                     var shadeToony = Mathf.Approximately(shadeShift, 1.0f)
                         ? 1.0f
                         : (2.0f - Mathf.Clamp01(shadowBorder + shadowBlur * 0.5f) * 2.0f) /
                           (1.0f - shadeShift);
                     if (LocalRetrieveTexture2D("_ShadowStrengthMask") ||
-                        !Mathf.Approximately(floats.GetValueOrDefault("_ShadowMainStrength", 0.0f), 0.0f))
+                        !Mathf.Approximately(material.GetFloat(PropertyShadowMainStrength), 0.0f))
                     {
                         var bakedShadowTex =
                             MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mToonTexture.MainTexture);
@@ -3339,8 +3299,8 @@ namespace com.github.hkrn
                     }
                     else
                     {
-                        var shadowColor = colors.GetValueOrDefault("_ShadowColor", new Color(0.82f, 0.76f, 0.85f));
-                        var shadowStrength = floats.GetValueOrDefault("_ShadowStrength", 1.0f);
+                        var shadowColor = material.GetColor(PropertyShadowColor);
+                        var shadowStrength = material.GetFloat(PropertyShadowStrength);
                         var shadeColorStrength = new Color(
                             1.0f - (1.0f - shadowColor.r) * shadowStrength,
                             1.0f - (1.0f - shadowColor.g) * shadowStrength,
@@ -3380,20 +3340,20 @@ namespace com.github.hkrn
 
                 var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
                 if (component.enableMToonRimLight &&
-                    Mathf.Approximately(floats.GetValueOrDefault("_UseRim", 0.0f), 1.0f))
+                    Mathf.Approximately(material.GetFloat(PropertyUseRim), 1.0f))
                 {
                     var rimColorTexture = LocalRetrieveTexture2D("_RimColorTex");
-                    var rimBorder = floats.GetValueOrDefault("_RimBorder", 0.5f);
-                    var rimBlur = floats.GetValueOrDefault("_RimBlur", 0.65f);
-                    var rimFresnelPower = floats.GetValueOrDefault("_RimFresnelPower", 3.5f);
+                    var rimBorder = material.GetFloat(PropertyRimBorder);
+                    var rimBlur = material.GetFloat(PropertyRimBlur);
+                    var rimFresnelPower = material.GetFloat(PropertyRimFresnelPower);
                     var rimFp = rimFresnelPower / Mathf.Max(0.001f, rimBlur);
                     var rimLift = Mathf.Pow(1.0f - rimBorder, rimFresnelPower) * (1.0f - rimBlur);
                     mtoon.RimLightingMixFactor = 1.0f;
                     mtoon.ParametricRimColorFactor =
-                        colors.GetValueOrDefault("_RimColor", new Color(0.66f, 0.5f, 0.48f)).ToVector3();
+                        material.GetColor(PropertyRimColor).ToVector3();
                     mtoon.ParametricRimLiftFactor = rimLift;
                     mtoon.ParametricRimFresnelPowerFactor = rimFp;
-                    if (Mathf.Approximately(floats.GetValueOrDefault("_RimBlendMode", 1.0f), 3.0f))
+                    if (Mathf.Approximately(material.GetFloat(PropertyRimBlendMode), 3.0f))
                     {
                         mtoon.RimMultiplyTexture =
                             exporter.ExportTextureInfoMToon(material, rimColorTexture, ColorSpace.Gamma,
@@ -3406,8 +3366,8 @@ namespace com.github.hkrn
                 }
 
                 if (component.enableMToonMatCap &&
-                    Mathf.Approximately(floats.GetValueOrDefault("_UseMatCap", 0.0f), 1.0f) &&
-                    !Mathf.Approximately(floats.GetValueOrDefault("_MatCapBlendMode", 1.0f), 3.0f))
+                    Mathf.Approximately(material.GetFloat(PropertyUseMatCap), 1.0f) &&
+                    !Mathf.Approximately(material.GetFloat(PropertyMatCapBlendMode), 3.0f))
                 {
                     var matcapTexture = LocalRetrieveTexture2D("_MatCapTex");
                     if (matcapTexture)
@@ -3434,8 +3394,8 @@ namespace com.github.hkrn
                     var outlineWidthTexture = LocalRetrieveTexture2D("_OutlineWidthMask");
                     mtoon.OutlineWidthMode = vrm.mtoon.OutlineWidthMode.WorldCoordinates;
                     mtoon.OutlineLightingMixFactor = 1.0f;
-                    mtoon.OutlineWidthFactor = floats.GetValueOrDefault("_OutlineWidth", 0.08f) * 0.01f;
-                    mtoon.OutlineColorFactor = colors.GetValueOrDefault("_OutlineColor", new Color(0.6f, 0.56f, 0.73f))
+                    mtoon.OutlineWidthFactor = material.GetFloat(PropertyOutlineWidth) * 0.01f;
+                    mtoon.OutlineColorFactor = material.GetColor(PropertyOutlineColor)
                         .ToVector3();
                     mtoon.OutlineWidthMultiplyTexture =
                         exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Gamma,
@@ -3446,7 +3406,7 @@ namespace com.github.hkrn
                 var isTransparent = shaderName.Contains("Transparent") || shaderName.Contains("Overlay");
                 mtoon.TransparentWithZWrite =
                     isCutout || (isTransparent &&
-                                 !Mathf.Approximately(floats.GetValueOrDefault("_ZWrite", 1.0f), 0.0f));
+                                 !Mathf.Approximately(material.GetFloat(PropertyZWrite), 0.0f));
 
                 mtoon.UVAnimationScrollXSpeedFactor = scrollRotate.r;
                 mtoon.UVAnimationScrollYSpeedFactor = scrollRotate.g;
@@ -4352,20 +4312,23 @@ namespace com.github.hkrn
                         case true when pb.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore && index == 1:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, name, transforms.Skip(1).ToImmutableList(), pbColliders,
+                            ConvertSpringBoneInner(pb, name, transforms.Skip(1).ToImmutableList(),
+                                pbColliders,
                                 colliderGroups, ref springs);
                             break;
                         }
                         case true:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups,
+                                ref springs);
                             break;
                         }
                         default:
                         {
                             var name = pb.name;
-                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups, ref springs);
+                            ConvertSpringBoneInner(pb, name, transforms, pbColliders, colliderGroups,
+                                ref springs);
                             break;
                         }
                     }
@@ -4930,7 +4893,8 @@ namespace com.github.hkrn
         private static void RetrieveAllModularAvatarReactiveComponentsPass(BuildContext buildContext)
         {
 #if NVE_HAS_MODULAR_AVATAR
-            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(
+                    out var ndmfVrmExporterComponent) &&
                 !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
             {
                 Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
@@ -5079,7 +5043,8 @@ namespace com.github.hkrn
         private static void RetrieveAllLiCostumeChangerComponentsPass(BuildContext buildContext)
         {
 #if NVE_HAS_LILYCAL_INVENTORY
-            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out var ndmfVrmExporterComponent) &&
+            if (buildContext.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(
+                    out var ndmfVrmExporterComponent) &&
                 !ndmfVrmExporterComponent.enableKhrMaterialsVariants)
             {
                 Debug.Log("KHR_materials_variants will not be exported due to be disabled in VRM Exporter Description");
