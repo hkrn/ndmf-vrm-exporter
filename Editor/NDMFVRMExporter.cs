@@ -245,7 +245,7 @@ namespace com.github.hkrn
         private SerializedProperty _extensionFoldoutProp = null!;
         private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
 #if NVE_HAS_VRCHAT_AVATAR_SDK
-        private struct VRChatAvatarToMetadata
+        internal struct VRChatAvatarToMetadata
         {
             public string Author { get; init; }
             public string CopyrightInformation { get; init; }
@@ -446,22 +446,7 @@ namespace com.github.hkrn
                     component.version = result.Version;
                     if (!string.IsNullOrEmpty(result.OriginThumbnailPath))
                     {
-                        var baseTexture = new Texture2D(2, 2);
-                        baseTexture.LoadImage(File.ReadAllBytes(result.OriginThumbnailPath));
-                        var lowerSize = Mathf.Min(baseTexture.width, baseTexture.height);
-                        var intermediateTexture = new Texture2D(lowerSize, lowerSize, baseTexture.format, false);
-                        var srcX = Math.Max(baseTexture.width - lowerSize, 0) / 2;
-                        var srcY = Math.Max(baseTexture.height - lowerSize, 0) / 2;
-                        Graphics.CopyTexture(baseTexture, 0, 0, srcX, srcY, lowerSize, lowerSize, intermediateTexture,
-                            0, 0, 0, 0);
-                        var filePath = result.OriginThumbnailPath.Replace(".origin.png", ".png");
-                        var destTexture =
-                            intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma, null);
-                        var bytes = destTexture.EncodeToPNG();
-                        DestroyImmediate(destTexture);
-                        File.WriteAllBytes(filePath, bytes);
-                        AssetDatabase.ImportAsset(filePath);
-                        component.thumbnail = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
+                        component.thumbnail = CreateSquareTrimmedThumbnail(result.OriginThumbnailPath);
                     }
 
                     Debug.Log("Succeeded to retrieve metadata via VRChat");
@@ -543,6 +528,60 @@ namespace com.github.hkrn
             serializedObject.ApplyModifiedProperties();
         }
 
+        internal static async Task<VRChatAvatarToMetadata> RetrieveAvatar(string blueprintId, CancellationToken token)
+        {
+            var packageJsonFile =
+                await File.ReadAllTextAsync($"Packages/{NdmfVrmExporter.PackageJson.Name}/package.json", token);
+            var packageJson = NdmfVrmExporter.PackageJson.LoadFromString(packageJsonFile);
+            var avatar = await VRCApi.GetAvatar(blueprintId, cancellationToken: token);
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.ParseAdd($"{packageJson.DisplayName}/{packageJson.Version}");
+            var result = await client.GetAsync(avatar.ImageUrl, token);
+            var filePath = string.Empty;
+            if (result.IsSuccessStatusCode)
+            {
+                var bytes = await result.Content.ReadAsByteArrayAsync();
+                var basePath = $"{AssetPathUtils.BasePath}/VRChatSDKAvatarThumbnails";
+                Directory.CreateDirectory(basePath);
+                filePath = $"{basePath}/{avatar.ID}.origin.png";
+                await File.WriteAllBytesAsync(filePath, bytes, token);
+            }
+            else
+            {
+                Debug.LogWarning($"Cannot retrieve thumbnail: {result.ReasonPhrase}");
+            }
+
+            return new VRChatAvatarToMetadata
+            {
+                Author = avatar.AuthorName,
+                CopyrightInformation = $"Copyright \u00a9 {avatar.CreatedAt.Year} {avatar.AuthorName}",
+                ContactInformation = $"https://vrchat.com/home/user/{avatar.AuthorId}",
+                Version =
+                    $"{avatar.UpdatedAt.Year}.{avatar.UpdatedAt.Month}.{avatar.UpdatedAt.Day}+{avatar.Version}",
+                OriginThumbnailPath = filePath,
+            };
+        }
+
+        internal static Texture2D CreateSquareTrimmedThumbnail(string originThumbnailPath)
+        {
+            var baseTexture = new Texture2D(2, 2);
+            baseTexture.LoadImage(File.ReadAllBytes(originThumbnailPath));
+            var lowerSize = Mathf.Min(baseTexture.width, baseTexture.height);
+            var intermediateTexture = new Texture2D(lowerSize, lowerSize, baseTexture.format, false);
+            var srcX = Math.Max(baseTexture.width - lowerSize, 0) / 2;
+            var srcY = Math.Max(baseTexture.height - lowerSize, 0) / 2;
+            Graphics.CopyTexture(baseTexture, 0, 0, srcX, srcY, lowerSize, lowerSize, intermediateTexture,
+                0, 0, 0, 0);
+            var filePath = originThumbnailPath.Replace(".origin.png", ".png");
+            var destTexture =
+                intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma, null);
+            var bytes = destTexture.EncodeToPNG();
+            DestroyImmediate(destTexture);
+            File.WriteAllBytes(filePath, bytes);
+            AssetDatabase.ImportAsset(filePath);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
+        }
+
         private void DrawMetadata()
         {
             var value = GUILayout.Toolbar(_metadataModeSelection.intValue, new[]
@@ -603,42 +642,8 @@ namespace com.github.hkrn
             }
             else if (GUILayout.Button(Translator._("component.metadata.information.vrchat.retrieve")))
             {
-                async Task<VRChatAvatarToMetadata> RetrieveAvatarTask(string blueprintId, CancellationToken token)
-                {
-                    var packageJsonFile =
-                        await File.ReadAllTextAsync($"Packages/{NdmfVrmExporter.PackageJson.Name}/package.json", token);
-                    var packageJson = NdmfVrmExporter.PackageJson.LoadFromString(packageJsonFile);
-                    var avatar = await VRCApi.GetAvatar(blueprintId, cancellationToken: token);
-                    var client = new HttpClient();
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd($"{packageJson.DisplayName}/{packageJson.Version}");
-                    var result = await client.GetAsync(avatar.ImageUrl, token);
-                    var filePath = string.Empty;
-                    if (result.IsSuccessStatusCode)
-                    {
-                        var bytes = await result.Content.ReadAsByteArrayAsync();
-                        var basePath = $"{AssetPathUtils.BasePath}/VRChatSDKAvatarThumbnails";
-                        Directory.CreateDirectory(basePath);
-                        filePath = $"{basePath}/{avatar.ID}.origin.png";
-                        await File.WriteAllBytesAsync(filePath, bytes, token);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Cannot retrieve thumbnail: {result.ReasonPhrase}");
-                    }
-
-                    return new VRChatAvatarToMetadata
-                    {
-                        Author = avatar.AuthorName,
-                        CopyrightInformation = $"Copyright \u00a9 {avatar.CreatedAt.Year} {avatar.AuthorName}",
-                        ContactInformation = $"https://vrchat.com/home/user/{avatar.AuthorId}",
-                        Version =
-                            $"{avatar.UpdatedAt.Year}.{avatar.UpdatedAt.Month}.{avatar.UpdatedAt.Day}+{avatar.Version}",
-                        OriginThumbnailPath = filePath,
-                    };
-                }
-
                 _retrieveAvatarTaskErrorMessage = null;
-                _retrieveAvatarTask = RetrieveAvatarTask(pipelineManager.blueprintId, _cancellationTokenSource.Token);
+                _retrieveAvatarTask = RetrieveAvatar(pipelineManager.blueprintId, _cancellationTokenSource.Token);
                 Debug.Log("Start to retrieve metadata via VRChat API");
             }
 
