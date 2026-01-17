@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-01-17
+
+### Fixed
+
+- [exporter] Changed material property configuration method ([#110](https://github.com/hkrn/ndmf-vrm-exporter/pull/110))
+
+### Changed
+
+- [docs] splits README.md into multiple markdown documents ([#111](https://github.com/hkrn/ndmf-vrm-exporter/pull/111))
+
 ## [1.2.4] - 2026-01-05
 
 ### Fixed
@@ -173,7 +183,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...HEAD
+[1.2.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...1.2.5
 [1.2.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.1...1.2.2
