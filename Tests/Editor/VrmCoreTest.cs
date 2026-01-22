@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024-present hkrn
+// SPDX-License-Identifier: MPL
+
 using Newtonsoft.Json;
 using NUnit.Framework;
 

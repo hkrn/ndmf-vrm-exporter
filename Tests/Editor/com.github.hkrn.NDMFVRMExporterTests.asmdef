@@ -2,9 +2,18 @@
     "name": "com.github.hkrn.NDMFVRMExporterTests",
     "rootNamespace": "com.github.hkrn",
     "references": [
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
-        "NDMFVRMExporter"
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:62ced99b048af7f4d8dfe4bed8373d76",
+        "GUID:fe747755f7b44e048820525b07f9b956",
+        "GUID:fc900867c0f47cd49b6e2ae4ef907300",
+        "GUID:1361f424038d2644fa9897816cda865f",
+        "GUID:e7f0f8dffe955d640bbc76d1d4f4986e",
+        "GUID:ae3639ea32c49446fa4dfcd3ad6fd805",
+        "GUID:6e9c6119ac4eb334284fb7b4bc6d1f05",
+        "GUID:3456780c4fb2d324ab9c633d6f1b0ddb",
+        "GUID:b906909fcc54f634db50f2cad0f988d9",
+        "GUID:5718fb738711cd34ea54e9553040911d"
     ],
     "includePlatforms": [
         "Editor"
@@ -15,12 +24,39 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "Newtonsoft.Json.dll",
-        "System.Collections.Immutable.dll"
+        "System.Collections.Immutable.dll",
+        "VRCSDK3A.dll",
+        "VRCSDKBase.dll",
+        "VRCCore-Editor.dll",
+        "VRC.Dynamics.dll",
+        "VRC.SDK3.Dynamics.Constraint.dll",
+        "VRC.SDK3.Dynamics.PhysBone.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.vrchat.avatars",
+            "expression": "3.7",
+            "define": "NVE_HAS_VRCHAT_AVATAR_SDK"
+        },
+        {
+            "name": "jp.lilxyzw.liltoon",
+            "expression": "1.8",
+            "define": "NVE_HAS_LILTOON"
+        },
+        {
+            "name": "jp.lilxyzw.lilycalinventory",
+            "expression": "1.0",
+            "define": "NVE_HAS_LILYCAL_INVENTORY"
+        },
+        {
+            "name": "nadena.dev.modular-avatar",
+            "expression": "1.13",
+            "define": "NVE_HAS_MODULAR_AVATAR"
+        }
+    ],
     "noEngineReferences": false
 }
