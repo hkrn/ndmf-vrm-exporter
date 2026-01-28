@@ -30,6 +30,7 @@ jobs:
       - name: Moves packages
         run: |
           mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
+          mv Tests~ Tests
           mv Editor* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv Tests* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
