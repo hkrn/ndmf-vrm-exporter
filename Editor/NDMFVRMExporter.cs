@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -60,6 +61,7 @@ using nadena.dev.ndmf.ui;
 #endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
 
 [assembly: ExportsPlugin(typeof(com.github.hkrn.NdmfVrmExporterPlugin))]
+[assembly: InternalsVisibleTo("com.github.hkrn.NDMFVRMExporterTests")]
 #endif
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
@@ -1830,7 +1832,7 @@ namespace com.github.hkrn
             private readonly string _name;
         }
 
-        private sealed class MToonTexture
+        public sealed class MToonTexture
         {
             public Texture? MainTexture { get; set; }
             public gltf.material.TextureInfo? MainTextureInfo { get; set; }
@@ -2820,7 +2822,7 @@ namespace com.github.hkrn
             return textureUnit;
         }
 
-        private sealed class VrmRootExporter
+        public sealed class VrmRootExporter
         {
             private const float FarDistance = 10000.0f;
 
@@ -3315,7 +3317,11 @@ namespace com.github.hkrn
                             : mToonTexture.MainTextureInfo;
                     }
 
-                    var texture = LocalRetrieveTexture2D("_ShadowBorderTex");
+                    var texture = LocalRetrieveTexture2D("_ShadowBorderMask");
+                    if (!texture)
+                    {
+                        texture = LocalRetrieveTexture2D("_ShadowBorderTex");
+                    }
                     var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Gamma, needsBlit: true);
                     if (info != null)
                     {
@@ -4448,7 +4454,7 @@ namespace com.github.hkrn
             private readonly ISet<string> _extensionUsed;
         }
 
-        private sealed class GltfMaterialExporter
+        public sealed class GltfMaterialExporter
         {
             public sealed class ExportOverrides
             {

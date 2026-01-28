@@ -42,13 +42,25 @@ namespace com.github.hkrn
             Assert.That(result, Is.EqualTo(expected));
         }
 
-        [TestCase("glTF")]
-        public void UnicodeStringConverter(string value)
+        //
+        // UniVRM cannot correctly convert non-ASCII character strings and changes them to `?`, and due to
+        // Unity's specification that [duplicate blend shape names cannot exist](https://github.com/vrm-c/UniVRM/issues/2619),
+        // when these two issues combine, there is a bug where VRM files cannot be loaded.
+        //
+        // Fortunately, glTF has a [specification that allows non-ASCII character strings to be represented in escaped form](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#json-encoding),
+        // so we use this to escape UTF-8 character strings to avoid the above issue. This test verifies that functionality.
+        //
+        [TestCase("glTF", "glTF")]
+        [TestCase("VRM\0", "VRM\0")]
+        [TestCase("куб", @"\u043a\u0443\u0431")]
+        [TestCase("立方體", @"\u7acb\u65b9\u9ad4")]
+        [TestCase("ぶいあーるえむ", @"\u3076\u3044\u3042\u30fc\u308b\u3048\u3080")]
+        [TestCase("🐈", @"\ud83d\udc08")]
+        public void UnicodeStringConverter(string input, string expected)
         {
-            var expected = new gltf.UnicodeString(value);
-            var json = JsonConvert.SerializeObject(expected, gltf.Document.SerializerOptions);
-            var result = JsonConvert.DeserializeObject<gltf.UnicodeString>(json, gltf.Document.SerializerOptions);
-            Assert.That(result, Is.EqualTo(expected));
+            var json = JsonConvert.SerializeObject(new gltf.UnicodeString(input), gltf.Document.SerializerOptions);
+            var actual = JsonConvert.DeserializeObject<gltf.UnicodeString>(json, gltf.Document.SerializerOptions);
+            Assert.That(actual.Value, Is.EqualTo(expected));
         }
 
         [TestCase(1.0f, 0.0f, 0.0f)]
