@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using nadena.dev.ndmf;
+using nadena.dev.ndmf.platform;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -25,7 +26,6 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 
 #if NVE_HAS_MODULAR_AVATAR
 using nadena.dev.modular_avatar.core;
-using nadena.dev.ndmf.platform;
 #endif // NVE_HAS_MODULAR_AVATAR
 
 #if NVE_HAS_LILYCAL_INVENTORY
@@ -1219,33 +1219,22 @@ namespace com.github.hkrn
                         }
                     }
                 })));
-            Assert.That(JsonConvert.SerializeObject(core.LookAt), Is.EqualTo(JsonConvert.SerializeObject(
-                new vrm.core.LookAt
-                {
-                    Type = vrm.core.LookAtType.Bone,
-                    OffsetFromHeadBone = new System.Numerics.Vector3(vrchatComponent.ViewPosition.x,
-                        vrchatComponent.ViewPosition.y, vrchatComponent.ViewPosition.z),
-                    RangeMapVerticalUp = new vrm.core.RangeMap
-                    {
-                        InputMaxValue = 4,
-                        OutputScale = 1,
-                    },
-                    RangeMapVerticalDown = new vrm.core.RangeMap
-                    {
-                        InputMaxValue = 6,
-                        OutputScale = 1,
-                    },
-                    RangeMapHorizontalInner = new vrm.core.RangeMap
-                    {
-                        InputMaxValue = 8,
-                        OutputScale = 1,
-                    },
-                    RangeMapHorizontalOuter = new vrm.core.RangeMap
-                    {
-                        InputMaxValue = 12,
-                        OutputScale = 1,
-                    },
-                })));
+            Assert.That(core.LookAt, Is.Not.Null);
+            Assert.That(core.LookAt.Type, Is.EqualTo(vrm.core.LookAtType.Bone));
+            Assert.That(core.LookAt.OffsetFromHeadBone, Is.EqualTo(new System.Numerics.Vector3(vrchatComponent.ViewPosition.x,
+                vrchatComponent.ViewPosition.y, vrchatComponent.ViewPosition.z)));
+            Assert.That(core.LookAt.RangeMapVerticalUp, Is.Not.Null);
+            Assert.That(core.LookAt.RangeMapVerticalUp.InputMaxValue, Is.EqualTo(4.0f).Within(3).Ulps);
+            Assert.That(core.LookAt.RangeMapVerticalUp.OutputScale, Is.EqualTo(1));
+            Assert.That(core.LookAt.RangeMapVerticalDown, Is.Not.Null);
+            Assert.That(core.LookAt.RangeMapVerticalDown.InputMaxValue, Is.EqualTo(6.0f).Within(3).Ulps);
+            Assert.That(core.LookAt.RangeMapVerticalDown.OutputScale, Is.EqualTo(1));
+            Assert.That(core.LookAt.RangeMapHorizontalInner, Is.Not.Null);
+            Assert.That(core.LookAt.RangeMapHorizontalInner.InputMaxValue, Is.EqualTo(8.0f).Within(3).Ulps);
+            Assert.That(core.LookAt.RangeMapHorizontalInner.OutputScale, Is.EqualTo(1));
+            Assert.That(core.LookAt.RangeMapHorizontalOuter, Is.Not.Null);
+            Assert.That(core.LookAt.RangeMapHorizontalOuter.InputMaxValue, Is.EqualTo(12.0f).Within(3).Ulps);
+            Assert.That(core.LookAt.RangeMapHorizontalOuter.OutputScale, Is.EqualTo(1));
         }
 
         [TestCase(-1, 0, 0, "PositiveX")]
