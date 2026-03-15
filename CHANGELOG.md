@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-03-15
+
+### Fixed
+
+- [exporter] Explicitly specify platform in path behavior configuration ([#120](https://github.com/hkrn/ndmf-vrm-exporter/pull/120))
+- [exporter] Add unit tests ([#115](https://github.com/hkrn/ndmf-vrm-exporter/pull/115))
+
+### Changed
+
+- [chore] updates document ([#119](https://github.com/hkrn/ndmf-vrm-exporter/pull/119))
+
 ## [1.2.5] - 2026-01-17
 
 ### Fixed
@@ -183,7 +194,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...HEAD
+[1.2.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...1.2.6
 [1.2.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...1.2.5
 [1.2.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.2...1.2.3
