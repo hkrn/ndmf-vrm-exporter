@@ -3322,6 +3322,7 @@ namespace com.github.hkrn
                     {
                         texture = LocalRetrieveTexture2D("_ShadowBorderTex");
                     }
+
                     var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Gamma, needsBlit: true);
                     if (info != null)
                     {
@@ -4846,19 +4847,28 @@ namespace com.github.hkrn
 
         protected override void Configure()
         {
-            InPhase(BuildPhase.Transforming)
-                .BeforePlugin("jp.lilxyzw.lilycalinventory")
-                .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
-                    RetrieveAllLiCostumeChangerComponentsPass)
-                .Then
-                .BeforePlugin("nadena.dev.modular-avatar")
-                .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
-                    RetrieveAllModularAvatarReactiveComponentsPass);
-            InPhase(BuildPhase.Optimizing)
-                .AfterPlugin("com.anatawa12.avatar-optimizer")
-                .AfterPlugin("nadena.dev.modular-avatar")
-                .AfterPlugin("net.rs64.tex-trans-tool")
-                .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+            var platforms = new[]
+            {
+                WellKnownPlatforms.VRChatAvatar30,
+                QualifiedName
+            };
+            InPhase(BuildPhase.Transforming).OnPlatforms(platforms, seq =>
+            {
+                seq.BeforePlugin("jp.lilxyzw.lilycalinventory")
+                    .Run("Retrieve all LI CostumeChanger components to be converted to KHR_materials_variants",
+                        RetrieveAllLiCostumeChangerComponentsPass)
+                    .Then
+                    .BeforePlugin("nadena.dev.modular-avatar")
+                    .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
+                        RetrieveAllModularAvatarReactiveComponentsPass);
+            });
+            InPhase(BuildPhase.Optimizing).OnPlatforms(platforms, seq =>
+            {
+                seq.AfterPlugin("com.anatawa12.avatar-optimizer")
+                    .AfterPlugin("nadena.dev.modular-avatar")
+                    .AfterPlugin("net.rs64.tex-trans-tool")
+                    .Run("Export VRM 1.0 file with NDMF VRM Exporter", ExportVrmFilePass);
+            });
         }
 
         private static void ExportVrmFilePass(BuildContext buildContext)

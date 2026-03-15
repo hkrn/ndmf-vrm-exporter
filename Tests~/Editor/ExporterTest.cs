@@ -98,7 +98,7 @@ namespace com.github.hkrn
         private static INDMFPlatformProvider[] SourceProviders => new[]
         {
             PlatformRegistry.PlatformProviders[WellKnownPlatforms.VRChatAvatar30],
-            // PlatformRegistry.PlatformProviders[NdmfVrmExporterPlatform.Instance.QualifiedName],
+            PlatformRegistry.PlatformProviders[NdmfVrmExporterPlatform.Instance.QualifiedName],
         };
 
         private static gltf.ObjectID FindHumanBodyNodeIndex(uint hipNodeId, HumanBodyBones bone)
@@ -1221,7 +1221,8 @@ namespace com.github.hkrn
                 })));
             Assert.That(core.LookAt, Is.Not.Null);
             Assert.That(core.LookAt.Type, Is.EqualTo(vrm.core.LookAtType.Bone));
-            Assert.That(core.LookAt.OffsetFromHeadBone, Is.EqualTo(new System.Numerics.Vector3(vrchatComponent.ViewPosition.x,
+            Assert.That(core.LookAt.OffsetFromHeadBone, Is.EqualTo(new System.Numerics.Vector3(
+                vrchatComponent.ViewPosition.x,
                 vrchatComponent.ViewPosition.y, vrchatComponent.ViewPosition.z)));
             Assert.That(core.LookAt.RangeMapVerticalUp, Is.Not.Null);
             Assert.That(core.LookAt.RangeMapVerticalUp.InputMaxValue, Is.EqualTo(4.0f).Within(3).Ulps);
@@ -2473,6 +2474,7 @@ namespace com.github.hkrn
                 };
                 child.transform.parent = hipTransform;
             }
+
             var quuxMaterial = new Material(shader)
             {
                 name = "quux"
@@ -2600,6 +2602,7 @@ namespace com.github.hkrn
                 };
                 child.transform.parent = hipTransform;
             }
+
             var quuxMaterial = new Material(shader)
             {
                 name = "quux"
@@ -2724,22 +2727,29 @@ namespace com.github.hkrn
                     var materialReplacer = Activator.CreateInstance(materialReplacerType);
                     var materialReplacerArray = Array.CreateInstance(materialReplacerType, 1);
                     materialReplacerArray.SetValue(materialReplacer, 0);
-                    materialReplacerType.GetField("renderer", bindingAttrPublic)!.SetValue(materialReplacer, skinnedMeshRenderer);
-                    materialReplacerType.GetField("replaceTo", bindingAttrPublic)!.SetValue(materialReplacer, new[] { item });
-                    parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!.SetValue(parametersPerMenu, materialReplacerArray);
+                    materialReplacerType.GetField("renderer", bindingAttrPublic)!.SetValue(materialReplacer,
+                        skinnedMeshRenderer);
+                    materialReplacerType.GetField("replaceTo", bindingAttrPublic)!.SetValue(materialReplacer,
+                        new[] { item });
+                    parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!.SetValue(parametersPerMenu,
+                        materialReplacerArray);
                     costumeType.GetField("menuName", bindingAttrPublic)!.SetValue(costume, item.name);
                     costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.SetValue(costume, parametersPerMenu);
                     costumes.SetValue(costume, index++);
                 }
+
                 {
                     var costume = Activator.CreateInstance(costumeType);
                     var parametersPerMenu = Activator.CreateInstance(parametersPerMenuType);
                     var materialReplacer = Activator.CreateInstance(materialReplacerType);
                     var materialReplacerArray = Array.CreateInstance(materialReplacerType, 1);
                     materialReplacerArray.SetValue(materialReplacer, 0);
-                    materialReplacerType.GetField("renderer", bindingAttrPublic)!.SetValue(materialReplacer, skinnedMeshRenderer);
-                    materialReplacerType.GetField("replaceTo", bindingAttrPublic)!.SetValue(materialReplacer, new[] { quuxMaterial });
-                    parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!.SetValue(parametersPerMenu, materialReplacerArray);
+                    materialReplacerType.GetField("renderer", bindingAttrPublic)!.SetValue(materialReplacer,
+                        skinnedMeshRenderer);
+                    materialReplacerType.GetField("replaceTo", bindingAttrPublic)!.SetValue(materialReplacer,
+                        new[] { quuxMaterial });
+                    parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!.SetValue(parametersPerMenu,
+                        materialReplacerArray);
                     costumeType.GetField("menuName", bindingAttrPublic)!.SetValue(costume, quuxMaterial.name);
                     costumeType.GetField("parametersPerMenu", bindingAttrPublic)!.SetValue(costume, parametersPerMenu);
                     {
@@ -2753,7 +2763,8 @@ namespace com.github.hkrn
                             }
                         };
                         var menuFolderBar = menuNodeBar.AddComponent<MenuFolder>();
-                        menuFolderType.GetField("menuName", bindingAttrPrivate)!.SetValue(menuFolderBar, menuNodeBar.name);
+                        menuFolderType.GetField("menuName", bindingAttrPrivate)!.SetValue(menuFolderBar,
+                            menuNodeBar.name);
                         var menuNodeFoo = new GameObject
                         {
                             name = "foo",
@@ -2763,8 +2774,10 @@ namespace com.github.hkrn
                             }
                         };
                         var menuFolderFoo = menuNodeFoo.AddComponent<MenuFolder>();
-                        menuFolderType.GetField("menuName", bindingAttrPrivate)!.SetValue(menuFolderFoo, menuFolderFoo.name);
-                        menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.SetValue(menuFolderBar, menuFolderFoo);
+                        menuFolderType.GetField("menuName", bindingAttrPrivate)!.SetValue(menuFolderFoo,
+                            menuFolderFoo.name);
+                        menuFolderType.GetField("parentOverride", bindingAttrPrivate)!.SetValue(menuFolderBar,
+                            menuFolderFoo);
                         costumeType.GetField("parentOverride", bindingAttrPublic)!.SetValue(costume, menuFolderBar);
                     }
                     costumes.SetValue(costume, index);
