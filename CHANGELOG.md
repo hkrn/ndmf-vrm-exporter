@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-03-17
+
+### Fixed
+
+- [exporter] Add test for bug fix occurring in AAO 1.9 and later ([#124](https://github.com/hkrn/ndmf-vrm-exporter/pull/124))
+
 ## [1.2.6] - 2026-03-15
 
 ### Fixed
@@ -194,7 +200,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.7...HEAD
+[1.2.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...1.2.7
 [1.2.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...1.2.6
 [1.2.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...1.2.5
 [1.2.4]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.3...1.2.4
