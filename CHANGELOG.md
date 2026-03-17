@@ -56,7 +56,7 @@
 
 ## [1.2.0] - 2025-12-05
 
-### Aded
+### Added
 
 - [exporter] adds support of NDMF platform API ([#92](https://github.com/hkrn/ndmf-vrm-exporter/pull/92))
 
@@ -93,7 +93,7 @@
 
 ### Fixed
 
-- [exporter] Skip when mesh primitives do not exist ([#67](hhttps://github.com/hkrn/ndmf-vrm-exporter/pull/67))
+- [exporter] Skip when mesh primitives do not exist ([#67](https://github.com/hkrn/ndmf-vrm-exporter/pull/67))
 - [exporter] Stricter mesh corruption processing ([#66](https://github.com/hkrn/ndmf-vrm-exporter/pull/66))
 - [exporter] Improves matcap processing ([#65](https://github.com/hkrn/ndmf-vrm-exporter/pull/65))
 
