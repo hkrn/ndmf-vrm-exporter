@@ -52,6 +52,8 @@ jobs:
             Library-unity-${{ env.UNITY_VERSION }}
       - name: Run all tests
         id: runAllTests
+        # https://github.com/orgs/community/discussions/26829
+        if: ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name }}
         uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
