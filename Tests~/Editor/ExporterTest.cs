@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using nadena.dev.ndmf;
 using nadena.dev.ndmf.platform;
+using nadena.dev.ndmf.ui;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -32,6 +33,10 @@ using nadena.dev.modular_avatar.core;
 using System.Reflection;
 using jp.lilxyzw.lilycalinventory.runtime;
 #endif // NVE_HAS_LILYCAL_INVENTORY
+
+#if NVE_HAS_AVATAR_OPTIMIZER
+using Anatawa12.AvatarOptimizer;
+#endif // NVE_HAS_AVATAR_OPTIMIZER
 
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
@@ -215,6 +220,18 @@ namespace com.github.hkrn
                 Skins = new List<gltf.node.Skin>(),
                 Textures = new List<gltf.material.Texture>(),
             };
+        }
+
+        [SetUp]
+        public void DisableErrorReportWindow()
+        {
+            ErrorReportWindow.DISABLE_WINDOW = true;
+        }
+
+        [TearDown]
+        public void EnableErrorReportWindow()
+        {
+            ErrorReportWindow.DISABLE_WINDOW = false;
         }
 
         [TestCase(null, gltf.material.AlphaMode.Opaque, null)]
@@ -2972,5 +2989,46 @@ namespace com.github.hkrn
             Assert.That(bin.Length % 4, Is.Zero);
         }
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK && NVE_HAS_LILTOON
+
+#if NVE_HAS_AVATAR_OPTIMIZER
+        // Disabled VRM Export Description component on NDMF VRM Exporter's platform should not be trimmed by AAO T&O component
+        private static object[] AvatarOptimizerTestCaseSource => new object[]
+        {
+            new object[] { PlatformRegistry.PlatformProviders[WellKnownPlatforms.VRChatAvatar30], true, true },
+            new object[] { PlatformRegistry.PlatformProviders[WellKnownPlatforms.VRChatAvatar30], false, false },
+            new object[]
+                { PlatformRegistry.PlatformProviders[NdmfVrmExporterPlatform.Instance.QualifiedName], true, true },
+            new object[]
+                { PlatformRegistry.PlatformProviders[NdmfVrmExporterPlatform.Instance.QualifiedName], false, true },
+        };
+
+        [TestCaseSource(nameof(AvatarOptimizerTestCaseSource))]
+        public void ExportWithAvatarOptimizer(INDMFPlatformProvider provider, bool enabled, bool shouldBeRetrieved)
+        {
+            const uint rootNodeId = 42u;
+            var root = new GameObject
+            {
+                name = "Humanoid(Clone)"
+            };
+            var nodes = new Dictionary<Transform, gltf.ObjectID>
+            {
+                { root.transform, new gltf.ObjectID(rootNodeId) }
+            };
+            const uint hipNodeId = rootNodeId + 1;
+            SetupDummyHumanoidAvatar(root, hipNodeId, nodes);
+            var hipTransform = root.transform.GetChild(0);
+            var mesh = new Mesh();
+            var skinnedMeshRenderer = hipTransform.gameObject.AddComponent<SkinnedMeshRenderer>();
+            var baseMaterial = new Material(Shader.Find("Standard"));
+            skinnedMeshRenderer.SetMaterials(new List<Material> { baseMaterial });
+            skinnedMeshRenderer.sharedMesh = mesh;
+            var component = root.AddComponent<NdmfVrmExporterComponent>();
+            component.enabled = enabled;
+            root.AddComponent<VRCAvatarDescriptor>();
+            root.AddComponent<TraceAndOptimize>();
+            var context = AvatarProcessor.ProcessAvatar(root, provider);
+            Assert.That(context.AvatarRootObject.TryGetComponent<NdmfVrmExporterComponent>(out _), Is.EqualTo(shouldBeRetrieved));
+        }
+#endif
     }
 }
