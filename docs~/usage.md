@@ -25,7 +25,7 @@ NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っ
 ## 使い方その２
 
 > [!IMPORTANT]
-> NDMF 1.8 以上 (Modular Avatar では 1.13 以上が対応) が導入されている必要があります
+> NDMF 1.8 以上 (Modular Avatar では 1.13 以上が対応) が導入されている必要があります。また Avatar Optimizer 1.9 以降を導入かつ NDMF VRM Exporter 1.2.6 以前の場合は書き出しに失敗する不具合を確認 [^1] しているため、NDMF VRM Exporter を 1.2.7 以上にアップグレードしてください
 
 NDMF に組み込まれているアバタープラットフォーム機能を利用する方法です。
 
@@ -45,3 +45,5 @@ NDMF に組み込まれているアバタープラットフォーム機能を利
 * コンポーネントを無効にしても機能するため「その１」と比較してビルド時間を短縮できる
 * 必要なタイミングで任意の場所に対して VRM ファイルの出力が可能
 * Modular Avatar を利用している場合は [プラットフォームフィルター](https://modular-avatar.nadena.dev/ja/docs/reference/platform-filter) コンポーネントによる表示の切り替えが利用可能
+
+[^1]: https://github.com/anatawa12/AvatarOptimizer/issues/1699

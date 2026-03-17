@@ -37,6 +37,7 @@ using VRC.SDKBase.Editor.Api;
 
 #if NVE_HAS_AVATAR_OPTIMIZER
 using Anatawa12.AvatarOptimizer.API;
+using nadena.dev.ndmf.platform;
 #endif // NVE_HAS_AVATAR_OPTIMIZER
 
 #if NVE_HAS_LILYCAL_INVENTORY
@@ -5372,6 +5373,13 @@ namespace com.github.hkrn
             protected override void CollectDependency(NdmfVrmExporterComponent component,
                 ComponentDependencyCollector collector)
             {
+                if (component.HasAvatarRoot && AmbientPlatform.CurrentPlatform.QualifiedName ==
+                    NdmfVrmExporterPlatform.Instance.QualifiedName)
+                {
+                    // Adds avatar's root transform as dependency to prevent removing disabled NdmfVrmExporterComponent instance
+                    collector.AddDependency(dependant: component.gameObject.transform, dependency: component);
+                }
+
                 collector.MarkEntrypoint();
             }
         }

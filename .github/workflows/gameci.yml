@@ -52,6 +52,8 @@ jobs:
             Library-unity-${{ env.UNITY_VERSION }}
       - name: Run all tests
         id: runAllTests
+        # https://github.com/orgs/community/discussions/26829
+        if: ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name }}
         uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -62,7 +64,7 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: ${{ env.UNITY_VERSION }}
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+com.github.hkrn.*
-          customParameters: -nographics -assemblyNames com.github.hkrn.NDMFVRMExporterTests
+          customParameters: -assemblyNames com.github.hkrn.NDMFVRMExporterTests
       - name: Uploads test run result
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: always()
