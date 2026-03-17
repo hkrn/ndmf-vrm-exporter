@@ -13,15 +13,15 @@ jobs:
     outputs:
       config_package: ${{ steps.config_package.outputs.configPackage }}
     steps:
-    # Ensure that required repository variable has been created for the Package
-    - name: Validate Package Config
-      id: config_package
-      run: |
-        if [ "${{ vars.PACKAGE_NAME }}" != "" ]; then
-          echo "configPackage=true" >> $GITHUB_OUTPUT;
-        else
-          echo "configPackage=false" >> $GITHUB_OUTPUT;
-        fi
+      # Ensure that required repository variable has been created for the Package
+      - name: Validate Package Config
+        id: config_package
+        run: |
+          if [ "${{ vars.PACKAGE_NAME }}" != "" ]; then
+            echo "configPackage=true" >> "$GITHUB_OUTPUT";
+          else
+            echo "configPackage=false" >> "$GITHUB_OUTPUT";
+          fi
 
   # Build and release the Package
   # If the repository is not configured properly, this job will be skipped
@@ -32,7 +32,6 @@ jobs:
       contents: write
     if: needs.config.outputs.config_package == 'true'
     steps:
-
       # Checkout Local Repository
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -42,15 +41,17 @@ jobs:
         id: version
         uses: zoexx/github-action-json-file-properties@d02f28167f05bf70cd75352b11c25a4e8c39bf38
         with:
-            file_path: "package.json"
-            prop_path: "version"
+          file_path: "package.json"
+          prop_path: "version"
 
       # Configure the Environment Variables needed for releasing the Package
       - name: Set Environment Variables
         run: |
-          echo "zipFile=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}".zip >> $GITHUB_ENV
-          echo "unityPackage=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.unitypackage" >> $GITHUB_ENV
-          echo "version=${{ steps.version.outputs.value }}" >> $GITHUB_ENV
+          {
+            echo "zipFile=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.zip";
+            echo "unityPackage=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.unitypackage";
+            echo "version=${{ steps.version.outputs.value }}";
+          }  >> "$GITHUB_ENV"
 
       - name: Removes Directories before Archiving
         run: |
@@ -60,9 +61,9 @@ jobs:
       - name: Archive Release
         uses: thedoctor0/zip-release@b57d897cb5d60cb78b51a507f63fa184cfe35554
         with:
-          type: 'zip'
-          filename: '${{ env.zipFile }}'
-          exclusions: '*.git* .editorconfig'
+          type: "zip"
+          filename: "${{ env.zipFile }}"
+          exclusions: "*.git* .editorconfig"
 
       - name: Prints SHA256 checksum
         run: sha256sum ${{ env.zipFile }}
