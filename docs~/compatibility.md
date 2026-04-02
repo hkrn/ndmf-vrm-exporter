@@ -11,12 +11,15 @@
 > [!NOTE]
 > VRC PhysBone が登場する前に使われていた [Dynamic Bone](https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743) からの変換には対応していません
 
-VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については VRM Spring Bone に対応する仕様が存在しないため、「動きにくくする措置」として以下で計算されます。
+VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については VRM Spring Bone に直接対応する仕様が存在しないため、以下で計算されます。
 
 * Limit の場合は角度を 180 で割り、その係数を以って乗算
   * 0 の場合は Stiffness と DragForce を無効化
-* Immobile の場合は Stiffness と DragForce に 1:1 の割合で加算
-  * Limit がある場合は先の係数を以って乗算
+* Immobile の場合は条件分岐により変化
+  * 「Immobile Type が `World (Experimental)` かつ Immobile が 1.0 であること」に該当する場合
+    * スプリングボーンのセンターにヒューマノイドの Hips ボーンを設定する形で擬似的に実装
+  * 該当しない場合は Stiffness と DragForce に 1:1 の割合で加算
+    * Limit がある場合は先の係数を以って乗算
 
 VRM Spring Bone と VRC PhysBone は計算方法が異なるため結果は同一になりません。また VRM Spring Bone の仕様に存在しない以下の項目には変換に対応していません。
 
