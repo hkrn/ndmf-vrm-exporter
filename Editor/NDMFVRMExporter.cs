@@ -1196,7 +1196,8 @@ namespace com.github.hkrn
         {
             self.ToAngleAxis(out var angle, out var axis);
             var newAxis = axis.ToVector3WithCoordinateSpace();
-            return System.Numerics.Quaternion.CreateFromAxisAngle(newAxis, -angle * Mathf.Deg2Rad);
+            var rotation = System.Numerics.Quaternion.CreateFromAxisAngle(newAxis, -angle * Mathf.Deg2Rad);
+            return System.Numerics.Quaternion.Normalize(rotation);
         }
 
         private static System.Numerics.Matrix4x4 ToMatrix4(this Matrix4x4 self)
@@ -1212,7 +1213,7 @@ namespace com.github.hkrn
         {
             var t = new Vector3(-self.m03, self.m13, self.m23);
             self.rotation.ToAngleAxis(out var angle, out var axis);
-            var r = Quaternion.AngleAxis(-angle, new Vector3(-axis.x, axis.y, axis.z));
+            var r = Quaternion.AngleAxis(-angle, new Vector3(-axis.x, axis.y, axis.z)).normalized;
             var s = new Vector3
             {
                 x = new Vector4(self.m00, self.m10, self.m20, self.m30).magnitude,
