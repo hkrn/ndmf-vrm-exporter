@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-04-05
+
+### Changed
+
+- [exporter] Change to pseudo-implement Immobile when specific conditions are met ([#134](https://github.com/hkrn/ndmf-vrm-exporter/pull/134))
+- [exporter] Change to skip baking 2nd/3rd main textures by default ([#132](https://github.com/hkrn/ndmf-vrm-exporter/pull/132))
+
+### Fixed
+
+- [exporter] Fix bug with unnormalized values ([#133](https://github.com/hkrn/ndmf-vrm-exporter/pull/133))
+
 ## [1.2.7] - 2026-03-17
 
 ### Fixed
@@ -200,7 +211,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.7...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.8...HEAD
+[1.2.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.7...1.2.8
 [1.2.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...1.2.7
 [1.2.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...1.2.6
 [1.2.5]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.4...1.2.5
