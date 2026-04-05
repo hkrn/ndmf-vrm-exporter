@@ -4359,6 +4359,14 @@ namespace com.github.hkrn
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
                 var rootTransform = pb.GetRootTransform();
+                gltf.ObjectID? centerNode = null;
+                if (pb.immobileType == VRCPhysBoneBase.ImmobileType.World && Mathf.Approximately(pb.immobile, 1.0f) &&
+                    pb.immobileCurve is not { length: > 0 })
+                {
+                    var animator = _gameObject.GetComponent<Animator>();
+                    centerNode = GetRequiredHumanBoneNodeID(animator, HumanBodyBones.Hips);
+                }
+
                 var joints = transforms.Select(transform =>
                     {
                         var nodeID = FindTransformNodeID(transform);
@@ -4381,7 +4389,7 @@ namespace com.github.hkrn
                         var pull = evaluate(pb.pull, pb.pullCurve);
                         var immobile = evaluate(pb.immobile, pb.immobileCurve) * 0.5f;
                         float stiffnessFactor, pullFactor;
-                        if (pb.limitType != VRCPhysBoneBase.LimitType.None)
+                        if (pb.limitType != VRCPhysBoneBase.LimitType.None && !centerNode.HasValue)
                         {
                             var maxAngleX = evaluate(pb.maxAngleX, pb.maxAngleXCurve);
                             stiffnessFactor = maxAngleX > 0.0f ? 1.0f / Mathf.Clamp01(maxAngleX / 180.0f) : 0.0f;
@@ -4425,7 +4433,7 @@ namespace com.github.hkrn
                 var spring = new vrm.sb.Spring
                 {
                     Name = new gltf.UnicodeString(name),
-                    Center = null,
+                    Center = centerNode,
                     ColliderGroups = newColliderGroups.Count > 0 ? newColliderGroups.ToList() : null,
                     Joints = joints.Where(joint => joint != null).Select(joint => joint!).ToList(),
                 };
