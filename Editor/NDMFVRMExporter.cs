@@ -1317,8 +1317,14 @@ namespace com.github.hkrn
                                    mainGradationStrength == 0.0 && useMainSecondTex == 0.0 && useMainThirdTex == 0.0;
             if (shouldNotBakeAll)
                 return null;
-            var bakeSecond = useMainSecondTex != 0.0;
-            var bakeThird = useMainThirdTex != 0.0;
+            var mainSecondUVMode = material.HasFloat(PropertyMainSecondUVMode)
+                ? material.GetFloat(PropertyMainSecondUVMode)
+                : 0.0;
+            var mainThirdUVMode = material.HasFloat(PropertyMainThirdUVMode)
+                ? material.GetFloat(PropertyMainThirdUVMode)
+                : 0.0;
+            var bakeSecond = useMainSecondTex != 0.0 && mainSecondUVMode == 0.0;
+            var bakeThird = useMainThirdTex != 0.0 && mainThirdUVMode == 0.0;
             // run bake
             var hsvgMaterial = new Material(lilShaderManager.ltsbaker);
 
@@ -1688,6 +1694,7 @@ namespace com.github.hkrn
         private static readonly int PropertyMainSecondTexIsLeftOnly = Shader.PropertyToID("_Main2ndTexIsLeftOnly");
         private static readonly int PropertyMainSecondTexIsRightOnly = Shader.PropertyToID("_Main2ndTexIsRightOnly");
         private static readonly int PropertyMainSecondTexShouldCopy = Shader.PropertyToID("_Main2ndTexShouldCopy");
+        private static readonly int PropertyMainSecondUVMode = Shader.PropertyToID("_Main2ndTex_UVMode");
 
         private static readonly int PropertyMainSecondTexShouldFlipMirror =
             Shader.PropertyToID("_Main2ndTexShouldFlipMirror");
@@ -1701,6 +1708,7 @@ namespace com.github.hkrn
         private static readonly int PropertyMainThirdTexIsLeftOnly = Shader.PropertyToID("_Main3rdTexIsLeftOnly");
         private static readonly int PropertyMainThirdTexIsRightOnly = Shader.PropertyToID("_Main3rdTexIsRightOnly");
         private static readonly int PropertyMainThirdTexShouldCopy = Shader.PropertyToID("_Main3rdTexShouldCopy");
+        private static readonly int PropertyMainThirdUVMode = Shader.PropertyToID("_Main3rdTex_UVMode");
 
         private static readonly int PropertyMainThirdTexShouldFlipMirror =
             Shader.PropertyToID("_Main3rdTexShouldFlipMirror");
