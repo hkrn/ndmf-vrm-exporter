@@ -1317,8 +1317,12 @@ namespace com.github.hkrn
                                    mainGradationStrength == 0.0 && useMainSecondTex == 0.0 && useMainThirdTex == 0.0;
             if (shouldNotBakeAll)
                 return null;
-            var mainSecondUVMode = material.GetFloat(PropertyMainSecondUVMode);
-            var mainThirdUVMode = material.GetFloat(PropertyMainThirdUVMode);
+            var mainSecondUVMode = material.HasFloat(PropertyMainSecondUVMode)
+                ? material.GetFloat(PropertyMainSecondUVMode)
+                : 0.0;
+            var mainThirdUVMode = material.HasFloat(PropertyMainThirdUVMode)
+                ? material.GetFloat(PropertyMainThirdUVMode)
+                : 0.0;
             var bakeSecond = useMainSecondTex != 0.0 && mainSecondUVMode == 0.0;
             var bakeThird = useMainThirdTex != 0.0 && mainThirdUVMode == 0.0;
             // run bake
