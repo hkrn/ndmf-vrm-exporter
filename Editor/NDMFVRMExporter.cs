@@ -4351,11 +4351,13 @@ namespace com.github.hkrn
             {
                 var rootTransform = pb.GetRootTransform();
                 gltf.ObjectID? centerNode = null;
-                if (pb.immobileType == VRCPhysBoneBase.ImmobileType.World && Mathf.Approximately(pb.immobile, 1.0f))
+                if (pb.immobileType == VRCPhysBoneBase.ImmobileType.World && Mathf.Approximately(pb.immobile, 1.0f) &&
+                    pb.immobileCurve is not { length: > 0 })
                 {
                     var animator = _gameObject.GetComponent<Animator>();
                     centerNode = GetRequiredHumanBoneNodeID(animator, HumanBodyBones.Hips);
                 }
+
                 var joints = transforms.Select(transform =>
                     {
                         var nodeID = FindTransformNodeID(transform);
