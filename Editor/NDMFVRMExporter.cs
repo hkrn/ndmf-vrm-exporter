@@ -25,6 +25,7 @@ using Object = UnityEngine.Object;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using VRC.Core;
 using VRC.Dynamics;
@@ -462,7 +463,7 @@ namespace com.github.hkrn
                             intermediateTexture.Blit(1024, 1024, TextureFormat.ARGB32, ColorSpace.Gamma, null);
                         var bytes = destTexture.EncodeToPNG();
                         DestroyImmediate(destTexture);
-                        File.WriteAllBytes(filePath, bytes);
+                        NdmfVrmExporter.ReplaceFile(filePath, bytes);
                         AssetDatabase.ImportAsset(filePath);
                         component.thumbnail = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
                     }
@@ -2024,6 +2025,37 @@ namespace com.github.hkrn
             var json = gltf.Document.SaveAsString(_root);
             _exporter.Export(json, stream);
             return json;
+        }
+
+        internal static void ReplaceFile(string filePath, byte[] data)
+        {
+            bool IsFileAlreadyExists(IOException ex)
+            {
+                return (uint)ex.HResult is 0x80070050 or 0x800700B7;
+            }
+            var randomFilename = Path.GetRandomFileName();
+            var tempFilePath = $"{filePath}.{randomFilename}.tmp";
+            var backupFilePath = $"{filePath}.{randomFilename}.bak";
+            try
+            {
+                try
+                {
+                    using var _ = File.Open(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                }
+                catch (IOException ex) when (IsFileAlreadyExists(ex))
+                {
+                    /* ignore only when file is already exists */
+                }
+                File.WriteAllBytes(tempFilePath, data);
+                File.Replace(tempFilePath, filePath, backupFilePath);
+            }
+            finally
+            {
+                if (File.Exists(backupFilePath))
+                {
+                    File.Delete(backupFilePath);
+                }
+            }
         }
 
         private void RetrieveAllTransforms(Transform parent, bool uniqueNodeName)
@@ -5241,10 +5273,12 @@ namespace com.github.hkrn
             using var exporter = new NdmfVrmExporter(ro, buildContext.AssetSaver, variants);
             var json = exporter.Export(stream);
             var bytes = stream.GetBuffer();
-            File.WriteAllBytes($"{baseOutputPath}.vrm", bytes);
+            var vrmFilePath = $"{baseOutputPath}.vrm";
+            NdmfVrmExporter.ReplaceFile(vrmFilePath, bytes);
             if (component.enableGenerateJsonFile)
             {
-                File.WriteAllText($"{baseOutputPath}.json", json);
+                var jsonFilePath = $"{baseOutputPath}.json";
+                NdmfVrmExporter.ReplaceFile(jsonFilePath, Encoding.UTF8.GetBytes(json));
             }
 
             if (!component.deleteTemporaryObjects)
