@@ -68,7 +68,7 @@ namespace com.github.hkrn
                 return;
             }
 
-            if (!component.enabled)
+            if (!component.enabled && buildContext.PlatformProvider != NdmfVrmExporterPlatform.Instance)
             {
                 Debug.LogWarning(Translator._("component.runtime.error.validation.not-enabled"));
                 return;
@@ -413,6 +413,11 @@ namespace com.github.hkrn
                     Key = "component.runtime.error.validation.smr",
                     Extras = corrupted,
                 };
+            }
+
+            if (NdmfVrmExporterPlatform.Instance.SkipExportingVrmFile)
+            {
+                return;
             }
 
             var ro = buildContext.AvatarRootObject;

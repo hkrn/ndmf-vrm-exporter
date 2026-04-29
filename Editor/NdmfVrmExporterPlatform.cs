@@ -47,6 +47,7 @@ namespace com.github.hkrn
 
         internal static readonly NdmfVrmExporterPlatform Instance = new();
         internal Dictionary<BuildLocationKey, BuildLocationValue> LastBuildLocations { get; set; } = new();
+        internal bool SkipExportingVrmFile { get; set; } = false;
 
         public void InitBuildFromCommonAvatarInfo(BuildContext context, CommonAvatarInfo info)
         {

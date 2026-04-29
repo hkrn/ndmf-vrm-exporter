@@ -164,6 +164,10 @@ namespace com.github.hkrn
 
         [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
 
+        // from 1.3.0
+        [NotKeyable] [SerializeField] internal bool animationFoldout;
+        [NotKeyable] [SerializeField] internal List<AnimationClip> humanoidAnimations = new();
+
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
         public bool HasLicenseUrl =>
@@ -233,6 +237,10 @@ namespace com.github.hkrn
         // from 1.1.0
         private SerializedProperty _extensionFoldoutProp = null!;
         private SerializedProperty _enableKhrMaterialsVariantsProp = null!;
+
+        // from 1.3.0
+        private SerializedProperty _animationFoldoutProp = null!;
+        private SerializedProperty _humanoidAnimationsProp = null!;
 #if NVE_HAS_VRCHAT_AVATAR_SDK
         private struct VRChatAvatarToMetadata
         {
@@ -312,6 +320,9 @@ namespace com.github.hkrn
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableMToonOutline));
             _enableBakingAlphaMaskProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableBakingAlphaMaskTexture));
+            _animationFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.animationFoldout));
+            _humanoidAnimationsProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.humanoidAnimations));
             _extensionFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.extensionFoldout));
             _enableKhrMaterialsVariantsProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enableKhrMaterialsVariants));
@@ -507,6 +518,14 @@ namespace com.github.hkrn
             }
 
             EditorGUILayout.Separator();
+            var animationFoldout = EditorGUILayout.Foldout(_animationFoldoutProp.boolValue,
+                Translator._("component.category.animation"));
+            if (animationFoldout)
+            {
+                DrawAnimationOptions();
+            }
+
+            EditorGUILayout.Separator();
             var extensionFoldout =
                 EditorGUILayout.Foldout(_extensionFoldoutProp.boolValue, Translator._("component.category.extension"));
             if (extensionFoldout)
@@ -527,6 +546,7 @@ namespace com.github.hkrn
             _mtoonFoldoutProp.boolValue = mtoonFoldout;
             _springBoneFoldoutProp.boolValue = springBoneFoldout;
             _constraintFoldoutProp.boolValue = constraintFoldout;
+            _animationFoldoutProp.boolValue = animationFoldout;
             _extensionFoldoutProp.boolValue = extensionFoldout;
             _debugFoldoutProp.boolValue = debugFoldout;
             serializedObject.ApplyModifiedProperties();
@@ -805,6 +825,30 @@ namespace com.github.hkrn
             EditorGUI.indentLevel--;
         }
 
+
+        private void DrawAnimationOptions()
+        {
+            EditorGUI.indentLevel++;
+            var component = (NdmfVrmExporterComponent)target;
+            if (component.humanoidAnimations.Any(clip => !clip.humanMotion))
+            {
+                EditorGUILayout.HelpBox(Translator._("component.validation.animation.non-humanoid"), MessageType.Warning);
+            }
+            EditorGUILayout.PropertyField(
+                _humanoidAnimationsProp,
+                new GUIContent(Translator._("component.animation.title")));
+            if (GUILayout.Button(Translator._("component.animation.export.button")))
+            {
+                var outputDirectoryPath = EditorUtility.SaveFolderPanel(Translator._("component.animation.export.dialog.title"), "", "");
+                if (!string.IsNullOrEmpty(outputDirectoryPath))
+                {
+                    ExportAllAnimations(component, outputDirectoryPath);
+                }
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
         private void DrawExtensionOptions()
         {
             DrawToggleLeft(Translator._("component.extension.enable-khr-materials-variants"),
@@ -835,6 +879,65 @@ namespace com.github.hkrn
             if (EditorGUI.EndChangeCheck())
             {
                 prop.boolValue = value;
+            }
+        }
+
+        private static void ExportAllAnimations(NdmfVrmExporterComponent component, string outputDirectoryPath)
+        {
+            var platform = NdmfVrmExporterPlatform.Instance;
+            var instance = Instantiate(component.gameObject);
+            try
+            {
+                platform.SkipExportingVrmFile = true;
+                using var scope = new OverrideTemporaryDirectoryScope(null);
+                var context = AvatarProcessor.ProcessAvatar(instance, platform);
+                var numProceededAnimationClips = 0;
+                var numTotalAnimationClips = component.humanoidAnimations.Count;
+                var progressTitle = Translator._("component.animation.export.progress.title");
+                var progressMessage = Translator._("component.animation.export.progress.info");
+                var cancelled = false;
+                foreach (var animation in component.humanoidAnimations)
+                {
+                    if (!animation)
+                    {
+                        numProceededAnimationClips++;
+                        continue;
+                    }
+
+                    if (!animation.humanMotion)
+                    {
+                        numProceededAnimationClips++;
+                        Debug.LogWarning(
+                            $"The animation clip {animation.name} is not human motion and will be skipped");
+                        continue;
+                    }
+
+                    var progress = numProceededAnimationClips / (float)numTotalAnimationClips;
+                    var message = $"{progressMessage} ({numProceededAnimationClips}/{numTotalAnimationClips})";
+                    AnimationExporter.Export(context.AvatarRootObject, animation, outputDirectoryPath);
+                    if (EditorUtility.DisplayCancelableProgressBar(progressTitle, message, progress))
+                    {
+                        cancelled = true;
+                        break;
+                    }
+
+                    numProceededAnimationClips++;
+                }
+
+                EditorUtility.ClearProgressBar();
+                if (!cancelled)
+                {
+                    EditorUtility.DisplayDialog(NdmfVrmExporterPlugin.Instance.DisplayName,
+                        Translator._("component.animation.export.success"), "OK");
+                }
+            }
+            finally
+            {
+                platform.SkipExportingVrmFile = false;
+                EditorUtility.ClearProgressBar();
+                DestroyImmediate(instance);
+                // ReSharper disable once RedundantAssignment
+                instance = null;
             }
         }
     }
@@ -1115,7 +1218,7 @@ namespace com.github.hkrn
             return height;
         }
 
-        private float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+        private static float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
         private List<string> _blendShapeNames = new();
     }

@@ -191,6 +191,15 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 利用目的は `Spring Bone Options` の `Excluded Spring Bone Colliders` および `Excluded Spring Bones` と同じです。
 
+## Animations
+
+[VRM Animation](https://vrm.dev/vrma/) に変換するヒューマノイドに対応する Animation Clip を指定します。設定自体は 1.3.0 から導入されました。
+
+> [!NOTE]
+> VRMA では対応する表情及び視線制御のアニメーションは標準化された方法が存在しないため未対応かつ対応予定がありません
+
+VRMA 形式の書き出し自体は VRM 出力とは別に「出力」ボタンによってのみ行われ、ビルドや NDMF Console によるタイミングでは行われません。出力の詳細については「[出力の互換性](compatibility.md)」の「アニメーションの変換」の章を参照してください。
+
 ## glTF Extension Options
 
 以下の設定が可能です。設定自体は 1.1.0 から導入されました。

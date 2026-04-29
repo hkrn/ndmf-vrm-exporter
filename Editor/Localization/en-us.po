@@ -49,6 +49,9 @@ msgstr "Spring Bone Options"
 msgid "component.category.constraint"
 msgstr "Constraint Options"
 
+msgid "component.category.animation"
+msgstr "Animations"
+
 msgid "component.category.extension"
 msgstr "glTF Extension Options"
 
@@ -219,6 +222,27 @@ msgstr "Excluded Spring Bones"
 
 msgid "component.constraint.exclude.constraints"
 msgstr "Excluded Constraints"
+
+msgid "component.animation.title"
+msgstr "Animation Clips to convert VRMA"
+
+msgid "component.animation.export.button"
+msgstr "Export"
+
+msgid "component.animation.export.dialog.title"
+msgstr "Folder to export VRM Animation"
+
+msgid "component.animation.export.progress.title"
+msgstr "Exporting VRM Animation"
+
+msgid "component.animation.export.progress.info"
+msgstr "Exporting VRM Animation..."
+
+msgid "component.animation.export.success"
+msgstr "Exporting all VRM animations has been completed!"
+
+msgid "component.validation.animation.non-humanoid"
+msgstr "Animation clip contains non humanoid animation! The animation clip will be ignored and not be exported."
 
 msgid "component.debug.make-all-node-names-unique"
 msgstr "Make All Node Names Unique"
