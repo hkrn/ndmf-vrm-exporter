@@ -258,3 +258,6 @@ msgstr "The submesh output was skipped because there is no material reference fo
 
 msgid "component.runtime.error.mesh.no-primitive"
 msgstr "Mesh output will be skipped because the mesh entity does not exist"
+
+msgid "component.runtime.error.constraint.circular"
+msgstr "Circular constraint dependency found and source will be cleared"

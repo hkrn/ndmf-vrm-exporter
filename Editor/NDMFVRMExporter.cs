@@ -2323,6 +2323,7 @@ namespace com.github.hkrn
             _root.Extensions!.Add(VrmcSpringBone, vrm.Document.SaveAsNode(vrmExporter.ExportSpringBone()));
             _extensionsUsed.Add(VrmcVrm);
             _extensionsUsed.Add(VrmcSpringBone);
+
             var immobileNodeID = gltf.ObjectID.Null;
             if (HasEmptySourceConstraint())
             {
@@ -2334,6 +2335,43 @@ namespace com.github.hkrn
                 });
                 _root.Nodes.First().Children!.Add(immobileNodeID);
             }
+
+            {
+                var detector = new CircularDependentNodeConstraintDetector(_transformNodeIDs);
+                detector.Visit();
+                foreach (var transform in detector.FoundAllTransforms)
+                {
+                    if (transform.TryGetComponent<AimConstraint>(out var aimConstraint))
+                    {
+                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                            "component.runtime.error.constraint.circular", transform.gameObject);
+                        aimConstraint.SetSources(new List<ConstraintSource>());
+                    }
+                    else if (transform.TryGetComponent<RotationConstraint>(out var rotationConstraint))
+                    {
+                        ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                            "component.runtime.error.constraint.circular", transform.gameObject);
+                        rotationConstraint.SetSources(new List<ConstraintSource>());
+                    }
+                }
+            }
+#if NVE_HAS_VRCHAT_AVATAR_SDK
+            {
+                var detector = new VrcCircularDependentNodeConstraintDetector(_transformNodeIDs);
+                detector.Visit();
+                foreach (var transform in detector.FoundAllTransforms)
+                {
+                    if (!transform.TryGetComponent<VRCConstraintBase>(out var vcb))
+                    {
+                        continue;
+                    }
+
+                    ErrorReport.ReportError(Translator.Instance, ErrorSeverity.NonFatal,
+                        "component.runtime.error.constraint.circular", transform.gameObject);
+                    vcb.Sources.Clear();
+                }
+            }
+#endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
             foreach (var (transform, nodeID) in _transformNodeIDs)
             {
