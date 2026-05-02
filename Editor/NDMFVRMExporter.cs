@@ -2055,6 +2055,10 @@ namespace com.github.hkrn
                 {
                     File.Delete(backupFilePath);
                 }
+                if (File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
             }
         }
 
@@ -5272,7 +5276,7 @@ namespace com.github.hkrn
             using var stream = new MemoryStream();
             using var exporter = new NdmfVrmExporter(ro, buildContext.AssetSaver, variants);
             var json = exporter.Export(stream);
-            var bytes = stream.GetBuffer();
+            var bytes = stream.ToArray();
             var vrmFilePath = $"{baseOutputPath}.vrm";
             NdmfVrmExporter.ReplaceFile(vrmFilePath, bytes);
             if (component.enableGenerateJsonFile)
