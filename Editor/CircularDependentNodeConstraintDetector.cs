@@ -83,11 +83,11 @@ namespace com.github.hkrn
 
             foreach (var item in ancestorTransforms)
             {
-                if (transform.TryGetComponent<AimConstraint>(out var aimConstraint))
+                if (item.TryGetComponent<AimConstraint>(out var aimConstraint))
                 {
                     VisitRecursive(item, aimConstraint);
                 }
-                else if (transform.TryGetComponent<RotationConstraint>(out var rotationConstraint))
+                else if (item.TryGetComponent<RotationConstraint>(out var rotationConstraint))
                 {
                     VisitRecursive(item, rotationConstraint);
                 }
