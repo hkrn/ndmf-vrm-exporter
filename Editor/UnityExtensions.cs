@@ -101,7 +101,7 @@ namespace com.github.hkrn
             return self switch
             {
                 TextureWrapMode.Clamp => gltf.material.TextureWrapMode.ClampToEdge,
-                TextureWrapMode.Mirror => gltf.material.TextureWrapMode.MirroredRepeat,
+                TextureWrapMode.Mirror or TextureWrapMode.MirrorOnce => gltf.material.TextureWrapMode.MirroredRepeat,
                 TextureWrapMode.Repeat => gltf.material.TextureWrapMode.Repeat,
                 _ => throw new ArgumentOutOfRangeException(),
             };
