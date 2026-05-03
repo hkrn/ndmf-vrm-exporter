@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-05-03
+
+### Changed
+
+- [exporter] Implement file splitting ([#143](https://github.com/hkrn/ndmf-vrm-exporter/pull/143))
+- [exporter] Add NdmfVrmExporter.ReplaceFile ([#141](https://github.com/hkrn/ndmf-vrm-exporter/pull/141))
+
+### Fixed
+
+- [exporter] Fix multiple potential bugs ([#144](https://github.com/hkrn/ndmf-vrm-exporter/pull/144))
+- [exporter] Change to remove circular references when detected ([#142](https://github.com/hkrn/ndmf-vrm-exporter/pull/142))
+
 ## [1.2.8] - 2026-04-05
 
 ### Changed
@@ -211,7 +223,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.8...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.9...HEAD
+[1.2.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.8...1.2.9
 [1.2.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.7...1.2.8
 [1.2.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...1.2.7
 [1.2.6]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.5...1.2.6
