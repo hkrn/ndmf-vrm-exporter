@@ -238,6 +238,11 @@ namespace com.github.hkrn
                 }
             }
 
+            if (mappings.Count == 0)
+            {
+                return;
+            }
+            
             variants.Add(new MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
@@ -505,7 +510,7 @@ namespace com.github.hkrn
 
         private static bool IsBoneInvalid(Transform[] bones, int index, float weight)
         {
-            return weight > 0.0 && (index < 0 || (index >= bones.Length && !bones[index]));
+            return weight > 0.0 && (index < 0 || index >= bones.Length || !bones[index]);
         }
     }
 
