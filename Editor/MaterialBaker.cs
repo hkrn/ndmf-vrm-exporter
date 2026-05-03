@@ -183,8 +183,9 @@ namespace com.github.hkrn
                     break;
             }
 
+            var mainTexture = baseMainTexture ?? mainTex;
             var referenceMainTexture =
-                LoadTexture(assetSaver, baseMainTexture, ref srcTexture) ? srcTexture : Texture2D.whiteTexture;
+                LoadTexture(assetSaver, mainTexture, ref srcTexture) ? srcTexture : Texture2D.whiteTexture;
             var referenceMainSecondTexture =
                 LoadTexture(assetSaver, shadowTex, ref srcMain2) ? srcMain2 : referenceMainTexture;
             hsvgMaterial.SetTexture(PropertyMainTex, referenceMainTexture);
@@ -267,6 +268,7 @@ namespace com.github.hkrn
 
             Object.DestroyImmediate(hsvgMaterial);
             Object.DestroyImmediate(srcTexture);
+            Object.DestroyImmediate(srcAlphaMask);
 
             return outTexture;
         }
@@ -312,7 +314,7 @@ namespace com.github.hkrn
             }
             else if (baseTexture && assetSaver.IsTemporaryAsset(baseTexture))
             {
-                Object.Destroy(srcTexture);
+                Object.DestroyImmediate(srcTexture);
                 var innerBaseTexture = baseTexture!;
                 srcTexture = new Texture2D(innerBaseTexture.width, innerBaseTexture.height);
                 Graphics.ConvertTexture(innerBaseTexture, srcTexture);

@@ -191,6 +191,11 @@ namespace com.github.hkrn
                 }
             }
 
+            if (mappings.Count == 0)
+            {
+                return;
+            }
+
             variants.Add(new MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
@@ -233,6 +238,11 @@ namespace com.github.hkrn
                 }
             }
 
+            if (mappings.Count == 0)
+            {
+                return;
+            }
+            
             variants.Add(new MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
@@ -486,16 +496,21 @@ namespace com.github.hkrn
                 }
 
                 var boneWeights = mesh.boneWeights;
-                if (boneWeights.Any(boneWeight => (boneWeight.weight0 > 0.0 && !bones[boneWeight.boneIndex0]) ||
-                                                  (boneWeight.weight1 > 0.0 && !bones[boneWeight.boneIndex1]) ||
-                                                  (boneWeight.weight2 > 0.0 && !bones[boneWeight.boneIndex2]) ||
-                                                  (boneWeight.weight3 > 0.0 && !bones[boneWeight.boneIndex3])))
+                if (boneWeights.Any(boneWeight => IsBoneInvalid(bones, boneWeight.boneIndex0, boneWeight.weight0) ||
+                                                  IsBoneInvalid(bones, boneWeight.boneIndex1, boneWeight.weight1) ||
+                                                  IsBoneInvalid(bones, boneWeight.boneIndex2, boneWeight.weight2) ||
+                                                  IsBoneInvalid(bones, boneWeight.boneIndex3, boneWeight.weight3)))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsBoneInvalid(Transform[] bones, int index, float weight)
+        {
+            return weight > 0.0 && (index < 0 || index >= bones.Length || !bones[index]);
         }
     }
 
@@ -543,13 +558,17 @@ namespace com.github.hkrn
                         continue;
                     }
 
+                    var blendShapeName = $"blendShape.{name}";
                     if (collectorProperties.TryGetValue(smr, out var names))
                     {
-                        names.Add($"blendShape.{name}");
+                        names.Add(blendShapeName);
                     }
                     else
                     {
-                        collectorProperties.Add(smr, new List<string>());
+                        collectorProperties.Add(smr, new List<string>
+                        {
+                            blendShapeName
+                        });
                     }
                 }
 
