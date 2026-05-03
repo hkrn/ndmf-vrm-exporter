@@ -164,6 +164,13 @@ namespace com.github.hkrn
 
         [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
 
+        // from 1.3.0
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetBlinkLeftBlendShape = VrmExpressionProperty.BlinkLeft;
+
+        [NotKeyable] [SerializeField]
+        internal VrmExpressionProperty expressionPresetBlinkRightBlendShape = VrmExpressionProperty.BlinkRight;
+
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
         public bool HasLicenseUrl =>
@@ -208,6 +215,8 @@ namespace com.github.hkrn
         private SerializedProperty _expressionPresetSadBlendShape = null!;
         private SerializedProperty _expressionPresetRelaxedBlendShape = null!;
         private SerializedProperty _expressionPresetSurprisedBlendShape = null!;
+        private SerializedProperty _expressionPresetBlinkLeftBlendShape = null!;
+        private SerializedProperty _expressionPresetBlinkRightBlendShape = null!;
         private SerializedProperty _expressionCustomBlendShapes = null!;
         private SerializedProperty _springBoneFoldoutProp = null!;
         private SerializedProperty _excludedSpringBoneColliderTransformsProp = null!;
@@ -294,6 +303,12 @@ namespace com.github.hkrn
             _expressionPresetSurprisedBlendShape =
                 serializedObject.FindProperty(
                     nameof(NdmfVrmExporterComponent.expressionPresetSurprisedBlendShape));
+            _expressionPresetBlinkLeftBlendShape =
+                serializedObject.FindProperty(
+                    nameof(NdmfVrmExporterComponent.expressionPresetBlinkLeftBlendShape));
+            _expressionPresetBlinkRightBlendShape =
+                serializedObject.FindProperty(
+                    nameof(NdmfVrmExporterComponent.expressionPresetBlinkRightBlendShape));
             _expressionCustomBlendShapes =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionCustomBlendShapes));
             _springBoneFoldoutProp = serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.springBoneFoldout));
@@ -337,6 +352,8 @@ namespace com.github.hkrn
             component.expressionPresetSadBlendShape.gameObject = component.gameObject;
             component.expressionPresetRelaxedBlendShape.gameObject = component.gameObject;
             component.expressionPresetSurprisedBlendShape.gameObject = component.gameObject;
+            component.expressionPresetBlinkLeftBlendShape.gameObject = component.gameObject;
+            component.expressionPresetBlinkRightBlendShape.gameObject = component.gameObject;
             foreach (var property in component.expressionCustomBlendShapes)
             {
                 property.gameObject = component.gameObject;
@@ -730,6 +747,17 @@ namespace com.github.hkrn
                 DrawPropertyField(Translator._("component.expression.preset.surprised"),
                     _expressionPresetSurprisedBlendShape);
             }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.blink.left"),
+                    _expressionPresetBlinkLeftBlendShape);
+            }
+            {
+                using var _ = new EditorGUILayout.VerticalScope(EditorStyles.helpBox);
+                DrawPropertyField(Translator._("component.expression.preset.blink.right"),
+                    _expressionPresetBlinkRightBlendShape);
+            }
+
             EditorGUILayout.Separator();
             if (GUILayout.Button(Translator._("component.expression.preset.from-mmd")))
             {
@@ -763,6 +791,8 @@ namespace com.github.hkrn
                 _expressionPresetSadBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Sad);
                 _expressionPresetRelaxedBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Relaxed);
                 _expressionPresetSurprisedBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.Surprised);
+                _expressionPresetBlinkLeftBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.BlinkLeft);
+                _expressionPresetBlinkRightBlendShape.boxedValue = WrapVrmExpression(VrmExpressionProperty.BlinkRight);
             }
         }
 
@@ -875,6 +905,18 @@ namespace com.github.hkrn
         internal static VrmExpressionProperty Surprised => new()
         {
             expressionName = "Surprised",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty BlinkLeft => new()
+        {
+            expressionName = "Blink (Left)",
+            isPreset = true,
+        };
+
+        internal static VrmExpressionProperty BlinkRight => new()
+        {
+            expressionName = "Blink (Right)",
             isPreset = true,
         };
 
@@ -3299,6 +3341,17 @@ namespace com.github.hkrn
                 else
                 {
                     Debug.LogWarning("Preset Surprised will be skipped due to expression is not set properly");
+                }
+
+                if (component.expressionPresetBlinkLeftBlendShape.IsValid)
+                {
+                    core.Expressions.Preset.BlinkLeft =
+                        ExportExpressionItem(component.expressionPresetBlinkLeftBlendShape);
+                }
+                if (component.expressionPresetBlinkRightBlendShape.IsValid)
+                {
+                    core.Expressions.Preset.BlinkRight =
+                        ExportExpressionItem(component.expressionPresetBlinkRightBlendShape);
                 }
 
                 var offset = 0;
