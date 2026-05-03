@@ -163,6 +163,12 @@ msgstr "Set Preset Expression from MMD Compatible"
 msgid "component.expression.preset.reset-all"
 msgstr "Reset All Preset Expressions"
 
+msgid "component.expression.preset.blink.left"
+msgstr "Blink (Left)"
+
+msgid "component.expression.preset.blink.right"
+msgstr "Blink (Right)"
+
 msgid "component.expression.name"
 msgstr "Expression Name"
 
