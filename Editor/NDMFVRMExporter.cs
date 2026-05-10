@@ -24,7 +24,7 @@ using Object = UnityEngine.Object;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
 using System.Net.Http;
-using System.Text;
+using System.Reflection;
 using System.Threading;
 using VRC.Core;
 using VRC.Dynamics;
@@ -890,6 +890,9 @@ namespace com.github.hkrn
         [NotKeyable] [SerializeField] internal bool isBinary;
         [NotKeyable] [SerializeField] internal bool isPreset;
 
+        // from 1.3.0
+        [NotKeyable] [SerializeField] internal SkinnedMeshRenderer? skinnedMeshRenderer;
+
         internal const string BlendShapeNamePrefix = "blendShape.";
 
         internal enum BaseType
@@ -932,18 +935,28 @@ namespace com.github.hkrn
 
         internal void SetFromMmdExpression(string targetName)
         {
-            var blendShapeNames = new List<string>();
             if (!gameObject || !gameObject!.transform)
             {
                 return;
             }
 
-            RetrieveAllBlendShapes(gameObject.transform, ref blendShapeNames);
-            var index = blendShapeNames.IndexOf(targetName);
-            if (index == -1)
+            var blendShapeNames = new List<string>();
+            SkinnedMeshRenderer? foundSkinnedMeshRenderer = null;
+            RetrieveAllBlendShapes(gameObject.transform, (name, innerSkinnedMeshRenderer, _) =>
+                {
+                    if (name == targetName)
+                    {
+                        foundSkinnedMeshRenderer = innerSkinnedMeshRenderer;
+                    }
+                },
+                ref blendShapeNames);
+            if (!foundSkinnedMeshRenderer)
+            {
                 return;
+            }
+
+            skinnedMeshRenderer = foundSkinnedMeshRenderer;
             baseType = BaseType.BlendShape;
-            blendShapeName = blendShapeNames[index];
             overrideBlink = vrm.core.ExpressionOverrideType.Block;
             overrideLookAt = vrm.core.ExpressionOverrideType.Block;
             overrideMouth = vrm.core.ExpressionOverrideType.Block;
@@ -958,21 +971,25 @@ namespace com.github.hkrn
         internal static void RetrieveAllBlendShapes<T>(Transform transform,
             Action<string, SkinnedMeshRenderer, T> callback, ref T blendShapeNames)
         {
+            if (!transform)
+            {
+                return;
+            }
+            if (transform.TryGetComponent<SkinnedMeshRenderer>(out var parentSmr))
+            {
+                var parentMesh = parentSmr.sharedMesh;
+                if (parentMesh)
+                {
+                    var numBlendShapes = parentMesh.blendShapeCount;
+                    for (var j = 0; j < numBlendShapes; j++)
+                    {
+                        callback(parentMesh.GetBlendShapeName(j), parentSmr, blendShapeNames);
+                    }
+                }
+            }
             for (var i = 0; i < transform.childCount; i++)
             {
                 var child = transform.GetChild(i);
-                if (!child || child is null || !child.TryGetComponent<SkinnedMeshRenderer>(out var smr))
-                    continue;
-                var mesh = smr.sharedMesh;
-                if (mesh)
-                {
-                    var numBlendShapes = mesh.blendShapeCount;
-                    for (var j = 0; j < numBlendShapes; j++)
-                    {
-                        callback(mesh.GetBlendShapeName(j), smr, blendShapeNames);
-                    }
-                }
-
                 RetrieveAllBlendShapes(child, callback, ref blendShapeNames);
             }
         }
@@ -1025,22 +1042,58 @@ namespace com.github.hkrn
                 {
                     var gameObjectProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.gameObject));
                     var gameObject = (GameObject)gameObjectProp.objectReferenceValue;
-                    if (_blendShapeNames.Count == 0 && gameObject)
+                    var skinnedMeshRendererProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.skinnedMeshRenderer));
+                    var skinnedMeshRenderer = (SkinnedMeshRenderer)skinnedMeshRendererProp.objectReferenceValue;
+                    var transform = skinnedMeshRenderer ? skinnedMeshRenderer.transform : gameObject.transform;
+                    var blendShapeName = property.FindPropertyRelative(nameof(VrmExpressionProperty.blendShapeName));
+
+                    if (_blendShapeNames.Count == 0 && transform)
                     {
-                        VrmExpressionProperty.RetrieveAllBlendShapes(gameObject.transform, ref _blendShapeNames);
+                        VrmExpressionProperty.RetrieveAllBlendShapes(transform, ref _blendShapeNames);
                     }
 
-                    var blendShapeName = property.FindPropertyRelative(nameof(VrmExpressionProperty.blendShapeName));
+                    EditorGUI.ObjectField(fieldRect, skinnedMeshRendererProp);
+                    fieldRect.y += fieldRect.height;
+
                     var selectedIndex = blendShapeName.stringValue != null
                         ? _blendShapeNames.IndexOf(blendShapeName.stringValue)
                         : -1;
                     var newIndex = EditorGUI.Popup(fieldRect, selectedIndex, _blendShapeNames.ToArray());
+                    fieldRect.y += fieldRect.height;
+
                     if (newIndex >= 0 && newIndex < _blendShapeNames.Count)
                     {
                         var targetBlendShapeName = _blendShapeNames[newIndex];
                         blendShapeName.stringValue = targetBlendShapeName;
                     }
-
+#if NVE_HAS_MODULAR_AVATAR
+                    if (GUI.Button(fieldRect, "Select"))
+                    {
+                        const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
+                        var assembly = typeof(nadena.dev.modular_avatar.core.editor.AvatarProcessor).Assembly;
+                        var blendShapeSelectWindow =
+                            assembly.GetType("nadena.dev.modular_avatar.core.editor.BlendshapeSelectWindow");
+                        if (_window)
+                        {
+                            Object.DestroyImmediate(_window);
+                            _window = null;
+                        }
+                        _window = ScriptableObject.CreateInstance(blendShapeSelectWindow);
+                        blendShapeSelectWindow.GetField("AvatarRoot", bindingAttrPrivate)!.SetValue(_window,
+                            gameObject);
+                        blendShapeSelectWindow.GetField("OfferBinding", bindingAttrPrivate)!.SetValue(_window,
+                            (Action<nadena.dev.modular_avatar.core.BlendshapeBinding>)OfferBinding);
+                        blendShapeSelectWindow.GetMethod("Show", new Type[] { })!.Invoke(_window, null);
+                        void OfferBinding(nadena.dev.modular_avatar.core.BlendshapeBinding binding)
+                        {
+                            var component = gameObject.GetComponent<NdmfVrmExporterComponent>();
+                            var referenceObject = binding.ReferenceMesh.Get(component);
+                            skinnedMeshRendererProp.objectReferenceValue = referenceObject.GetComponent<SkinnedMeshRenderer>();
+                            blendShapeName.stringValue = binding.Blendshape;
+                            property.serializedObject.ApplyModifiedProperties();
+                        }
+                    }
+#endif // NVE_HAS_MODULAR_AVATAR
                     break;
                 }
                 case VrmExpressionProperty.BaseType.AnimationClip:
@@ -1101,10 +1154,30 @@ namespace com.github.hkrn
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var height = LineHeight * 3;
+            var height = LineHeight;
             if (!property.FindPropertyRelative(nameof(VrmExpressionProperty.isPreset)).boolValue)
             {
                 height += LineHeight;
+            }
+
+            switch ((VrmExpressionProperty.BaseType)property.FindPropertyRelative(nameof(VrmExpressionProperty.baseType)).intValue)
+            {
+                case VrmExpressionProperty.BaseType.BlendShape:
+                {
+#if NVE_HAS_MODULAR_AVATAR
+                    height += LineHeight * 4;
+#else
+                    height += LineHeight * 3;
+#endif // NVE_HAS_MODULAR_AVATAR
+                    break;
+                }
+                case VrmExpressionProperty.BaseType.AnimationClip:
+                {
+                    height += LineHeight * 2;
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             if (property.FindPropertyRelative(nameof(VrmExpressionProperty.optionsFoldout)).boolValue)
@@ -1118,6 +1191,7 @@ namespace com.github.hkrn
         private float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
         private List<string> _blendShapeNames = new();
+        private ScriptableObject? _window;
     }
 
     internal sealed class MaterialVariantMapping
@@ -1411,6 +1485,7 @@ namespace com.github.hkrn
             {
                 return (uint)ex.HResult is 0x80070050 or 0x800700B7;
             }
+
             var randomFilename = Path.GetRandomFileName();
             var tempFilePath = $"{filePath}.{randomFilename}.tmp";
             var backupFilePath = $"{filePath}.{randomFilename}.bak";
@@ -1424,6 +1499,7 @@ namespace com.github.hkrn
                 {
                     /* ignore only when file is already exists */
                 }
+
                 File.WriteAllBytes(tempFilePath, data);
                 File.Replace(tempFilePath, filePath, backupFilePath);
             }
@@ -1433,6 +1509,7 @@ namespace com.github.hkrn
                 {
                     File.Delete(backupFilePath);
                 }
+
                 if (File.Exists(tempFilePath))
                 {
                     File.Delete(tempFilePath);
