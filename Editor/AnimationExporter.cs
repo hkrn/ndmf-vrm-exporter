@@ -126,7 +126,7 @@ namespace com.github.hkrn
                 }
 
                 var unit = new AnimationUnit { Transform = transform };
-                var humanBodyNode = GetHumanBodyNode(avatarRoot.transform, transform, humanBodyBoneId, units);
+                var humanBodyNode = GetHumanBodyNode(transform, humanBodyBoneId, units);
                 var nodeID = new gltf.ObjectID((uint)root.Nodes.Count);
                 unit.NodeID = nodeID;
                 root.Nodes.Add(new gltf.node.Node
@@ -168,7 +168,7 @@ namespace com.github.hkrn
                     }
 
                     var transform = unit.Transform;
-                    var humanBodyNode = GetHumanBodyNode(avatarRoot.transform, transform, humanBodyBoneId, units);
+                    var humanBodyNode = GetHumanBodyNode(transform, humanBodyBoneId, units);
                     unit.Bundle.Rotations.Keyframes.Add(new gltf.exporter.KeyframeUnit(time,
                         humanBodyNode.Rotation.ToQuaternionWithCoordinateSpace()));
                     if (humanBodyBoneId != HumanBodyBones.Hips)
@@ -320,18 +320,17 @@ namespace com.github.hkrn
             File.WriteAllBytes(outputPath, stream.ToArray());
         }
 
-        private static HumanBodyNode GetHumanBodyNode(Transform avatarRootTransform, Transform transform, HumanBodyBones humanBodyBoneId,
+        private static HumanBodyNode GetHumanBodyNode(Transform transform, HumanBodyBones humanBodyBoneId,
             Dictionary<HumanBodyBones, AnimationUnit> units)
         {
             var parentId = HumanTrait.GetParentBone((int)humanBodyBoneId);
             if (parentId == -1)
             {
-                var rootTransform = avatarRootTransform.worldToLocalMatrix * transform.localToWorldMatrix;
                 return new HumanBodyNode
                 {
-                    Translation = rootTransform.GetPosition(),
-                    Rotation = rootTransform.rotation,
-                    Scale = rootTransform.lossyScale,
+                    Translation = transform.position,
+                    Rotation = transform.rotation,
+                    Scale = transform.lossyScale,
                     ParentHumanBodyBones = HumanBodyBones.LastBone,
                 };
             }
