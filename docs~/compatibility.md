@@ -11,7 +11,7 @@
 > [!NOTE]
 > VRC PhysBone が登場する前に使われていた [Dynamic Bone](https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743) からの変換には対応していません
 
-VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については VRM Spring Bone に直接対応する仕様が存在しないため、`Enable Spring Bone Limit` を無効にしている場合に限り「動きにくくする措置」として以下で計算されます。
+VRC PhysBone については VRM Spring Bone のジョイントに変換されます。ただし Immobile および Limit については VRM Spring Bone に直接対応する仕様が存在しないため、`(Experimental) Enable Spring Bone Limit` を無効にしている場合に限り「動きにくくする措置」として以下で計算されます。
 
 * Limit の場合は角度を 180 で割り、その係数を以って乗算
   * 0 の場合は Stiffness と DragForce を無効化

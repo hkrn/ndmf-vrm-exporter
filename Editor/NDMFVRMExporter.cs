@@ -4227,8 +4227,8 @@ namespace com.github.hkrn
                         {
                             Spherical = new vrm.sb.SphericalLimit
                             {
-                                Pitch = EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio),
-                                Yaw = EvaluateCurve(pb.maxAngleZCurve, pb.maxAngleZ, depthRatio),
+                                Pitch = Mathf.Deg2Rad * EvaluateCurve(pb.maxAngleXCurve, pb.maxAngleX, depthRatio),
+                                Yaw = Mathf.Deg2Rad * EvaluateCurve(pb.maxAngleZCurve, pb.maxAngleZ, depthRatio),
                                 Rotation = Quaternion.Euler(pb.limitRotation).ToQuaternionWithCoordinateSpace(),
                             }
                         };
