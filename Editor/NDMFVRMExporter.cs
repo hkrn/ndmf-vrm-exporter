@@ -956,6 +956,7 @@ namespace com.github.hkrn
             }
 
             skinnedMeshRenderer = foundSkinnedMeshRenderer;
+            blendShapeName = targetName;
             baseType = BaseType.BlendShape;
             overrideBlink = vrm.core.ExpressionOverrideType.Block;
             overrideLookAt = vrm.core.ExpressionOverrideType.Block;
@@ -975,6 +976,7 @@ namespace com.github.hkrn
             {
                 return;
             }
+
             if (transform.TryGetComponent<SkinnedMeshRenderer>(out var parentSmr))
             {
                 var parentMesh = parentSmr.sharedMesh;
@@ -987,6 +989,7 @@ namespace com.github.hkrn
                     }
                 }
             }
+
             for (var i = 0; i < transform.childCount; i++)
             {
                 var child = transform.GetChild(i);
@@ -1042,11 +1045,13 @@ namespace com.github.hkrn
                 {
                     var gameObjectProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.gameObject));
                     var gameObject = (GameObject)gameObjectProp.objectReferenceValue;
-                    var skinnedMeshRendererProp = property.FindPropertyRelative(nameof(VrmExpressionProperty.skinnedMeshRenderer));
+                    var skinnedMeshRendererProp =
+                        property.FindPropertyRelative(nameof(VrmExpressionProperty.skinnedMeshRenderer));
                     var skinnedMeshRenderer = (SkinnedMeshRenderer)skinnedMeshRendererProp.objectReferenceValue;
                     var transform = skinnedMeshRenderer ? skinnedMeshRenderer.transform : gameObject.transform;
                     var blendShapeName = property.FindPropertyRelative(nameof(VrmExpressionProperty.blendShapeName));
 
+                    StaleAllBlendShapeNamesIfChanged(transform);
                     if (_blendShapeNames.Count == 0 && transform)
                     {
                         VrmExpressionProperty.RetrieveAllBlendShapes(transform, ref _blendShapeNames);
@@ -1073,22 +1078,43 @@ namespace com.github.hkrn
                         var assembly = typeof(nadena.dev.modular_avatar.core.editor.AvatarProcessor).Assembly;
                         var blendShapeSelectWindow =
                             assembly.GetType("nadena.dev.modular_avatar.core.editor.BlendshapeSelectWindow");
+                        if (blendShapeSelectWindow == null)
+                        {
+                            EditorUtility.DisplayDialog("Select button is unavailable",
+                                "Select button is unavailable due to BlendshapeSelectWindow is unavailable", "OK");
+                            Debug.LogWarning("BlendshapeSelectWindow is unavailable and will be skipped");
+                            break;
+                        }
+
+                        var avatarRoot = blendShapeSelectWindow.GetField("AvatarRoot", bindingAttrPrivate);
+                        var offerBinding = blendShapeSelectWindow.GetField("OfferBinding", bindingAttrPrivate);
+                        var show = blendShapeSelectWindow.GetMethod("Show", new Type[] { });
+                        if (avatarRoot == null || offerBinding == null || show == null)
+                        {
+                            EditorUtility.DisplayDialog("Select button is unavailable",
+                                "Select button is unavailable due to BlendshapeSelectWindow API is changed", "OK");
+                            Debug.LogWarning("BlendshapeSelectWindow API is changed and will be skipped");
+                            break;
+                        }
+
                         if (_window)
                         {
                             Object.DestroyImmediate(_window);
                             _window = null;
                         }
+
                         _window = ScriptableObject.CreateInstance(blendShapeSelectWindow);
-                        blendShapeSelectWindow.GetField("AvatarRoot", bindingAttrPrivate)!.SetValue(_window,
-                            gameObject);
-                        blendShapeSelectWindow.GetField("OfferBinding", bindingAttrPrivate)!.SetValue(_window,
+                        avatarRoot.SetValue(_window, gameObject);
+                        offerBinding.SetValue(_window,
                             (Action<nadena.dev.modular_avatar.core.BlendshapeBinding>)OfferBinding);
-                        blendShapeSelectWindow.GetMethod("Show", new Type[] { })!.Invoke(_window, null);
+                        show.Invoke(_window, null);
+
                         void OfferBinding(nadena.dev.modular_avatar.core.BlendshapeBinding binding)
                         {
                             var component = gameObject.GetComponent<NdmfVrmExporterComponent>();
                             var referenceObject = binding.ReferenceMesh.Get(component);
-                            skinnedMeshRendererProp.objectReferenceValue = referenceObject.GetComponent<SkinnedMeshRenderer>();
+                            skinnedMeshRendererProp.objectReferenceValue =
+                                referenceObject.GetComponent<SkinnedMeshRenderer>();
                             blendShapeName.stringValue = binding.Blendshape;
                             property.serializedObject.ApplyModifiedProperties();
                         }
@@ -1160,7 +1186,8 @@ namespace com.github.hkrn
                 height += LineHeight;
             }
 
-            switch ((VrmExpressionProperty.BaseType)property.FindPropertyRelative(nameof(VrmExpressionProperty.baseType)).intValue)
+            switch ((VrmExpressionProperty.BaseType)property
+                        .FindPropertyRelative(nameof(VrmExpressionProperty.baseType)).intValue)
             {
                 case VrmExpressionProperty.BaseType.BlendShape:
                 {
@@ -1188,10 +1215,23 @@ namespace com.github.hkrn
             return height;
         }
 
+        private void StaleAllBlendShapeNamesIfChanged(Transform transform)
+        {
+            var sourceId = transform ? transform.GetInstanceID() : 0;
+            if (sourceId == _lastTransformInstanceId)
+            {
+                return;
+            }
+
+            _blendShapeNames.Clear();
+            _lastTransformInstanceId = sourceId;
+        }
+
         private float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
         private List<string> _blendShapeNames = new();
         private ScriptableObject? _window;
+        private int _lastTransformInstanceId;
     }
 
     internal sealed class MaterialVariantMapping
