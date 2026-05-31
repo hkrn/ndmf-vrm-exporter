@@ -860,7 +860,7 @@ namespace com.github.hkrn
         {
             EditorGUI.indentLevel++;
             var component = (NdmfVrmExporterComponent)target;
-            if (component.humanoidAnimations.Any(clip => !clip.humanMotion))
+            if (component.humanoidAnimations.Any(clip => clip && !clip.humanMotion))
             {
                 EditorGUILayout.HelpBox(Translator._("component.validation.animation.non-humanoid"), MessageType.Warning);
             }

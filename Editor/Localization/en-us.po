@@ -230,7 +230,7 @@ msgid "component.constraint.exclude.constraints"
 msgstr "Excluded Constraints"
 
 msgid "component.animation.title"
-msgstr "Animation Clips to convert VRMA"
+msgstr "Animation Clips to Export as VRMA"
 
 msgid "component.animation.export.button"
 msgstr "Export"
@@ -248,7 +248,7 @@ msgid "component.animation.export.success"
 msgstr "Exporting all VRM animations has been completed!"
 
 msgid "component.validation.animation.non-humanoid"
-msgstr "Animation clip contains non humanoid animation! The animation clip will be ignored and not be exported."
+msgstr "Animation clip contains non-humanoid motion. It will be ignored and not exported."
 
 msgid "component.debug.make-all-node-names-unique"
 msgstr "Make All Node Names Unique"
