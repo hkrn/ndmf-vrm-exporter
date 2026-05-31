@@ -95,17 +95,22 @@ VRM の表情設定を行います。
 > 表情はブレンドシェイプと機能的によく似ていますが、同一ではありません [^4]
 
 > [!NOTE]
-> まばたきとリップシンクの表情は VRC Avatar Descriptor コンポーネントから情報を取得して自動的に設定されます。また [Avatar Optimizer](https://vpm.anatawa12.com/avatar-optimizer/ja/) を利用している場合は表情に指定されたブレンドシェイプが最適化対象から外す処理を行う関係で除去されずに残ります
+> 両目のまばたきとリップシンクの表情は VRC Avatar Descriptor コンポーネントから情報を取得して自動的に設定されます。また [Avatar Optimizer](https://vpm.anatawa12.com/avatar-optimizer/ja/) を利用している場合は表情に指定されたブレンドシェイプが最適化対象から外す処理を行う関係で除去されずに残ります
 
 ### Preset
 
 VRM のプリセットである以下の項目を設定することが可能です。
+
+> [!NOTE]
+> Blink (まばたき) 系は 1.3.0 から利用可能です。またこちらは左右個別であり VRC Avatar Description から取得する両目とは別の扱いなのでご注意ください
 
 * Happy
 * Angry
 * Sad
 * Relaxed
 * Surprised
+* Blink (Left)
+* Blink (Right)
 
 表情設定については以下の二種類が選択可能です。
 
