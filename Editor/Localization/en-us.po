@@ -250,6 +250,9 @@ msgstr "Exporting all VRM animations has been completed!"
 msgid "component.validation.animation.non-humanoid"
 msgstr "Animation clip contains non-humanoid motion. It will be ignored and not exported."
 
+msgid "component.spring-bone.experimental-enable-limit"
+msgstr "(Experimental) Enable Spring Bone Limit Extension"
+
 msgid "component.debug.make-all-node-names-unique"
 msgstr "Make All Node Names Unique"
 
