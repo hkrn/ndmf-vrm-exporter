@@ -54,6 +54,12 @@ namespace com.github.hkrn
             return new System.Numerics.Vector4(color.r, color.g, color.b, color.a);
         }
 
+        public static System.Numerics.Quaternion ToQuaternion(this Quaternion self)
+        {
+            var rotation = new System.Numerics.Quaternion(self.x, self.y, self.z, self.w);
+            return System.Numerics.Quaternion.Normalize(rotation);
+        }
+
         public static System.Numerics.Quaternion ToQuaternionWithCoordinateSpace(this Quaternion self)
         {
             self.ToAngleAxis(out var angle, out var axis);

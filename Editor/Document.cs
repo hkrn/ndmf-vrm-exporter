@@ -14,6 +14,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -1536,6 +1537,7 @@ namespace com.github.hkrn.gltf
         {
             public IList<KhrMaterialsVariantsPrimitiveMapping> Mappings { get; init; } =
                 new List<KhrMaterialsVariantsPrimitiveMapping>();
+
             public IExtensions? Extensions { get; set; }
             public JToken? Extras { get; set; }
 
@@ -1634,6 +1636,7 @@ namespace com.github.hkrn.gltf
             public IList<KeyframeUnit> Keyframes { get; private init; } = new List<KeyframeUnit>();
             public ObjectID InputAccessor { get; set; } = ObjectID.Null;
             public ObjectID OutputAccessor { get; set; } = ObjectID.Null;
+
             // ReSharper disable once UnassignedGetOnlyAutoProperty
             public bool HasTangent { get; }
         }
@@ -1645,6 +1648,15 @@ namespace com.github.hkrn.gltf
             public KeyframeAccessorUnit Rotations { get; private init; } = new();
             public KeyframeAccessorUnit Translations { get; private init; } = new();
             public KeyframeAccessorUnit Weights { get; private init; } = new();
+        }
+
+        // ReSharper disable once ClassNeverInstantiated.Global
+        public sealed class KeyframeAccessorBundleOutput
+        {
+            public animation.AnimationSampler? Scales { get; internal set; }
+            public animation.AnimationSampler? Rotations { get; internal set; }
+            public animation.AnimationSampler? Translations { get; internal set; }
+            public animation.AnimationSampler? Weights { get; internal set; }
         }
 
         public sealed class MorphTarget
@@ -2042,16 +2054,34 @@ namespace com.github.hkrn.gltf
                 }
             }
 
+
             public void SerializeAnimationSamplerBundle(Root root, KeyframeAccessorBundle bundle)
             {
-                SerializeAnimationSamplerAccessor(root, bundle.Translations, accessor.Type.Vec3,
+                SerializeAnimationSamplerAccessor(root, bundle.Translations, null, accessor.Type.Vec3,
                     accessor.ComponentType.Float);
-                SerializeAnimationSamplerAccessor(root, bundle.Rotations, accessor.Type.Vec4,
+                SerializeAnimationSamplerAccessor(root, bundle.Rotations, null, accessor.Type.Vec4,
                     accessor.ComponentType.Float);
-                SerializeAnimationSamplerAccessor(root, bundle.Scales, accessor.Type.Vec3,
+                SerializeAnimationSamplerAccessor(root, bundle.Scales, null, accessor.Type.Vec3,
                     accessor.ComponentType.Float);
-                SerializeAnimationSamplerAccessor(root, bundle.Weights, accessor.Type.Scalar,
+                SerializeAnimationSamplerAccessor(root, bundle.Weights, null, accessor.Type.Scalar,
                     accessor.ComponentType.Float);
+            }
+
+            public KeyframeAccessorBundleOutput SerializeAnimationSamplerBundleOutput(Root root, UnicodeString name,
+                KeyframeAccessorBundle bundle)
+            {
+                return new KeyframeAccessorBundleOutput
+                {
+                    Translations = SerializeAnimationSamplerAccessor(root, bundle.Translations, name,
+                        accessor.Type.Vec3,
+                        accessor.ComponentType.Float),
+                    Rotations = SerializeAnimationSamplerAccessor(root, bundle.Rotations, name, accessor.Type.Vec4,
+                        accessor.ComponentType.Float),
+                    Scales = SerializeAnimationSamplerAccessor(root, bundle.Scales, name, accessor.Type.Vec3,
+                        accessor.ComponentType.Float),
+                    Weights = SerializeAnimationSamplerAccessor(root, bundle.Weights, name, accessor.Type.Scalar,
+                        accessor.ComponentType.Float)
+                };
             }
 
             public ObjectID? CreateAccessorJoints(Root root, UnicodeString? name, JointUnit[] joints)
@@ -2416,19 +2446,20 @@ namespace com.github.hkrn.gltf
                 }
             }
 
-            private void SerializeAnimationSamplerAccessor(Root root, KeyframeAccessorUnit sa, accessor.Type ty,
+            private animation.AnimationSampler? SerializeAnimationSamplerAccessor(Root root, KeyframeAccessorUnit sa,
+                UnicodeString? name, accessor.Type ty,
                 accessor.ComponentType componentTy)
             {
                 if (sa.Keyframes.Count == 0)
                 {
-                    return;
+                    return null;
                 }
 
                 var inputAccessorID = sa.InputAccessor;
-                var (inputAccessor, inputBufferView) = CreateAccessor(root, null, ref inputAccessorID);
+                var (inputAccessor, inputBufferView) = CreateAccessor(root, name, ref inputAccessorID);
                 sa.InputAccessor = inputAccessorID;
                 var outputAccessorID = sa.OutputAccessor;
-                var (outputAccessor, outputBufferView) = CreateAccessor(root, null, ref outputAccessorID);
+                var (outputAccessor, outputBufferView) = CreateAccessor(root, name, ref outputAccessorID);
                 sa.OutputAccessor = outputAccessorID;
                 using var inputMemoryStream = new MemoryStream();
                 using var inputByteArray = new BinaryWriter(inputMemoryStream);
@@ -2482,15 +2513,19 @@ namespace com.github.hkrn.gltf
                 inputAccessor.Max = new[] { max };
                 inputBufferView.ByteOffset = InnerStream.Position;
                 inputBufferView.ByteLength = inputMemoryStream.Length;
-                inputBufferView.ByteStride = inputMemoryStream.Length / inputAccessor.Count;
                 WriteStream(inputMemoryStream);
                 outputAccessor.Count = sa.Keyframes.Count;
                 outputAccessor.ComponentType = componentTy;
                 outputAccessor.Type = ty;
                 outputBufferView.ByteOffset = InnerStream.Position;
                 outputBufferView.ByteLength = outputMemoryStream.Length;
-                outputBufferView.ByteStride = outputMemoryStream.Length / outputAccessor.Count;
                 WriteStream(outputMemoryStream);
+                return new animation.AnimationSampler
+                {
+                    Input = inputAccessorID,
+                    Output = outputAccessorID,
+                    Interpolation = animation.Interpolation.Linear,
+                };
             }
 
             private static (accessor.Accessor, buffer.BufferView) CreateAccessor(Root root, UnicodeString? name,
@@ -3299,6 +3334,7 @@ namespace com.github.hkrn.vrm.core
     public sealed class Expressions
     {
         public Preset Preset { get; init; } = new();
+
         // ReSharper disable once CollectionNeverQueried.Global
         public IDictionary<gltf.UnicodeString, ExpressionItem>? Custom { get; set; }
         public IExtensions? Extensions { get; set; }
@@ -3379,6 +3415,7 @@ namespace com.github.hkrn.vrm.sb
     {
         public gltf.ObjectID Node { get; set; } = gltf.ObjectID.Null;
         public Shape Shape { get; init; } = new();
+
         // ReSharper disable once CollectionNeverQueried.Global
         public IExtensions? Extensions { get; set; }
         public JToken? Extras { get; set; }
@@ -3598,6 +3635,109 @@ namespace com.github.hkrn.vrm.mtoon
     }
 }
 
+
+namespace com.github.hkrn.vrm.animation
+{
+    using IExtensions = IDictionary<string, JToken>;
+
+    public sealed class Expressions
+    {
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class LookAt
+    {
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class HumanBone
+    {
+        public gltf.ObjectID Node;
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class HumanBones
+    {
+        public HumanBone Hips { get; init; } = new();
+        public HumanBone Spine { get; init; } = new();
+        public HumanBone? Chest { get; set; }
+        public HumanBone? UpperChest { get; set; }
+        public HumanBone? Neck { get; set; }
+        public HumanBone Head { get; init; } = new();
+        public HumanBone? LeftEye { get; set; }
+        public HumanBone? RightEye { get; set; }
+        public HumanBone? Jaw { get; set; }
+        public HumanBone LeftUpperLeg { get; init; } = new();
+        public HumanBone LeftLowerLeg { get; init; } = new();
+        public HumanBone LeftFoot { get; init; } = new();
+        public HumanBone? LeftToes { get; set; }
+        public HumanBone RightUpperLeg { get; init; } = new();
+        public HumanBone RightLowerLeg { get; init; } = new();
+        public HumanBone RightFoot { get; init; } = new();
+        public HumanBone? RightToes { get; set; }
+        public HumanBone? LeftShoulder { get; set; }
+        public HumanBone LeftUpperArm { get; init; } = new();
+        public HumanBone LeftLowerArm { get; init; } = new();
+        public HumanBone LeftHand { get; init; } = new();
+        public HumanBone? RightShoulder { get; set; }
+        public HumanBone RightUpperArm { get; init; } = new();
+        public HumanBone RightLowerArm { get; init; } = new();
+        public HumanBone RightHand { get; init; } = new();
+        public HumanBone? LeftThumbMetacarpal { get; set; }
+        public HumanBone? LeftThumbProximal { get; set; }
+        public HumanBone? LeftThumbDistal { get; set; }
+        public HumanBone? LeftIndexProximal { get; set; }
+        public HumanBone? LeftIndexIntermediate { get; set; }
+        public HumanBone? LeftIndexDistal { get; set; }
+        public HumanBone? LeftMiddleProximal { get; set; }
+        public HumanBone? LeftMiddleIntermediate { get; set; }
+        public HumanBone? LeftMiddleDistal { get; set; }
+        public HumanBone? LeftRingProximal { get; set; }
+        public HumanBone? LeftRingIntermediate { get; set; }
+        public HumanBone? LeftRingDistal { get; set; }
+        public HumanBone? LeftLittleProximal { get; set; }
+        public HumanBone? LeftLittleIntermediate { get; set; }
+        public HumanBone? LeftLittleDistal { get; set; }
+        public HumanBone? RightThumbMetacarpal { get; set; }
+        public HumanBone? RightThumbProximal { get; set; }
+        public HumanBone? RightThumbDistal { get; set; }
+        public HumanBone? RightIndexProximal { get; set; }
+        public HumanBone? RightIndexIntermediate { get; set; }
+        public HumanBone? RightIndexDistal { get; set; }
+        public HumanBone? RightMiddleProximal { get; set; }
+        public HumanBone? RightMiddleIntermediate { get; set; }
+        public HumanBone? RightMiddleDistal { get; set; }
+        public HumanBone? RightRingProximal { get; set; }
+        public HumanBone? RightRingIntermediate { get; set; }
+        public HumanBone? RightRingDistal { get; set; }
+        public HumanBone? RightLittleProximal { get; set; }
+        public HumanBone? RightLittleIntermediate { get; set; }
+        public HumanBone? RightLittleDistal { get; set; }
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class Humanoid
+    {
+        public HumanBones HumanBones = new();
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+
+    public sealed class Animation
+    {
+        public string SpecVersion { get; set; } = "1.0";
+        public Humanoid Humanoid = new();
+        public Expressions? Expressions;
+        public LookAt? LookAt;
+        public IExtensions? Extensions { get; set; }
+        public JToken? Extras { get; set; }
+    }
+}
+
 namespace com.github.hkrn.vrm
 {
     public static class Document
@@ -3630,6 +3770,11 @@ namespace com.github.hkrn.vrm
         public static JToken SaveAsNode(mtoon.MToon mtoon)
         {
             return JToken.FromObject(mtoon, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(animation.Animation animation)
+        {
+            return JToken.FromObject(animation, JsonSerializer.Create(SerializerOptions));
         }
 
         public static JsonSerializerSettings SerializerOptions
