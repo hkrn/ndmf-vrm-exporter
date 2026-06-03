@@ -13,7 +13,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using com.github.hkrn.ui;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -1233,10 +1232,11 @@ namespace com.github.hkrn
                             _window = null;
                         }
 
-                        _window = ScriptableObject.CreateInstance<BlendshapeSelectWindow>();
-                        _window.AvatarRoot = gameObject;
-                        _window.OfferBinding = OfferBinding;
-                        _window.Show();
+                        var window = ScriptableObject.CreateInstance<ui.BlendshapeSelectWindow>();
+                        window.AvatarRoot = gameObject;
+                        window.OfferBinding = OfferBinding;
+                        window.Show();
+                        _window = window;
 
                         void OfferBinding(nadena.dev.modular_avatar.core.BlendshapeBinding binding)
                         {
@@ -1359,7 +1359,7 @@ namespace com.github.hkrn
         private static float LineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
         private List<string> _blendShapeNames = new();
-        private BlendshapeSelectWindow? _window;
+        private ScriptableObject? _window;
         private int _lastTransformInstanceId;
     }
 
