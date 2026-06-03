@@ -24,7 +24,6 @@ using Object = UnityEngine.Object;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using VRC.Core;
 using VRC.Dynamics;
@@ -1227,40 +1226,17 @@ namespace com.github.hkrn
 #if NVE_HAS_MODULAR_AVATAR
                     if (GUI.Button(fieldRect, "Select"))
                     {
-                        const BindingFlags bindingAttrPrivate = BindingFlags.NonPublic | BindingFlags.Instance;
-                        var assembly = typeof(nadena.dev.modular_avatar.core.editor.AvatarProcessor).Assembly;
-                        var blendShapeSelectWindow =
-                            assembly.GetType("nadena.dev.modular_avatar.core.editor.BlendshapeSelectWindow");
-                        if (blendShapeSelectWindow == null)
-                        {
-                            EditorUtility.DisplayDialog("Select button is unavailable",
-                                "Select button is unavailable due to BlendshapeSelectWindow is unavailable", "OK");
-                            Debug.LogWarning("BlendshapeSelectWindow is unavailable and will be skipped");
-                            break;
-                        }
-
-                        var avatarRoot = blendShapeSelectWindow.GetField("AvatarRoot", bindingAttrPrivate);
-                        var offerBinding = blendShapeSelectWindow.GetField("OfferBinding", bindingAttrPrivate);
-                        var show = blendShapeSelectWindow.GetMethod("Show", new Type[] { });
-                        if (avatarRoot == null || offerBinding == null || show == null)
-                        {
-                            EditorUtility.DisplayDialog("Select button is unavailable",
-                                "Select button is unavailable due to BlendshapeSelectWindow API is changed", "OK");
-                            Debug.LogWarning("BlendshapeSelectWindow API is changed and will be skipped");
-                            break;
-                        }
-
                         if (_window)
                         {
                             Object.DestroyImmediate(_window);
                             _window = null;
                         }
 
-                        _window = ScriptableObject.CreateInstance(blendShapeSelectWindow);
-                        avatarRoot.SetValue(_window, gameObject);
-                        offerBinding.SetValue(_window,
-                            (Action<nadena.dev.modular_avatar.core.BlendshapeBinding>)OfferBinding);
-                        show.Invoke(_window, null);
+                        var window = ScriptableObject.CreateInstance<ui.BlendshapeSelectWindow>();
+                        window.AvatarRoot = gameObject;
+                        window.OfferBinding = OfferBinding;
+                        window.Show();
+                        _window = window;
 
                         void OfferBinding(nadena.dev.modular_avatar.core.BlendshapeBinding binding)
                         {
