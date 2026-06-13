@@ -113,6 +113,21 @@ namespace com.github.hkrn
             };
         }
 
+        public static float GetFloatOrDefault(this Material material, int value, float defaultValue)
+        {
+            return material.HasFloat(value) ? material.GetFloat(value) : defaultValue;
+        }
+
+        public static int GetIntOrDefault(this Material material, int value, int defaultValue)
+        {
+            return material.HasInt(value) ? material.GetInt(value) : defaultValue;
+        }
+
+        public static Color GetColorOrDefault(this Material material, int value, Color defaultValue)
+        {
+            return material.HasColor(value) ? material.GetColor(value) : defaultValue;
+        }
+
         internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
             Material? material = null)
         {

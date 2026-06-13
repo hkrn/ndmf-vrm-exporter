@@ -1570,6 +1570,110 @@ namespace com.github.hkrn.gltf
                 };
             }
         }
+
+        public sealed class KhrMaterialsSpecular : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_specular";
+            public float? SpecularFactor { get; set; }
+            public material.TextureInfo? SpecularTexture { get; set; }
+            public Vector3? SpecularColorFactor { get; set; }
+            public material.TextureInfo? SpecularColorTexture { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsSpecular
+                {
+                    SpecularFactor = SpecularFactor,
+                    SpecularTexture = SpecularTexture,
+                    SpecularColorFactor = SpecularColorFactor,
+                    SpecularColorTexture = SpecularColorTexture,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsDiffuseTransmission : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_diffuse_transmission";
+            public float? DiffuseTransmissionFactor { get; set; }
+            public Vector3? DiffuseTransmissionColorFactor { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsDiffuseTransmission
+                {
+                    DiffuseTransmissionFactor = DiffuseTransmissionFactor,
+                    DiffuseTransmissionColorFactor = DiffuseTransmissionColorFactor,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsTransmission : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_transmission";
+            public float? TransmissionFactor { get; set; }
+            public material.TextureInfo? TransmissionTexture { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsTransmission
+                {
+                    TransmissionFactor = TransmissionFactor,
+                    TransmissionTexture = TransmissionTexture,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsVolume : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_volume";
+            public float? ThicknessFactor { get; set; }
+            public Vector3? AttenuationColor { get; set; }
+            public float? AttenuationDistance { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsVolume
+                {
+                    ThicknessFactor = ThicknessFactor,
+                    AttenuationColor = AttenuationColor,
+                    AttenuationDistance = AttenuationDistance,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
+
+        public sealed class KhrMaterialsIor : ICloneable
+        {
+            public static readonly string Name = "KHR_materials_ior";
+            public float? Ior { get; set; }
+            public IExtensions? Extensions { get; set; }
+            public JToken? Extras { get; set; }
+
+            public object Clone()
+            {
+                return new KhrMaterialsIor
+                {
+                    Ior = Ior,
+                    Extensions = ExtensionsUtils.DeepClone(Extensions),
+                    Extras = Extras?.DeepClone(),
+                };
+            }
+        }
     }
 
     namespace exporter
@@ -2781,6 +2885,31 @@ namespace com.github.hkrn.gltf
         }
 
         public static JToken SaveAsNode(extensions.KhrMaterialsVariantsPrimitive value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsSpecular value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsDiffuseTransmission value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsTransmission value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsVolume value)
+        {
+            return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
+        }
+
+        public static JToken SaveAsNode(extensions.KhrMaterialsIor value)
         {
             return JToken.FromObject(value, JsonSerializer.Create(SerializerOptions));
         }
