@@ -12,6 +12,17 @@ NDMF VRM Exporter が提供するコンポーネントは `VRM Export Descriptio
 > [!TIP]
 > 処理の性質上 VRM ファイルの生成は最低でも数秒、場合によっては数分と時間がかかるため、時間がかかる場合はコンポーネントを無効化して NDMF Console 経由でファイル書き出しをしてください
 
+## Preview
+
+プレビュー機能を管理します。現状は有効化するかどうかのみです。
+
+> [!NOTE]
+> プレビューを機能を利用するには UniVRM 0.130 以降が必要です。[UniVRM のリリースページ](https://github.com/vrm-c/UniVRM/releases) から VRM 1.0 向けのパッケージを UPM または unitypackage 経由でインストールすると利用できるようになります。
+
+プレビュー機能は NDMF が持っているプレビュー機能を利用し、有効後に NDMF VRM Exporter が変換するものと同等のパラメータで UniVRM に内包されている MToon シェーダに差し替えます（UniVRM が必要なのはこの理由によるものです）。
+
+これにより VRM 1.0 対応アプリケーションに読み込ませる手間なしに MToon による見え方の結果を即座に確認できるようになります。ただし最終的な確認は VRM 1.0 対応の読み込み先アプリケーションで行ってください。
+
 ## Metadata
 
 VRM のメタデータに直接対応しています。詳細な情報は [モデル情報](https://vrm.dev/univrm/meta/univrm_meta/) および [VRoid Hubの利用条件とVRMライセンスについて](https://vroid.pixiv.help/hc/ja/articles/360016417013-VRoid-Hub%E3%81%AE%E5%88%A9%E7%94%A8%E6%9D%A1%E4%BB%B6%E3%81%A8VRM%E3%83%A9%E3%82%A4%E3%82%BB%E3%83%B3%E3%82%B9%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6) を参照してください。

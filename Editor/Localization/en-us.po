@@ -34,6 +34,15 @@ msgstr "Exporting VRM has been completed!"
 msgid "component.validation.avatar-thumbnail"
 msgstr "Avatar thumbnail image must be square"
 
+msgid "component.category.preview"
+msgstr "Preview"
+
+msgid "component.preview.toggle"
+msgstr "Enable NDMF Preview"
+
+msgid "component.preview.unavailable"
+msgstr "The preview feature cannot be available due to UniVRM 0.130 or later is not installed. Installs UniVRM (for VRM 1.0) via UPM or unity package to be available."
+
 msgid "component.category.metadata"
 msgstr "Metadata"
 

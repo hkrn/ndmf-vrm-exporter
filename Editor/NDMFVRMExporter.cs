@@ -164,6 +164,9 @@ namespace com.github.hkrn
 
         [NotKeyable] [SerializeField] internal bool experimentalEnableSpringBoneLimit;
 
+        // from 1.4.0
+        [NotKeyable] [SerializeField] internal bool previewFoldout;
+
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
         public bool HasLicenseUrl =>
@@ -241,6 +244,9 @@ namespace com.github.hkrn
         private SerializedProperty _animationFoldoutProp = null!;
         private SerializedProperty _humanoidAnimationsProp = null!;
         private SerializedProperty _experimentalEnableSpringBoneLimit = null!;
+
+        // from 1.4.0
+        private SerializedProperty _previewFoldoutProp = null!;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
         private struct VRChatAvatarToMetadata
@@ -351,6 +357,8 @@ namespace com.github.hkrn
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.metadataModeSelection));
             _expressionModeSelection =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionModeSelection));
+            _previewFoldoutProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.previewFoldout));
             var component = (NdmfVrmExporterComponent)target;
             component.expressionPresetHappyBlendShape.gameObject = component.gameObject;
             component.expressionPresetAngryBlendShape.gameObject = component.gameObject;
@@ -489,6 +497,14 @@ namespace com.github.hkrn
                 EditorGUILayout.HelpBox(Translator._("component.validation.avatar-thumbnail"), MessageType.Warning);
             }
 
+            var previewFoldout = EditorGUILayout.Foldout(_previewFoldoutProp.boolValue,
+                Translator._("component.category.preview"));
+            if (previewFoldout)
+            {
+                DrawPreview();
+            }
+
+            EditorGUILayout.Separator();
             var metadataFoldout = EditorGUILayout.Foldout(_metadataFoldoutProp.boolValue,
                 Translator._("component.category.metadata"));
             if (metadataFoldout)
@@ -552,6 +568,7 @@ namespace com.github.hkrn
                 DrawDebugOptions();
             }
 
+            _previewFoldoutProp.boolValue = previewFoldout;
             _metadataFoldoutProp.boolValue = metadataFoldout;
             _expressionFoldoutProp.boolValue = expressionsFoldout;
             _mtoonFoldoutProp.boolValue = mtoonFoldout;
@@ -561,6 +578,24 @@ namespace com.github.hkrn
             _extensionFoldoutProp.boolValue = extensionFoldout;
             _debugFoldoutProp.boolValue = debugFoldout;
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawPreview()
+        {
+#if NVE_HAS_UNIVRM
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.ToggleLeft(Translator._("component.preview.toggle"), VrmPreview.EnableNode.IsEnabled.Value);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VrmPreview.EnableNode.IsEnabled.Value = value;
+            }
+#else
+            EditorGUILayout.HelpBox(Translator._("component.preview.unavailable"), MessageType.Warning);
+            if (EditorGUILayout.LinkButton("https://github.com/vrm-c/UniVRM/releases"))
+            {
+                Application.OpenURL("https://github.com/vrm-c/UniVRM/releases");
+            }
+#endif // NVE_HAS_UNIVRM
         }
 
         private void DrawMetadata()
