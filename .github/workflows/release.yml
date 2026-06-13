@@ -39,7 +39,7 @@ jobs:
       # Get the Package version based on the package.json file
       - name: Get Version
         id: version
-        uses: zoexx/github-action-json-file-properties@d02f28167f05bf70cd75352b11c25a4e8c39bf38
+        uses: zoexx/github-action-json-file-properties@42c424cc2a0f9dfd36c79aedb70d429c0ae3e3fa
         with:
           file_path: "package.json"
           prop_path: "version"
