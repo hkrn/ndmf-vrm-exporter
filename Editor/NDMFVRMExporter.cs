@@ -2572,6 +2572,7 @@ namespace com.github.hkrn
                 RimLightingMixFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimLightingMix")),
                 ParametricRimFresnelPowerFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimFresnelPower")),
                 ParametricRimLiftFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimLift")),
+                OutlineWidthFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_OutlineWidth")),
                 OutlineWidthMode =
                     (vrm.mtoon.OutlineWidthMode)subMeshMaterial.GetInt(Shader.PropertyToID("_OutlineWidthMode")),
                 OutlineColorFactor = subMeshMaterial.GetColor(Shader.PropertyToID("_OutlineColor")).ToVector3(),
