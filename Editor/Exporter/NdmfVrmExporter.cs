@@ -20,11 +20,8 @@ using VRC.Dynamics;
 #endif // NVE_HAS_VRCHAT_AVATAR_SDK
 
 using Debug = UnityEngine.Debug;
-using Material = UnityEngine.Material;
 using Matrix4x4 = System.Numerics.Matrix4x4;
-using Mesh = UnityEngine.Mesh;
 using Quaternion = System.Numerics.Quaternion;
-using Texture = UnityEngine.Texture;
 using Vector4 = System.Numerics.Vector4;
 
 // ReSharper disable once CheckNamespace
@@ -1063,8 +1060,7 @@ namespace com.github.hkrn
             out bool isShaderLiltoon)
         {
             var shaderName = subMeshMaterial.shader.name;
-            isShaderLiltoon = shaderName == "lilToon" ||
-                              shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal);
+            isShaderLiltoon = GltfMaterialExporter.IsLilToon(subMeshMaterial);
             var isMToon = shaderName.StartsWith("VRM10/", StringComparison.Ordinal) &&
                           shaderName.EndsWith("/MToon10", StringComparison.Ordinal);
             if (_materialIDs.TryGetValue(subMeshMaterial, out var materialID))

@@ -277,23 +277,33 @@ namespace com.github.hkrn
             Texture2D? referenceTexture = null)
         {
             int width = 4096, height = 4096;
+            var format = TextureFormat.ARGB32;
+            var mipChain = false;
+            var linear = false;
             if (referenceTexture)
             {
                 width = referenceTexture!.width;
                 height = referenceTexture.height;
+                format = referenceTexture.format;
+                mipChain = referenceTexture.mipmapCount > 1;
+                linear = !referenceTexture.isDataSRGB;
             }
             else if (srcTexture)
             {
                 width = srcTexture.width;
                 height = srcTexture.height;
+                format = srcTexture.format;
+                mipChain = srcTexture.mipmapCount > 1;
+                linear = !srcTexture.isDataSRGB;
             }
 
-            var outTexture = new Texture2D(width, height);
+            var outTexture = new Texture2D(width, height, format, mipChain, linear, false);
             var bufRT = RenderTexture.active;
             var dstTexture = RenderTexture.GetTemporary(width, height);
             Graphics.Blit(srcTexture, dstTexture, material);
             RenderTexture.active = dstTexture;
             outTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            outTexture.Apply();
             RenderTexture.active = bufRT;
             RenderTexture.ReleaseTemporary(dstTexture);
             return outTexture;

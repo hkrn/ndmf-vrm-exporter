@@ -49,6 +49,7 @@ namespace com.github.hkrn
                     .BeforePlugin("nadena.dev.modular-avatar")
                     .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
                         RetrieveAllModularAvatarReactiveComponentsPass);
+                seq.Run("VRM Preview", _ => { }).PreviewingWith(new VrmPreview());
             });
             InPhase(BuildPhase.Optimizing).OnPlatforms(platforms, seq =>
             {
