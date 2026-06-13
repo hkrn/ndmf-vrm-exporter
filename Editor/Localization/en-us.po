@@ -230,7 +230,7 @@ msgid "component.constraint.exclude.constraints"
 msgstr "Excluded Constraints"
 
 msgid "component.animation.title"
-msgstr "Animation Clips to Export as VRMA"
+msgstr "Animation Clips to Export as VRM Animation"
 
 msgid "component.animation.export.button"
 msgstr "Export"
