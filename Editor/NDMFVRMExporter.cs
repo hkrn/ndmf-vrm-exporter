@@ -19,6 +19,7 @@ using Newtonsoft.Json.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.Experimental.Rendering;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
@@ -850,7 +851,8 @@ namespace com.github.hkrn
             EditorGUILayout.PropertyField(_excludedSpringBoneTransformsProp,
                 new GUIContent(Translator._("component.spring-bone.exclude.bones")));
             EditorGUI.indentLevel--;
-            DrawToggleLeft(Translator._("component.spring-bone.experimental-enable-limit"), _experimentalEnableSpringBoneLimit);
+            DrawToggleLeft(Translator._("component.spring-bone.experimental-enable-limit"),
+                _experimentalEnableSpringBoneLimit);
         }
 
         private void DrawConstraintOptions()
@@ -869,14 +871,17 @@ namespace com.github.hkrn
             var component = (NdmfVrmExporterComponent)target;
             if (component.humanoidAnimations.Any(clip => clip && !clip.humanMotion))
             {
-                EditorGUILayout.HelpBox(Translator._("component.validation.animation.non-humanoid"), MessageType.Warning);
+                EditorGUILayout.HelpBox(Translator._("component.validation.animation.non-humanoid"),
+                    MessageType.Warning);
             }
+
             EditorGUILayout.PropertyField(
                 _humanoidAnimationsProp,
                 new GUIContent(Translator._("component.animation.title")));
             if (GUILayout.Button(Translator._("component.animation.export.button")))
             {
-                var outputDirectoryPath = EditorUtility.SaveFolderPanel(Translator._("component.animation.export.dialog.title"), "", "");
+                var outputDirectoryPath =
+                    EditorUtility.SaveFolderPanel(Translator._("component.animation.export.dialog.title"), "", "");
                 if (!string.IsNullOrEmpty(outputDirectoryPath))
                 {
                     ExportAllAnimations(component, outputDirectoryPath);
@@ -2431,6 +2436,8 @@ namespace com.github.hkrn
             var shaderName = subMeshMaterial.shader.name;
             isShaderLiltoon = shaderName == "lilToon" ||
                               shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal);
+            var isMToon = shaderName.StartsWith("VRM10/", StringComparison.Ordinal) &&
+                          shaderName.EndsWith("/MToon10", StringComparison.Ordinal);
             if (_materialIDs.TryGetValue(subMeshMaterial, out var materialID))
             {
                 return materialID;
@@ -2474,8 +2481,14 @@ namespace com.github.hkrn
                     Mathf.Approximately(subMeshMaterial.GetFloat(PropertyUseBumpMap), 1.0f);
             }
 #endif // NVE_HAS_LILTOON
+
             materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
             var material = _materialExporter.Export(subMeshMaterial, config);
+            if (isMToon)
+            {
+                WrapMToonMaterial(subMeshMaterial, material);
+            }
+
             _root.Materials!.Add(material);
             _materialIDs.Add(subMeshMaterial, materialID);
 
@@ -2498,24 +2511,105 @@ namespace com.github.hkrn
             return materialID;
         }
 
+        private void WrapMToonMaterial(Material subMeshMaterial, gltf.material.Material material)
+        {
+            // Parameters from `vrmc_materials_mtoon.shader`
+            // https://github.com/vrm-c/UniVRM/blob/9b129cf788a00232b62cc7227e732a39158ea883/Packages/VRM10/MToon10/Shaders/vrmc_materials_mtoon.shader
+            var shadeMultiplyTextureInner = subMeshMaterial.GetTexture(Shader.PropertyToID("_ShadeTex"));
+            var shadeMultiplyTexture = shadeMultiplyTextureInner
+                ? _materialExporter.ExportTextureInfoMToon(subMeshMaterial, shadeMultiplyTextureInner,
+                    ColorSpace.Gamma, false)
+                : null;
+            var shadingShiftTextureInner = subMeshMaterial.GetTexture(Shader.PropertyToID("_ShadingShiftTex"));
+            vrm.mtoon.ShadingShiftTexture? shadingShiftTexture = null;
+            if (shadingShiftTextureInner)
+            {
+                var info = _materialExporter.ExportTextureInfoMToon(subMeshMaterial, shadingShiftTextureInner,
+                    ColorSpace.Linear, false)!;
+                shadingShiftTexture = new vrm.mtoon.ShadingShiftTexture
+                {
+                    Index = info.Index,
+                    Scale = 1.0f,
+                    TexCoord = info.TexCoord,
+                };
+            }
+
+            var matcapTextureInner = subMeshMaterial.GetTexture(Shader.PropertyToID("_MatcapTex"));
+            var matcapTexture = matcapTextureInner
+                ? _materialExporter.ExportTextureInfoMToon(subMeshMaterial, matcapTextureInner, ColorSpace.Gamma,
+                    false)
+                : null;
+            var rimMultiplyTextureInner = subMeshMaterial.GetTexture(Shader.PropertyToID("_RimTex"));
+            var rimMultiplyTexture = rimMultiplyTextureInner
+                ? _materialExporter.ExportTextureInfoMToon(subMeshMaterial, rimMultiplyTextureInner,
+                    ColorSpace.Gamma, false)
+                : null;
+            var outlineWidthMultiplyTextureInner =
+                subMeshMaterial.GetTexture(Shader.PropertyToID("_OutlineWidthTex"));
+            var outlineWidthMultiplyTexture = outlineWidthMultiplyTextureInner
+                ? _materialExporter.ExportTextureInfoMToon(subMeshMaterial, outlineWidthMultiplyTextureInner,
+                    ColorSpace.Linear, false)
+                : null;
+            var uvAnimationMaskTextureInner = subMeshMaterial.GetTexture(Shader.PropertyToID("_UvAnimMaskTex"));
+            var uvAnimationMaskTexture = uvAnimationMaskTextureInner
+                ? _materialExporter.ExportTextureInfoMToon(subMeshMaterial, uvAnimationMaskTextureInner,
+                    ColorSpace.Linear, false)
+                : null;
+            var mtoon = new vrm.mtoon.MToon
+            {
+                TransparentWithZWrite = subMeshMaterial.GetInt(Shader.PropertyToID("_TransparentWithZWrite")) != 0,
+                RenderQueueOffsetNumber = subMeshMaterial.GetInt(Shader.PropertyToID("_RenderQueueOffset")),
+                ShadeColorFactor = subMeshMaterial.GetColor(Shader.PropertyToID("_ShadeColor")).ToVector3(),
+                ShadeMultiplyTexture = shadeMultiplyTexture,
+                ShadingShiftFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_ShadingShiftFactor")),
+                ShadingShiftTexture = shadingShiftTexture,
+                ShadingToonyFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_ShadingToonyFactor")),
+                GIEqualizationFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_GiEqualization")),
+                MatcapFactor = subMeshMaterial.GetColor(Shader.PropertyToID("_MatcapColor")).ToVector3(),
+                MatcapTexture = matcapTexture,
+                ParametricRimColorFactor = subMeshMaterial.GetColor(Shader.PropertyToID("_RimColor")).ToVector3(),
+                RimMultiplyTexture = rimMultiplyTexture,
+                RimLightingMixFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimLightingMix")),
+                ParametricRimFresnelPowerFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimFresnelPower")),
+                ParametricRimLiftFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_RimLift")),
+                OutlineWidthFactor = subMeshMaterial.GetFloat(Shader.PropertyToID("_OutlineWidth")),
+                OutlineWidthMode =
+                    (vrm.mtoon.OutlineWidthMode)subMeshMaterial.GetInt(Shader.PropertyToID("_OutlineWidthMode")),
+                OutlineColorFactor = subMeshMaterial.GetColor(Shader.PropertyToID("_OutlineColor")).ToVector3(),
+                OutlineWidthMultiplyTexture = outlineWidthMultiplyTexture,
+                UVAnimationMaskTexture = uvAnimationMaskTexture,
+                UVAnimationScrollXSpeedFactor =
+                    subMeshMaterial.GetFloat(Shader.PropertyToID("_UvAnimScrollXSpeed")),
+                UVAnimationScrollYSpeedFactor =
+                    subMeshMaterial.GetFloat(Shader.PropertyToID("_UvAnimScrollYSpeed")),
+                UVAnimationRotationSpeedFactor =
+                    subMeshMaterial.GetFloat(Shader.PropertyToID("_UvAnimRotationSpeed")),
+            };
+            material.Extensions ??= new Dictionary<string, JToken>();
+            material.Extensions.Add(gltf.extensions.KhrMaterialsUnlit.Name, new JObject());
+            material.Extensions.Add(VrmcMaterialsMtoon, vrm.Document.SaveAsNode(mtoon));
+            _extensionsUsed.Add(gltf.extensions.KhrMaterialsUnlit.Name);
+            _extensionsUsed.Add(VrmcMaterialsMtoon);
+        }
+
         private static gltf.exporter.SampledTextureUnit ExportTextureUnit(Texture texture, string name,
             TextureFormat textureFormat, ColorSpace cs, Material? blitMaterial, bool needsBlit)
         {
             using var _ = new ScopedProfile($"ExportTextureUnit({name})");
             byte[] bytes;
-            if (needsBlit)
+            if (needsBlit || GraphicsFormatUtility.IsCompressedFormat(texture.graphicsFormat))
             {
                 var destTexture = texture.Blit(textureFormat, cs, blitMaterial);
                 bytes = destTexture.EncodeToPNG();
                 Object.DestroyImmediate(destTexture);
             }
-            else if (texture.isReadable && texture is Texture2D tex)
+            else if (texture.isReadable && texture is Texture2D texture2D)
             {
-                bytes = tex.EncodeToPNG();
+                bytes = texture2D.EncodeToPNG();
             }
             else
             {
-                bytes = Array.Empty<byte>();
+                bytes = Texture2D.whiteTexture.EncodeToPNG();
             }
 
             var textureUnit = new gltf.exporter.SampledTextureUnit
@@ -3032,7 +3126,7 @@ namespace com.github.hkrn
                         texture = LocalRetrieveTexture2D("_ShadowBorderTex");
                     }
 
-                    var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Gamma, needsBlit: true);
+                    var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Linear, needsBlit: true);
                     if (info != null)
                     {
                         mtoon.ShadingShiftTexture = new vrm.mtoon.ShadingShiftTexture
@@ -3098,7 +3192,7 @@ namespace com.github.hkrn
                     {
                         var matcapBlendMaskTexture = LocalRetrieveTexture2D("_MatCapBlendMask");
                         mtoon.RimMultiplyTexture = exporter.ExportTextureInfoMToon(material, matcapBlendMaskTexture,
-                            ColorSpace.Linear, needsBlit: true);
+                            ColorSpace.Gamma, needsBlit: true);
                         mtoon.RimLightingMixFactor = 1.0f;
                     }
                 }
@@ -3114,7 +3208,7 @@ namespace com.github.hkrn
                     mtoon.OutlineColorFactor = material.GetColor(PropertyOutlineColor)
                         .ToVector3();
                     mtoon.OutlineWidthMultiplyTexture =
-                        exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Gamma,
+                        exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Linear,
                             needsBlit: true);
                 }
 
@@ -3553,6 +3647,7 @@ namespace com.github.hkrn
                     core.Expressions.Preset.BlinkLeft =
                         ExportExpressionItem(component.expressionPresetBlinkLeftBlendShape);
                 }
+
                 if (component.expressionPresetBlinkRightBlendShape.IsValid)
                 {
                     core.Expressions.Preset.BlinkRight =
@@ -4031,7 +4126,8 @@ namespace com.github.hkrn
                 return new DepthRatio(upperDepth, lowerDepth);
             }
 
-            private void ConvertSpringBone(VRCPhysBone pb, NdmfVrmExporterComponent component, IImmutableList<VRCPhysBoneColliderBase> pbColliders,
+            private void ConvertSpringBone(VRCPhysBone pb, NdmfVrmExporterComponent component,
+                IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
                 var rootTransform = pb.GetRootTransform();
@@ -4051,20 +4147,22 @@ namespace com.github.hkrn
                         case true when pb.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore && index == 1:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, component, name, transforms.Skip(1).ToImmutableList(), pbColliders,
-                                colliderGroups, ref springs);
+                            ConvertSpringBoneInner(pb, component, name, transforms.Skip(1).ToImmutableList(),
+                                pbColliders, colliderGroups, ref springs);
                             break;
                         }
                         case true:
                         {
                             var name = $"{pb.name}.{index}";
-                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups, ref springs);
+                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups,
+                                ref springs);
                             break;
                         }
                         default:
                         {
                             var name = pb.name;
-                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups, ref springs);
+                            ConvertSpringBoneInner(pb, component, name, transforms, pbColliders, colliderGroups,
+                                ref springs);
                             break;
                         }
                     }
@@ -4073,7 +4171,8 @@ namespace com.github.hkrn
                 }
             }
 
-            private void ConvertSpringBoneInner(VRCPhysBone pb, NdmfVrmExporterComponent component, string name, IImmutableList<Transform> transforms,
+            private void ConvertSpringBoneInner(VRCPhysBone pb, NdmfVrmExporterComponent component, string name,
+                IImmutableList<Transform> transforms,
                 IImmutableList<VRCPhysBoneColliderBase> pbColliders,
                 IImmutableList<vrm.sb.ColliderGroup> colliderGroups, ref IList<vrm.sb.Spring> springs)
             {
