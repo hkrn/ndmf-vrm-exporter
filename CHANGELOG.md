@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-14
+
+### Added
+
+- [exporter] Implement MToon pass-through export ([#154](https://github.com/hkrn/ndmf-vrm-exporter/pull/154))
+- [exporter] Implemented VRMC_springBone_limit ([#150](https://github.com/hkrn/ndmf-vrm-exporter/pull/150))
+- [exporter] Support VRM Animation export ([#149](https://github.com/hkrn/ndmf-vrm-exporter/pull/149))
+- [exporter] Improve blend shape list retrieval ([#148](https://github.com/hkrn/ndmf-vrm-exporter/pull/148))
+- [exporter] Make BlinkLeft/BlinkRight configurable ([#147](https://github.com/hkrn/ndmf-vrm-exporter/pull/147))
+
 ## [1.2.9] - 2026-05-03
 
 ### Changed
@@ -223,7 +233,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.9...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.3.0...HEAD
+[1.3.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.9...1.3.0
 [1.2.9]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.8...1.2.9
 [1.2.8]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.7...1.2.8
 [1.2.7]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.6...1.2.7
