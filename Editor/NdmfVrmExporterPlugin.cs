@@ -242,7 +242,7 @@ namespace com.github.hkrn
             {
                 return;
             }
-            
+
             variants.Add(new MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
@@ -549,6 +549,10 @@ namespace com.github.hkrn
                 allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSadBlendShape.BlendShapeNames);
                 allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetRelaxedBlendShape.BlendShapeNames);
                 allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSurprisedBlendShape
+                    .BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetBlinkLeftBlendShape
+                    .BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetBlinkRightBlendShape
                     .BlendShapeNames);
                 foreach (var property in component.expressionCustomBlendShapes)
                 {
