@@ -695,11 +695,11 @@ namespace com.github.hkrn
                 transform.Offset = offset.ToVector2WithCoordinateSpace();
             }
 
-            var scale = material.GetTextureScale(PropertyMainTex);
+            var scale = material.GetTextureScale(propertyID);
             if (scale != Vector2.one)
             {
                 transform ??= new gltf.extensions.KhrTextureTransform();
-                transform.Scale = offset.ToVector2();
+                transform.Scale = scale.ToVector2();
             }
 
             if (transform == null)
