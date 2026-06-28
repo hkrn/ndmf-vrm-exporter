@@ -232,7 +232,7 @@ namespace com.github.hkrn
             {
                 material.PbrMetallicRoughness.MetallicFactor = overrides.MetallicFactor.GetValueOrDefault(
                     Mathf.Clamp01(source.GetFloatOrDefault(PropertyMetallic, 0.0f)));
-                material.PbrMetallicRoughness.RoughnessFactor = overrides.RoughnessFactor.GetValueOrDefault(
+                material.PbrMetallicRoughness.RoughnessFactor = 1.0f - overrides.RoughnessFactor.GetValueOrDefault(
                     Mathf.Clamp01(source.GetFloatOrDefault(PropertyGlossiness, 0.0f)));
             }
 
@@ -465,13 +465,13 @@ namespace com.github.hkrn
             var smoothnessTexture = subMeshMaterial.GetTexture(PropertySmoothnessTex) as Texture2D;
             var metallicGlossinessTexture = subMeshMaterial.GetTexture(PropertyMetallicGlossMap) as Texture2D;
             var roughnessFactor = 1.0f - smoothnessFactor;
-            if (smoothnessTexture && metallicGlossinessTexture)
+            if (smoothnessTexture && smoothnessTexture!.isReadable && metallicGlossinessTexture && metallicGlossinessTexture!.isReadable)
             {
-                var width = smoothnessTexture!.width;
+                var width = smoothnessTexture.width;
                 var height = smoothnessTexture.height;
                 var metallicRoughnessTexturePixels = new Color[width * height];
                 var smoothnessTexturePixels = smoothnessTexture.GetPixels();
-                var metallicGlossinessTexturePixels = metallicGlossinessTexture!.GetPixels();
+                var metallicGlossinessTexturePixels = metallicGlossinessTexture.GetPixels();
                 for (var j = 0; j < height; j++)
                 {
                     var stride = j * width;
@@ -490,9 +490,9 @@ namespace com.github.hkrn
                 config.MetallicFactor = 1.0f;
                 config.RoughnessFactor = 1.0f;
             }
-            else if (metallicGlossinessTexture)
+            else if (metallicGlossinessTexture && metallicGlossinessTexture!.isReadable)
             {
-                var width = metallicGlossinessTexture!.width;
+                var width = metallicGlossinessTexture.width;
                 var height = metallicGlossinessTexture.height;
                 var metallicRoughnessTexturePixels = new Color[width * height];
                 var metallicGlossinessTexturePixels = metallicGlossinessTexture.GetPixels();
@@ -513,9 +513,9 @@ namespace com.github.hkrn
                 config.MetallicFactor = 1.0f;
                 config.RoughnessFactor = roughnessFactor;
             }
-            else if (smoothnessTexture)
+            else if (smoothnessTexture && smoothnessTexture!.isReadable)
             {
-                var width = smoothnessTexture!.width;
+                var width = smoothnessTexture.width;
                 var height = smoothnessTexture.height;
                 var metallicRoughnessTexturePixels = new Color[width * height];
                 var smoothnessTexturePixels = smoothnessTexture.GetPixels();
@@ -538,7 +538,7 @@ namespace com.github.hkrn
             }
             else
             {
-                config.MetallicFactor = Mathf.GammaToLinearSpace(metallicFactor);
+                config.MetallicFactor = metallicFactor;
                 config.RoughnessFactor = roughnessFactor;
             }
         }

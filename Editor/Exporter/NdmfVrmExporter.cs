@@ -161,7 +161,10 @@ namespace com.github.hkrn
                 }
                 using var reader = new MemoryStream();
                 process.StandardOutput.BaseStream.CopyTo(reader);
-                process.WaitForExit(30000);
+                if (!process.WaitForExit(30000) || process.ExitCode != 0)
+                {
+                    return null;
+                }
                 return reader.GetBuffer();
             }
 

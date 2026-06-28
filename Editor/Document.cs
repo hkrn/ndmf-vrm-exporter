@@ -1586,9 +1586,9 @@ namespace com.github.hkrn.gltf
                 return new KhrMaterialsSpecular
                 {
                     SpecularFactor = SpecularFactor,
-                    SpecularTexture = SpecularTexture,
+                    SpecularTexture = (material.TextureInfo?)SpecularTexture?.Clone(),
                     SpecularColorFactor = SpecularColorFactor,
-                    SpecularColorTexture = SpecularColorTexture,
+                    SpecularColorTexture = (material.TextureInfo?)SpecularColorTexture?.Clone(),
                     Extensions = ExtensionsUtils.DeepClone(Extensions),
                     Extras = Extras?.DeepClone(),
                 };
@@ -1628,7 +1628,7 @@ namespace com.github.hkrn.gltf
                 return new KhrMaterialsTransmission
                 {
                     TransmissionFactor = TransmissionFactor,
-                    TransmissionTexture = TransmissionTexture,
+                    TransmissionTexture = (material.TextureInfo?)TransmissionTexture?.Clone(),
                     Extensions = ExtensionsUtils.DeepClone(Extensions),
                     Extras = Extras?.DeepClone(),
                 };
