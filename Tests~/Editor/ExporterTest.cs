@@ -268,8 +268,8 @@ namespace com.github.hkrn
             material.SetTexture($"_MetallicGlossMap", Texture2D.redTexture);
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
-            var overrides = new NdmfVrmExporter.GltfMaterialExporter.ExportOverrides
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var overrides = new GltfMaterialExporter.ExportOverrides
             {
                 EnableNormalMap = true,
                 EmissiveStrength = 1,
@@ -339,8 +339,8 @@ namespace com.github.hkrn
 
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
-            var overrides = new NdmfVrmExporter.GltfMaterialExporter.ExportOverrides()
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var overrides = new GltfMaterialExporter.ExportOverrides()
             {
                 CullMode = 1,
             };
@@ -399,7 +399,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -466,7 +466,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -534,7 +534,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -585,7 +585,7 @@ namespace com.github.hkrn
             var nodeId = new gltf.ObjectID(42);
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -769,7 +769,7 @@ namespace com.github.hkrn
 
             var assetSaver = new NullAssetSaver();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var core = exporter.ExportCore(thumbnailNodeId);
             Assert.That(core, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(core.Humanoid), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1285,7 +1285,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -1341,7 +1341,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -1400,7 +1400,7 @@ namespace com.github.hkrn
             nodes.Add(sourceNodeIgnored.transform, new gltf.ObjectID(43));
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -1442,7 +1442,7 @@ namespace com.github.hkrn
             var nodeId = new gltf.ObjectID(42);
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var node = new GameObject
             {
                 transform =
@@ -1500,7 +1500,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Null);
             Assert.That(extensionUsed, Is.Empty);
@@ -1531,7 +1531,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Colliders), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1577,7 +1577,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Colliders), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1625,7 +1625,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Colliders), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1690,7 +1690,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Colliders), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1750,7 +1750,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Colliders, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Colliders), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1813,7 +1813,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Springs, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Springs), Is.EqualTo(JsonConvert.SerializeObject(
@@ -1883,7 +1883,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Springs, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Springs), Is.EqualTo(JsonConvert.SerializeObject(
@@ -2006,7 +2006,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Springs, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Springs), Is.EqualTo(JsonConvert.SerializeObject(
@@ -2128,7 +2128,7 @@ namespace com.github.hkrn
             }
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var sb = exporter.ExportSpringBone();
             Assert.That(sb.Springs, Is.Not.Null);
             Assert.That(JsonConvert.SerializeObject(sb.Springs), Is.EqualTo(JsonConvert.SerializeObject(
@@ -2208,12 +2208,12 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonTransparent"));
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2235,7 +2235,7 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonOutline"));
             material.SetFloat($"_UseShadow", 1);
             material.SetFloat($"_ShadowBorder", 0.5f);
@@ -2246,7 +2246,7 @@ namespace com.github.hkrn
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2281,7 +2281,7 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonCutout"));
             material.SetFloat($"_UseShadow", 1);
             material.SetFloat($"_ShadowBorder", 0.5f);
@@ -2291,7 +2291,7 @@ namespace com.github.hkrn
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2319,7 +2319,7 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonOutline"));
             material.SetFloat($"_UseRim", 1);
             material.SetFloat($"_RimBorder", 0);
@@ -2331,7 +2331,7 @@ namespace com.github.hkrn
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2363,7 +2363,7 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonOutline"));
             material.SetFloat($"_UseMatCap", 1);
             material.SetTexture($"_MatCapTex", Texture2D.whiteTexture);
@@ -2371,7 +2371,7 @@ namespace com.github.hkrn
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2404,7 +2404,7 @@ namespace com.github.hkrn
             var nodes = new Dictionary<Transform, gltf.ObjectID>();
             var allMorphTargets = new Dictionary<string, (gltf.ObjectID, int)>();
             var extensionUsed = new HashSet<string>();
-            var exporter = new NdmfVrmExporter.VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
+            var exporter = new VrmRootExporter(root, assetSaver, nodes, allMorphTargets, extensionUsed);
             var material = new Material(Shader.Find("Hidden/lilToonOutline"));
             material.SetFloat($"_OutlineWidth", 1);
             material.SetColor($"_OutlineColor", Color.cyan);
@@ -2412,7 +2412,7 @@ namespace com.github.hkrn
             var mtoonTexture = new NdmfVrmExporter.MToonTexture();
             var gltfRoot = NewEmptyGltfRoot();
             var gltfExporter = new gltf.exporter.Exporter();
-            var materialExporter = new NdmfVrmExporter.GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
+            var materialExporter = new GltfMaterialExporter(gltfRoot, gltfExporter, extensionUsed);
             var mtoon = exporter.ExportMToon(material, mtoonTexture, materialExporter);
             Assert.That(JsonConvert.SerializeObject(mtoon), Is.EqualTo(JsonConvert.SerializeObject(new vrm.mtoon.MToon
             {
@@ -2531,7 +2531,7 @@ namespace com.github.hkrn
                 child1.transform.parent = hipTransform;
             }
             var context = AvatarProcessor.ProcessAvatar(root, provider);
-            var variants = context.GetState<List<MaterialVariant>>().AsReadOnly();
+            var variants = context.GetState<List<NdmfVrmExporter.MaterialVariant>>().AsReadOnly();
             Assert.That(variants, Is.Not.Empty);
             Assert.That(variants.Count, Is.EqualTo(4));
             Assert.That(variants[0].Name, Is.EqualTo("MA-foo"));
@@ -2658,7 +2658,7 @@ namespace com.github.hkrn
                 child1.transform.parent = hipTransform;
             }
             var context = AvatarProcessor.ProcessAvatar(root, provider);
-            var variants = context.GetState<List<MaterialVariant>>().AsReadOnly();
+            var variants = context.GetState<List<NdmfVrmExporter.MaterialVariant>>().AsReadOnly();
             Assert.That(variants, Is.Not.Empty);
             Assert.That(variants.Count, Is.EqualTo(4));
             Assert.That(variants[0].Name, Is.EqualTo("MA-foo"));
@@ -2802,7 +2802,7 @@ namespace com.github.hkrn
                 costumeChangerType.GetField("costumes", bindingAttrPrivate)!.SetValue(costumeChanger, costumes);
             }
             var context = AvatarProcessor.ProcessAvatar(root, provider);
-            var variants = context.GetState<List<MaterialVariant>>().AsReadOnly();
+            var variants = context.GetState<List<NdmfVrmExporter.MaterialVariant>>().AsReadOnly();
             Assert.That(variants, Is.Not.Empty);
             Assert.That(variants.Count, Is.EqualTo(4));
             Assert.That(variants[0].Name, Is.EqualTo("LI/foo"));
@@ -2937,14 +2937,14 @@ namespace com.github.hkrn
             root.AddComponent<NdmfVrmExporterComponent>();
             root.AddComponent<VRCAvatarDescriptor>();
             var assetSaver = new NullAssetSaver();
-            var variants = new List<MaterialVariant>
+            var variants = new List<NdmfVrmExporter.MaterialVariant>
             {
                 new()
                 {
                     Name = "mappings",
                     Mappings = new[]
                     {
-                        new MaterialVariantMapping
+                        new NdmfVrmExporter.MaterialVariantMapping
                         {
                             Materials = new Material[]
                             {
@@ -2952,7 +2952,7 @@ namespace com.github.hkrn
                             },
                             Renderer = skinnedMeshRenderer,
                         },
-                        new MaterialVariantMapping
+                        new NdmfVrmExporter.MaterialVariantMapping
                         {
                             Materials = new[]
                             {
@@ -2963,7 +2963,7 @@ namespace com.github.hkrn
                             },
                             Renderer = skinnedMeshRenderer,
                         },
-                        new MaterialVariantMapping
+                        new NdmfVrmExporter.MaterialVariantMapping
                         {
                             Materials = new[]
                             {
