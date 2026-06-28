@@ -13,10 +13,10 @@ namespace com.github.hkrn
     [NDMFPlatformProvider]
     internal class NdmfVrmExporterPlatform : INDMFPlatformProvider
     {
-        public struct BuildLocationKey : IEquatable<BuildLocationKey>
+        public readonly struct BuildLocationKey : IEquatable<BuildLocationKey>
         {
-            public int SceneBuildId { get; set; }
-            public int AvatarId { get; set; }
+            public int SceneBuildId { get; init; }
+            public int AvatarId { get; init; }
 
             public bool Equals(BuildLocationKey other)
             {
@@ -34,10 +34,10 @@ namespace com.github.hkrn
             }
         }
 
-        public struct BuildLocationValue
+        public readonly struct BuildLocationValue
         {
-            public string Directory { get; set; }
-            public string Filename { get; set; }
+            public string Directory { get; init; }
+            public string Filename { get; init; }
         }
 
         public string QualifiedName => NdmfVrmExporterPlugin.Instance.QualifiedName;

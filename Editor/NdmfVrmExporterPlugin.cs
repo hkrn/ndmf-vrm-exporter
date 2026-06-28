@@ -105,7 +105,7 @@ namespace com.github.hkrn
                 return;
             }
 
-            var variants = new List<MaterialVariant>();
+            var variants = new List<NdmfVrmExporter.MaterialVariant>();
             var installers = buildContext.AvatarRootObject.GetComponentsInChildren<ModularAvatarMenuInstaller>();
             foreach (var installer in installers)
             {
@@ -146,12 +146,12 @@ namespace com.github.hkrn
                 }
             }
 
-            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
+            buildContext.GetState<List<NdmfVrmExporter.MaterialVariant>>().AddRange(variants);
         }
 
         private static void MapMaterialSwapToVariants(BuildContext buildContext, ModularAvatarMaterialSwap materialSwap,
             string? name,
-            ref List<MaterialVariant> variants)
+            ref List<NdmfVrmExporter.MaterialVariant> variants)
         {
             var reference = materialSwap.Root.Get(materialSwap);
             var renderers = (reference ?? buildContext.AvatarRootObject).GetComponentsInChildren<Renderer>();
@@ -196,16 +196,16 @@ namespace com.github.hkrn
                 return;
             }
 
-            variants.Add(new MaterialVariant
+            variants.Add(new NdmfVrmExporter.MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
-                Mappings = mappings.Select(item => new MaterialVariantMapping
+                Mappings = mappings.Select(item => new NdmfVrmExporter.MaterialVariantMapping
                     { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
             });
         }
 
         private static void MapMaterialSetterToVariants(ModularAvatarMaterialSetter materialSetter, string? name,
-            ref List<MaterialVariant> variants)
+            ref List<NdmfVrmExporter.MaterialVariant> variants)
         {
             var mappings = new Dictionary<Renderer, Material[]>();
             var variantName = materialSetter.gameObject.name;
@@ -243,10 +243,10 @@ namespace com.github.hkrn
                 return;
             }
 
-            variants.Add(new MaterialVariant
+            variants.Add(new NdmfVrmExporter.MaterialVariant
             {
                 Name = !string.IsNullOrEmpty(name) ? $"{name}/{variantName}" : variantName,
-                Mappings = mappings.Select(item => new MaterialVariantMapping
+                Mappings = mappings.Select(item => new NdmfVrmExporter.MaterialVariantMapping
                     { Renderer = item.Key, Materials = item.Value.ToArray(), }).ToArray(),
             });
 #else
@@ -274,7 +274,7 @@ namespace com.github.hkrn
             Type? costumeType = null;
             Type? materialReplacerType = null;
             Type? parametersPerMenuType = null;
-            var variants = new List<MaterialVariant>();
+            var variants = new List<NdmfVrmExporter.MaterialVariant>();
             foreach (var costumeChanger in costumeChangers)
             {
                 if (!costumeChanger.enabled)
@@ -337,7 +337,7 @@ namespace com.github.hkrn
                     var materialReplaces =
                         (object[])parametersPerMenuType.GetField("materialReplacers", bindingAttrPublic)!
                             .GetValue(parametersPerMenu);
-                    var mappings = new List<MaterialVariantMapping>();
+                    var mappings = new List<NdmfVrmExporter.MaterialVariantMapping>();
                     foreach (var materialReplace in materialReplaces)
                     {
                         materialReplacerType ??= materialReplace.GetType();
@@ -346,7 +346,7 @@ namespace com.github.hkrn
                             .GetValue(materialReplace);
                         var replaceTo = (Material[])fields.First(item => item.Name == "replaceTo")
                             .GetValue(materialReplace);
-                        mappings.Add(new MaterialVariantMapping
+                        mappings.Add(new NdmfVrmExporter.MaterialVariantMapping
                         {
                             Renderer = renderer,
                             Materials = replaceTo,
@@ -363,7 +363,7 @@ namespace com.github.hkrn
                         baseMenuName,
                         menuItemName
                     };
-                    variants.Add(new MaterialVariant
+                    variants.Add(new NdmfVrmExporter.MaterialVariant
                     {
                         Name = string.Join("/", menuItemNameChainInner),
                         Mappings = mappings.ToArray(),
@@ -371,7 +371,7 @@ namespace com.github.hkrn
                 }
             }
 
-            buildContext.GetState<List<MaterialVariant>>().AddRange(variants);
+            buildContext.GetState<List<NdmfVrmExporter.MaterialVariant>>().AddRange(variants);
 #else
             Debug.Log("lilycalInventory is not installed and will be skipped");
 #endif // NVE_HAS_LILYCAL_INVENTORY
@@ -421,7 +421,7 @@ namespace com.github.hkrn
             }
 
             var ro = buildContext.AvatarRootObject;
-            var variants = buildContext.GetState<List<MaterialVariant>>().AsReadOnly();
+            var variants = buildContext.GetState<List<NdmfVrmExporter.MaterialVariant>>().AsReadOnly();
             using var stream = new MemoryStream();
             using var exporter = new NdmfVrmExporter(ro, buildContext.AssetSaver, variants);
             var json = exporter.Export(stream);
