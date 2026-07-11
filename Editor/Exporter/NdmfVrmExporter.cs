@@ -388,7 +388,6 @@ namespace com.github.hkrn
 
         private void ConvertAllMaterialVariants(NdmfVrmExporterComponent component)
         {
-            var enableBakingAlphaMaskTexture = component.enableBakingAlphaMaskTexture;
             var materialVariants = new gltf.extensions.KhrMaterialsVariants();
             var variantIndex = 0u;
             foreach (var variant in _materialVariants)
@@ -440,7 +439,7 @@ namespace com.github.hkrn
                         {
                             if (!_materialIDs.TryGetValue(material, out materialID))
                             {
-                                materialID = ConvertMaterial(material, enableBakingAlphaMaskTexture, out _);
+                                materialID = ConvertMaterial(material, component, out _);
                             }
                         }
                         else
@@ -1008,7 +1007,7 @@ namespace com.github.hkrn
                 }
 
                 var materialID =
-                    ConvertMaterial(subMeshMaterial, enableBakingAlphaMaskTexture, out var isShaderLiltoon);
+                    ConvertMaterial(subMeshMaterial, component, out var isShaderLiltoon);
                 if (isShaderLiltoon && component.disableVertexColorOnLiltoon)
                 {
                     var numColors = (uint)meshUnit.Colors.Length;
@@ -1056,7 +1055,7 @@ namespace com.github.hkrn
             }
         }
 
-        private gltf.ObjectID ConvertMaterial(Material subMeshMaterial, bool enableBakingAlphaMaskTexture,
+        private gltf.ObjectID ConvertMaterial(Material subMeshMaterial, NdmfVrmExporterComponent component,
             out bool isShaderLiltoon)
         {
             var shaderName = subMeshMaterial.shader.name;
@@ -1069,8 +1068,8 @@ namespace com.github.hkrn
             }
 
             materialID = new gltf.ObjectID((uint)_root.Materials!.Count);
-            var config = GltfMaterialExporter.CreateExportOverrides(_assetSaver, subMeshMaterial, shaderName,
-                enableBakingAlphaMaskTexture, ref isShaderLiltoon);
+            var config = GltfMaterialExporter.CreateExportOverrides(_assetSaver, subMeshMaterial, component,
+                shaderName, ref isShaderLiltoon);
             var material = _materialExporter.Export(subMeshMaterial, config);
             if (isMToon)
             {

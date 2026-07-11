@@ -175,6 +175,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 * `Enable MatCap`
 * `Enable Outline`
 * `Enable Baking Alpha Mask Texture`
+* `Enable PBR Compatible Conversion`
 
 > [!WARNING]
 > [TexTransTool](https://ttt.rs64.net) (TTT) の [AtlasTexture コンポーネント](https://ttt.rs64.net/docs/Reference/AtlasTexture) 使用時にマテリアルの組み合わせ次第では `Enable Baking Alpha Mask Texture` と TTT のプロパティベイクの二重焼き込みの影響で表示上の問題が発生する場合があります。その場合は `Enable Baking Alpha Mask Texture` か TTT のプロパティベイクのどちらかを無効にしてください
@@ -189,6 +190,8 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 > NDMF VRM Exporter においてリムライトを無効にしていることが条件ですが、マットキャップのマスクテクスチャを使う形でマットキャップの乗算モードを擬似的に実現可能です
 
 ただしマットキャップが「有効」かつリムライトが「無効」の場合は MToon の実装の関係でリムライトのパラメータを上書きします。詳細は「出力互換性の情報」の「材質（マテリアル）の変換」を確認してください。
+
+`Enable PBR Compatible Conversion` は 1.4.0 から追加された設定で、lilToon の光沢設定がリアル (物理ベースレンダリング、通称 PBR) の場合に lilToon から PBR を持たない MToon のかわりに glTF に寄せる変換を行います。NDMF VRM Exporter 1.3.0 以前の変換の挙動に戻す場合に利用します。
 
 ## Spring Bone Options
 

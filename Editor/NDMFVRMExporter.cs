@@ -166,6 +166,7 @@ namespace com.github.hkrn
 
         // from 1.4.0
         [NotKeyable] [SerializeField] internal bool previewFoldout;
+        [NotKeyable] [SerializeField] internal bool enablePbrCompatibleConversion = true;
 
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
@@ -247,6 +248,7 @@ namespace com.github.hkrn
 
         // from 1.4.0
         private SerializedProperty _previewFoldoutProp = null!;
+        private SerializedProperty _enablePbrCompatibleConversionProp = null!;
 
 #if NVE_HAS_VRCHAT_AVATAR_SDK
         private struct VRChatAvatarToMetadata
@@ -359,6 +361,8 @@ namespace com.github.hkrn
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.expressionModeSelection));
             _previewFoldoutProp =
                 serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.previewFoldout));
+            _enablePbrCompatibleConversionProp =
+                serializedObject.FindProperty(nameof(NdmfVrmExporterComponent.enablePbrCompatibleConversion));
             var component = (NdmfVrmExporterComponent)target;
             component.expressionPresetHappyBlendShape.gameObject = component.gameObject;
             component.expressionPresetAngryBlendShape.gameObject = component.gameObject;
@@ -862,6 +866,7 @@ namespace com.github.hkrn
             DrawToggleLeft(Translator._("component.mtoon.enable.mat-cap"), _enableMToonMatCapProp);
             DrawToggleLeft(Translator._("component.mtoon.enable.outline"), _enableMToonOutlineProp);
             DrawToggleLeft(Translator._("component.mtoon.enable.bake-alpha-mask"), _enableBakingAlphaMaskProp);
+            DrawToggleLeft(Translator._("component.mtoon.enable.pbr-compatible-conversion"), _enablePbrCompatibleConversionProp);
         }
 
         private void DrawSpringBoneOptions()

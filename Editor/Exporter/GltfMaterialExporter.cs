@@ -86,9 +86,10 @@ namespace com.github.hkrn
 
         public static bool IsLilToonPbr(Material material)
         {
+            var useReflection = material.GetIntOrDefault(PropertyUseReflection, 0);
             var specularToon = material.GetIntOrDefault(PropertySpecularToon, 0);
             var reflectionBlendMode = material.GetIntOrDefault(PropertyReflectionBlendMode, 1);
-            return specularToon == SpecularToonReal && reflectionBlendMode == ReflectionBlendModeAdd;
+            return useReflection != 0 && specularToon == SpecularToonReal && reflectionBlendMode == ReflectionBlendModeAdd;
         }
 
         public GltfMaterialExporter(gltf.Root root, gltf.exporter.Exporter exporter,
@@ -344,7 +345,7 @@ namespace com.github.hkrn
         }
 
         internal static ExportOverrides CreateExportOverrides(IAssetSaver assetSaver, Material subMeshMaterial,
-            string shaderName, bool enableBakingAlphaMaskTexture, ref bool isShaderLiltoon)
+            NdmfVrmExporterComponent component, string shaderName,ref bool isShaderLiltoon)
         {
             var config = new ExportOverrides();
 #if NVE_HAS_LILTOON
@@ -363,7 +364,7 @@ namespace com.github.hkrn
                      shaderName.Contains("Overlay", StringComparison.Ordinal))
             {
                 config.AlphaMode = gltf.material.AlphaMode.Blend;
-                config.MainTexture = enableBakingAlphaMaskTexture &&
+                config.MainTexture = component.enableBakingAlphaMaskTexture &&
                                      Mathf.Approximately(subMeshMaterial.GetFloatOrDefault(PropertyAlphaMaskMode, 0.0f),
                                          1.0f)
                     ? MaterialBaker.AutoBakeAlphaMask(assetSaver, subMeshMaterial)
@@ -402,7 +403,7 @@ namespace com.github.hkrn
             config.EnableNormalMap =
                 Mathf.Approximately(subMeshMaterial.GetFloatOrDefault(PropertyUseBumpMap, 0.0f), 1.0f);
 
-            if (!IsLilToonPbr(subMeshMaterial))
+            if (!component.enablePbrCompatibleConversion || !IsLilToonPbr(subMeshMaterial))
             {
                 return config;
             }
@@ -567,8 +568,13 @@ namespace com.github.hkrn
 
         private static void ConvertToGltfMaterialSpecular(Material subMeshMaterial, ExportOverrides config)
         {
+            const float f0 = 0.04f;
             var reflectance = Mathf.GammaToLinearSpace(subMeshMaterial.GetFloatOrDefault(PropertyReflectance, 0.04f));
-            config.SpecularColorFactor = new Color(reflectance / 0.04f, reflectance / 0.04f, reflectance / 0.04f);
+            if (Mathf.Approximately(reflectance, f0))
+            {
+                return;
+            }
+            config.SpecularColorFactor = new Color(reflectance / f0, reflectance / f0, reflectance / f0);
             config.SpecularFactor = 1.0f;
         }
 
@@ -599,8 +605,8 @@ namespace com.github.hkrn
                 for (var i = 0; i < width; i++)
                 {
                     var offset = stride + i;
-                    var alpha = 1.0f - mainTexturePixels[offset].linear.a;
-                    transmissionTexturePixels[offset] = new Color(1.0f, 1.0f, 1.0f, alpha);
+                    var value = 1.0f - mainTexturePixels[offset].linear.a;
+                    transmissionTexturePixels[offset] = new Color(value, 0.0f, 0.0f, 1.0f);
                 }
             }
 
@@ -755,6 +761,7 @@ namespace com.github.hkrn
         private static readonly int PropertyAlphaMaskMode = Shader.PropertyToID("_AlphaMaskMode");
 
         // lilToon
+        private static readonly int PropertyUseReflection = Shader.PropertyToID("_UseReflection");
         private static readonly int PropertySpecularToon = Shader.PropertyToID("_SpecularToon");
         private static readonly int PropertyReflectionBlendMode = Shader.PropertyToID("_ReflectionBlendMode");
         private static readonly int PropertySmoothness = Shader.PropertyToID("_Smoothness");
