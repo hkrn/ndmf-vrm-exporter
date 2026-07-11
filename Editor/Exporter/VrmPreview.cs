@@ -227,8 +227,6 @@ namespace com.github.hkrn
                     continue;
                 }
 
-                context.Observe(component, c => (c.enableMToonMatCap, c.enableMToonOutline, c.enableMToonRimLight));
-
                 foreach (var renderer in context.GetComponentsInChildren<Renderer>(avatar, true)
                              .Where(renderer => renderer is SkinnedMeshRenderer or MeshRenderer))
                 {
@@ -267,6 +265,8 @@ namespace com.github.hkrn
             var exporter = new gltf.exporter.Exporter();
             var extensionsUsed = new HashSet<string>();
             var materialExporter = new GltfMaterialExporter(root, exporter, extensionsUsed);
+            context.Observe(component, c => (c.enableMToonMatCap, c.enableMToonOutline, c.enableMToonRimLight,
+                c.enableBakingAlphaMaskTexture, c.enablePbrCompatibleConversion));
             foreach (var (_, proxy) in proxyPairs)
             {
                 var materials = proxy.sharedMaterials;
@@ -377,10 +377,10 @@ namespace com.github.hkrn
             Material originalMaterial)
         {
             var shaderName = originalMaterial.shader.name;
-            var enableBakingAlphaMaskTexture = component.enableBakingAlphaMaskTexture;
             var isShaderLiltoon = true;
-            var overrides = GltfMaterialExporter.CreateExportOverrides(assetSaver, originalMaterial, shaderName,
-                enableBakingAlphaMaskTexture, ref isShaderLiltoon);
+            var overrides = GltfMaterialExporter.CreateExportOverrides(assetSaver, originalMaterial, component,
+                shaderName,
+                ref isShaderLiltoon);
             var normalTexture = originalMaterial.HasProperty(PropertyBumpMap)
                 ? originalMaterial.GetTexture(PropertyBumpMap)
                 : null;
@@ -394,6 +394,7 @@ namespace com.github.hkrn
             {
                 mainTexture = originalMaterial.GetTexture(PropertyMainTex);
             }
+
             var mapper = new UnityGLTF.PBRGraphMap
             {
                 AlphaMode = overrides.AlphaMode switch
@@ -429,12 +430,13 @@ namespace com.github.hkrn
                 mapper.Material.EnableKeyword("_SPECULAR");
                 mapper.Material.EnableKeyword("_SPECULAR_ON");
             }
+
             if (overrides.TransmissionFactor.HasValue)
             {
                 mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
                 mapper.Material.SetFloat($"_VOLUME_TRANSMISSION", 1);
-
             }
+
             if (overrides.ThicknessFactor.HasValue)
             {
                 mapper.Material.SetFloat($"_VOLUME_ON", 1);

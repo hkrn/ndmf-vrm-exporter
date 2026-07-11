@@ -229,6 +229,9 @@ msgstr "Enable Outline"
 msgid "component.mtoon.enable.bake-alpha-mask"
 msgstr "Enable Baking Alpha Mask Texture"
 
+msgid "component.mtoon.enable.pbr-compatible-conversion"
+msgstr "Enable PBR Compatible Conversion"
+
 msgid "component.spring-bone.exclude.colliders"
 msgstr "Excluded Spring Bone Colliders"
 
