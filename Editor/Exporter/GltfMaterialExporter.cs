@@ -77,6 +77,20 @@ namespace com.github.hkrn
         private const int SpecularToonReal = 0;
         private const int TransparentModeRefraction = 3;
 
+        public static bool IsLilToon(Material material)
+        {
+            var shaderName = material.shader.name;
+            return shaderName == "lilToon" ||
+                shaderName.StartsWith("Hidden/lilToon", StringComparison.Ordinal);
+        }
+
+        public static bool IsLilToonPbr(Material material)
+        {
+            var specularToon = material.GetIntOrDefault(PropertySpecularToon, 0);
+            var reflectionBlendMode = material.GetIntOrDefault(PropertyReflectionBlendMode, 1);
+            return specularToon == SpecularToonReal && reflectionBlendMode == ReflectionBlendModeAdd;
+        }
+
         public GltfMaterialExporter(gltf.Root root, gltf.exporter.Exporter exporter,
             ISet<string> extensionsUsed)
         {
@@ -339,26 +353,6 @@ namespace com.github.hkrn
                 return config;
             }
 
-            // lilToon PBR should be set as glTF PBR
-            var specularToon = subMeshMaterial.GetIntOrDefault(PropertySpecularToon, 0);
-            var reflectionBlendMode = subMeshMaterial.GetIntOrDefault(PropertyReflectionBlendMode, 1);
-            if (specularToon == SpecularToonReal && reflectionBlendMode == ReflectionBlendModeAdd)
-            {
-                ConvertToGltfMetallicRoughness(subMeshMaterial, config);
-                ConvertToGltfMaterialSpecular(subMeshMaterial, config);
-                ConvertToGltfMaterialDiffuseTransmission(subMeshMaterial, config);
-                if (shaderName.Contains("Refraction", StringComparison.Ordinal) ||
-                    subMeshMaterial.GetIntOrDefault(PropertyTransparentMode, 0) == TransparentModeRefraction)
-                {
-                    ConvertToGltfMaterialTransmission(subMeshMaterial, config);
-                    ConvertToGltfMaterialVolume(subMeshMaterial, config);
-                    ConvertToGltfMaterialIor(config);
-                }
-
-                isShaderLiltoon = false;
-                return config;
-            }
-
             if (shaderName.Contains("Cutout", StringComparison.Ordinal))
             {
                 config.AlphaMode = gltf.material.AlphaMode.Mask;
@@ -407,11 +401,39 @@ namespace com.github.hkrn
 
             config.EnableNormalMap =
                 Mathf.Approximately(subMeshMaterial.GetFloatOrDefault(PropertyUseBumpMap, 0.0f), 1.0f);
+
+            if (!IsLilToonPbr(subMeshMaterial))
+            {
+                return config;
+            }
+            // lilToon PBR should be set as glTF PBR
+            var hasRefraction = shaderName.Contains("Refraction", StringComparison.Ordinal) ||
+                                subMeshMaterial.GetIntOrDefault(PropertyTransparentMode, 0) ==
+                                TransparentModeRefraction;
+            ConvertToGltfMetallicRoughness(subMeshMaterial, config);
+            ConvertToGltfMaterialSpecular(subMeshMaterial, config);
+            ConvertToGltfMaterialDiffuseTransmission(subMeshMaterial, config);
+            if (hasRefraction)
+            {
+                ConvertToGltfMaterialTransmission(subMeshMaterial, config);
+                ConvertToGltfMaterialVolume(subMeshMaterial, config);
+                ConvertToGltfMaterialIor(config);
+            }
+
+            isShaderLiltoon = false;
 #endif // NVE_HAS_LILTOON
             return config;
         }
 
         internal Texture? ResolveTexture(gltf.material.TextureInfo? info)
+        {
+            return info == null
+                ? null
+                : (from item in _textureIDs where item.Value.Equals(info.Index) select item.Key)
+                .FirstOrDefault();
+        }
+
+        internal Texture? ResolveTexture(vrm.mtoon.ShadingShiftTexture? info)
         {
             return info == null
                 ? null
@@ -738,8 +760,6 @@ namespace com.github.hkrn
         private static readonly int PropertySmoothness = Shader.PropertyToID("_Smoothness");
         private static readonly int PropertySmoothnessTex = Shader.PropertyToID("_SmoothnessTex");
         private static readonly int PropertyReflectance = Shader.PropertyToID("_Reflectance");
-        private static readonly int PropertyReflectionColor = Shader.PropertyToID("_ReflectionColor");
-        private static readonly int PropertyReflectionColorTex = Shader.PropertyToID("_ReflectionColorTex");
         private static readonly int PropertyBacklightColor = Shader.PropertyToID("_BacklightColor");
         private static readonly int PropertyTransparentMode = Shader.PropertyToID("_TransparentMode");
         private static readonly int PropertyRefractionColor = Shader.PropertyToID("_RefractionColor");

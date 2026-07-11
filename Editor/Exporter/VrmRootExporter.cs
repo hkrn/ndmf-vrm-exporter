@@ -27,25 +27,80 @@ namespace com.github.hkrn
     {
         private static readonly string VrmcSpringBoneExtendedCollider = "VRMC_springBone_extended_collider";
         private static readonly string VrmcSpringBoneLimit = "VRMC_springBone_limit";
-        private static readonly int PropertyMainTexScrollRotate = Shader.PropertyToID("_MainTex_ScrollRotate");
-        private static readonly int PropertyUseShadow = Shader.PropertyToID("_UseShadow");
-        private static readonly int PropertyShadowBorder = Shader.PropertyToID("_ShadowBorder");
-        private static readonly int PropertyShadowBlur = Shader.PropertyToID("_ShadowBlur");
-        private static readonly int PropertyShadowMainStrength = Shader.PropertyToID("_ShadowMainStrength");
-        private static readonly int PropertyShadowColor = Shader.PropertyToID("_ShadowColor");
-        private static readonly int PropertyShadowStrength = Shader.PropertyToID("_ShadowStrength");
-        private static readonly int PropertyUseRim = Shader.PropertyToID("_UseRim");
-        private static readonly int PropertyRimBorder = Shader.PropertyToID("_RimBorder");
-        private static readonly int PropertyRimBlur = Shader.PropertyToID("_RimBlur");
-        private static readonly int PropertyRimFresnelPower = Shader.PropertyToID("_RimFresnelPower");
-        private static readonly int PropertyRimColor = Shader.PropertyToID("_RimColor");
-        private static readonly int PropertyRimBlendMode = Shader.PropertyToID("_RimBlendMode");
-        private static readonly int PropertyUseMatCap = Shader.PropertyToID("_UseMatCap");
-        private static readonly int PropertyMatCapBlendMode = Shader.PropertyToID("_MatCapBlendMode");
-        private static readonly int PropertyOutlineWidth = Shader.PropertyToID("_OutlineWidth");
-        private static readonly int PropertyOutlineColor = Shader.PropertyToID("_OutlineColor");
-        private static readonly int PropertyZWrite = Shader.PropertyToID("_ZWrite");
         private const float FarDistance = 10000.0f;
+
+#if NVE_HAS_LILTOON
+        private class LilToonMaterialMapper
+        {
+            public LilToonMaterialMapper(Material material)
+            {
+                _material = material;
+            }
+
+            public Texture2D? ShadowStrengthMaskTexture => LocalRetrieveTexture2D("_ShadowStrengthMask");
+            public Texture2D? ShadowColorTexture => LocalRetrieveTexture2D("_ShadowColorTex");
+            public Texture2D? ShadowBorderMaskTexture
+            {
+                get
+                {
+                    var texture = LocalRetrieveTexture2D("_ShadowBorderMask");
+                    if (!texture)
+                    {
+                        texture = LocalRetrieveTexture2D("_ShadowBorderTex");
+                    }
+                    return texture;
+                }
+            }
+            public Texture2D? RimColorTexture => LocalRetrieveTexture2D("_RimColorTex");
+            public Texture2D? MatCapTexture => LocalRetrieveTexture2D("_MatCapTex");
+            public Texture2D? MatCapBlendMaskTexture => LocalRetrieveTexture2D("_MatCapBlendMask");
+            public Texture2D? OutlineWidthMask => LocalRetrieveTexture2D("_OutlineWidthMask");
+            public Color MainTexScrollRotate => _material.GetColor(PropertyMainTexScrollRotate);
+            public bool HasShadow => !Mathf.Approximately(_material.GetFloat(PropertyUseShadow), 0.0f);
+            public float ShadowBorder => _material.GetFloat(PropertyShadowBorder);
+            public float ShadowBlur => _material.GetFloat(PropertyShadowBlur);
+            public bool HasShadowMainStrength => !Mathf.Approximately(_material.GetFloat(PropertyShadowMainStrength), 0.0f);
+            public Color ShadowColor => _material.GetColor(PropertyShadowColor);
+            public float ShadowStrength => _material.GetFloat(PropertyShadowStrength);
+            public bool HasRimLight => !Mathf.Approximately(_material.GetFloat(PropertyUseRim), 0.0f);
+            public float RimBorder => _material.GetFloat(PropertyRimBorder);
+            public float RimBlur => _material.GetFloat(PropertyRimBlur);
+            public float RimFresnelPower => _material.GetFloat(PropertyRimFresnelPower);
+            public Color RimColor => _material.GetColor(PropertyRimColor);
+            public float RimBlendMode => _material.GetFloat(PropertyRimBlendMode);
+            public bool HasMatCap => !Mathf.Approximately(_material.GetFloat(PropertyUseMatCap), 0.0f);
+            public float MatCapBlendMode => _material.GetFloat(PropertyMatCapBlendMode);
+            public float OutlineWidth => _material.GetFloat(PropertyOutlineWidth);
+            public Color OutlineColor => _material.GetColor(PropertyOutlineColor);
+            public bool HasZWrite => !Mathf.Approximately(_material.GetFloat(PropertyZWrite), 0.0f);
+
+            private Texture2D? LocalRetrieveTexture2D(string name)
+            {
+                return _material.HasProperty(name) ? _material.GetTexture(name) as Texture2D : null;
+            }
+
+            private static readonly int PropertyMainTexScrollRotate = Shader.PropertyToID("_MainTex_ScrollRotate");
+            private static readonly int PropertyUseShadow = Shader.PropertyToID("_UseShadow");
+            private static readonly int PropertyShadowBorder = Shader.PropertyToID("_ShadowBorder");
+            private static readonly int PropertyShadowBlur = Shader.PropertyToID("_ShadowBlur");
+            private static readonly int PropertyShadowMainStrength = Shader.PropertyToID("_ShadowMainStrength");
+            private static readonly int PropertyShadowColor = Shader.PropertyToID("_ShadowColor");
+            private static readonly int PropertyShadowStrength = Shader.PropertyToID("_ShadowStrength");
+            private static readonly int PropertyUseRim = Shader.PropertyToID("_UseRim");
+            private static readonly int PropertyRimBorder = Shader.PropertyToID("_RimBorder");
+            private static readonly int PropertyRimBlur = Shader.PropertyToID("_RimBlur");
+            private static readonly int PropertyRimFresnelPower = Shader.PropertyToID("_RimFresnelPower");
+            private static readonly int PropertyRimColor = Shader.PropertyToID("_RimColor");
+            private static readonly int PropertyRimBlendMode = Shader.PropertyToID("_RimBlendMode");
+            private static readonly int PropertyUseMatCap = Shader.PropertyToID("_UseMatCap");
+            private static readonly int PropertyMatCapBlendMode = Shader.PropertyToID("_MatCapBlendMode");
+            private static readonly int PropertyOutlineWidth = Shader.PropertyToID("_OutlineWidth");
+            private static readonly int PropertyOutlineColor = Shader.PropertyToID("_OutlineColor");
+            private static readonly int PropertyZWrite = Shader.PropertyToID("_ZWrite");
+
+            private readonly Material _material;
+        }
+#endif // NVE_HAS_LILTOON
 
         public VrmRootExporter(GameObject gameObject, IAssetSaver assetSaver,
             IDictionary<Transform, gltf.ObjectID> transformNodeIDs,
@@ -487,33 +542,34 @@ namespace com.github.hkrn
         public vrm.mtoon.MToon ExportMToon(Material material, NdmfVrmExporter.MToonTexture mToonTexture,
             GltfMaterialExporter exporter)
         {
+            var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
+            return ExportMToon(component, _assetSaver, material, mToonTexture, exporter);
+        }
+
+        internal static vrm.mtoon.MToon ExportMToon(NdmfVrmExporterComponent component, IAssetSaver assetSaver, Material material, NdmfVrmExporter.MToonTexture mToonTexture,
+            GltfMaterialExporter exporter)
+        {
             var mtoon = new vrm.mtoon.MToon
             {
                 GIEqualizationFactor = 1.0f,
                 MatcapFactor = System.Numerics.Vector3.Zero
             };
 #if NVE_HAS_LILTOON
-            var scrollRotate = material.GetColor(PropertyMainTexScrollRotate);
+            var lilToonMaterial = new LilToonMaterialMapper(material);
 
-            Texture2D? LocalRetrieveTexture2D(string name)
+            if (lilToonMaterial.HasShadow)
             {
-                return material.HasProperty(name) ? material.GetTexture(name) as Texture2D : null;
-            }
-
-            if (Mathf.Approximately(material.GetFloat(PropertyUseShadow), 1.0f))
-            {
-                var shadowBorder = material.GetFloat(PropertyShadowBorder);
-                var shadowBlur = material.GetFloat(PropertyShadowBlur);
+                var shadowBorder = lilToonMaterial.ShadowBorder;
+                var shadowBlur = lilToonMaterial.ShadowBlur;
                 var shadeShift = Mathf.Clamp01(shadowBorder - (shadowBlur * 0.5f)) * 2.0f - 1.0f;
                 var shadeToony = Mathf.Approximately(shadeShift, 1.0f)
                     ? 1.0f
                     : (2.0f - Mathf.Clamp01(shadowBorder + shadowBlur * 0.5f) * 2.0f) /
                       (1.0f - shadeShift);
-                if (LocalRetrieveTexture2D("_ShadowStrengthMask") ||
-                    !Mathf.Approximately(material.GetFloat(PropertyShadowMainStrength), 0.0f))
+                if (lilToonMaterial.ShadowStrengthMaskTexture || lilToonMaterial.HasShadowMainStrength)
                 {
                     var bakedShadowTex =
-                        MaterialBaker.AutoBakeShadowTexture(_assetSaver, material, mToonTexture.MainTexture);
+                        MaterialBaker.AutoBakeShadowTexture(assetSaver, material, mToonTexture.MainTexture);
                     mtoon.ShadeColorFactor = Color.white.ToVector3();
                     mtoon.ShadeMultiplyTexture = bakedShadowTex
                         ? exporter.ExportTextureInfoMToon(material, bakedShadowTex, ColorSpace.Gamma,
@@ -522,8 +578,8 @@ namespace com.github.hkrn
                 }
                 else
                 {
-                    var shadowColor = material.GetColor(PropertyShadowColor);
-                    var shadowStrength = material.GetFloat(PropertyShadowStrength);
+                    var shadowColor = lilToonMaterial.ShadowColor;
+                    var shadowStrength = lilToonMaterial.ShadowStrength;
                     var shadeColorStrength = new Color(
                         1.0f - (1.0f - shadowColor.r) * shadowStrength,
                         1.0f - (1.0f - shadowColor.g) * shadowStrength,
@@ -531,20 +587,14 @@ namespace com.github.hkrn
                         1.0f
                     );
                     mtoon.ShadeColorFactor = shadeColorStrength.ToVector3();
-                    var shadowColorTex = LocalRetrieveTexture2D("_ShadowColorTex");
+                    var shadowColorTex = lilToonMaterial.ShadowColorTexture;
                     mtoon.ShadeMultiplyTexture = shadowColorTex
                         ? exporter.ExportTextureInfoMToon(material, shadowColorTex, ColorSpace.Gamma,
                             needsBlit: true)
                         : mToonTexture.MainTextureInfo;
                 }
 
-                var texture = LocalRetrieveTexture2D("_ShadowBorderMask");
-                if (!texture)
-                {
-                    texture = LocalRetrieveTexture2D("_ShadowBorderTex");
-                }
-
-                var info = exporter.ExportTextureInfoMToon(material, texture, ColorSpace.Linear, needsBlit: true);
+                var info = exporter.ExportTextureInfoMToon(material, lilToonMaterial.ShadowBorderMaskTexture, ColorSpace.Linear, needsBlit: true);
                 if (info != null)
                 {
                     mtoon.ShadingShiftTexture = new vrm.mtoon.ShadingShiftTexture
@@ -566,22 +616,19 @@ namespace com.github.hkrn
                 mtoon.ShadeMultiplyTexture = mToonTexture.MainTextureInfo;
             }
 
-            var component = _gameObject.GetComponent<NdmfVrmExporterComponent>();
-            if (component.enableMToonRimLight &&
-                Mathf.Approximately(material.GetFloat(PropertyUseRim), 1.0f))
+            if (component.enableMToonRimLight && lilToonMaterial.HasRimLight)
             {
-                var rimColorTexture = LocalRetrieveTexture2D("_RimColorTex");
-                var rimBorder = material.GetFloat(PropertyRimBorder);
-                var rimBlur = material.GetFloat(PropertyRimBlur);
-                var rimFresnelPower = material.GetFloat(PropertyRimFresnelPower);
+                var rimColorTexture = lilToonMaterial.RimColorTexture;
+                var rimBorder = lilToonMaterial.RimBorder;
+                var rimBlur = lilToonMaterial.RimBlur;
+                var rimFresnelPower = lilToonMaterial.RimFresnelPower;
                 var rimFp = rimFresnelPower / Mathf.Max(0.001f, rimBlur);
                 var rimLift = Mathf.Pow(1.0f - rimBorder, rimFresnelPower) * (1.0f - rimBlur);
                 mtoon.RimLightingMixFactor = 1.0f;
-                mtoon.ParametricRimColorFactor =
-                    material.GetColor(PropertyRimColor).ToVector3();
+                mtoon.ParametricRimColorFactor = lilToonMaterial.RimColor.ToVector3();
                 mtoon.ParametricRimLiftFactor = rimLift;
                 mtoon.ParametricRimFresnelPowerFactor = rimFp;
-                if (Mathf.Approximately(material.GetFloat(PropertyRimBlendMode), 3.0f))
+                if (Mathf.Approximately(lilToonMaterial.RimBlendMode, 3.0f))
                 {
                     mtoon.RimMultiplyTexture =
                         exporter.ExportTextureInfoMToon(material, rimColorTexture, ColorSpace.Gamma,
@@ -593,14 +640,12 @@ namespace com.github.hkrn
                 mtoon.RimLightingMixFactor = 0.0f;
             }
 
-            if (component.enableMToonMatCap &&
-                Mathf.Approximately(material.GetFloat(PropertyUseMatCap), 1.0f) &&
-                !Mathf.Approximately(material.GetFloat(PropertyMatCapBlendMode), 3.0f))
+            if (component.enableMToonMatCap && lilToonMaterial.HasMatCap && !Mathf.Approximately(lilToonMaterial.MatCapBlendMode, 3.0f))
             {
-                var matcapTexture = LocalRetrieveTexture2D("_MatCapTex");
+                var matcapTexture = lilToonMaterial.MatCapTexture;
                 if (matcapTexture)
                 {
-                    var bakedMatCap = MaterialBaker.AutoBakeMatCap(_assetSaver, material);
+                    var bakedMatCap = MaterialBaker.AutoBakeMatCap(assetSaver, material);
                     mtoon.MatcapTexture =
                         exporter.ExportTextureInfoMToon(material, bakedMatCap, ColorSpace.Gamma, needsBlit: true);
                     mtoon.MatcapFactor = System.Numerics.Vector3.One;
@@ -608,7 +653,7 @@ namespace com.github.hkrn
 
                 if (!component.enableMToonRimLight)
                 {
-                    var matcapBlendMaskTexture = LocalRetrieveTexture2D("_MatCapBlendMask");
+                    var matcapBlendMaskTexture = lilToonMaterial.MatCapBlendMaskTexture;
                     mtoon.RimMultiplyTexture = exporter.ExportTextureInfoMToon(material, matcapBlendMaskTexture,
                         ColorSpace.Gamma, needsBlit: true);
                     mtoon.RimLightingMixFactor = 1.0f;
@@ -619,12 +664,11 @@ namespace com.github.hkrn
             var isOutline = shaderName.Contains("Outline");
             if (component.enableMToonOutline && isOutline)
             {
-                var outlineWidthTexture = LocalRetrieveTexture2D("_OutlineWidthMask");
+                var outlineWidthTexture = lilToonMaterial.OutlineWidthMask;
                 mtoon.OutlineWidthMode = vrm.mtoon.OutlineWidthMode.WorldCoordinates;
                 mtoon.OutlineLightingMixFactor = 1.0f;
-                mtoon.OutlineWidthFactor = material.GetFloat(PropertyOutlineWidth) * 0.01f;
-                mtoon.OutlineColorFactor = material.GetColor(PropertyOutlineColor)
-                    .ToVector3();
+                mtoon.OutlineWidthFactor = lilToonMaterial.OutlineWidth * 0.01f;
+                mtoon.OutlineColorFactor = lilToonMaterial.OutlineColor.ToVector3();
                 mtoon.OutlineWidthMultiplyTexture =
                     exporter.ExportTextureInfoMToon(material, outlineWidthTexture, ColorSpace.Linear,
                         needsBlit: true);
@@ -633,9 +677,9 @@ namespace com.github.hkrn
             var isCutout = shaderName.Contains("Cutout");
             var isTransparent = shaderName.Contains("Transparent") || shaderName.Contains("Overlay");
             mtoon.TransparentWithZWrite =
-                isCutout || (isTransparent &&
-                             !Mathf.Approximately(material.GetFloat(PropertyZWrite), 0.0f));
+                isCutout || (isTransparent && lilToonMaterial.HasZWrite);
 
+            var scrollRotate = lilToonMaterial.MainTexScrollRotate;
             mtoon.UVAnimationScrollXSpeedFactor = scrollRotate.r;
             mtoon.UVAnimationScrollYSpeedFactor = scrollRotate.g;
             mtoon.UVAnimationRotationSpeedFactor = scrollRotate.a / Mathf.PI * 0.5f;

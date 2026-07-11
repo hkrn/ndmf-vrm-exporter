@@ -49,6 +49,9 @@ namespace com.github.hkrn
                     .BeforePlugin("nadena.dev.modular-avatar")
                     .Run("Retrieve all MA reactive components to be converted to KHR_materials_variants",
                         RetrieveAllModularAvatarReactiveComponentsPass);
+#if NVE_HAS_UNIVRM
+                seq.Run("VRM Preview", _ => { }).PreviewingWith(new VrmPreview());
+#endif // NVE_HAS_UNIVRM
             });
             InPhase(BuildPhase.Optimizing).OnPlatforms(platforms, seq =>
             {
