@@ -44,6 +44,10 @@ namespace com.github.hkrn
             public void Dispose()
             {
                 AssetSaver.Dispose();
+                foreach (var material in SwappedMaterials.Values.Where(material => material))
+                {
+                    Object.DestroyImmediate(material);
+                }
             }
 
             public void OnFrame(Renderer original, Renderer proxy)
@@ -139,7 +143,7 @@ namespace com.github.hkrn
             public IEnumerable<Object> GetPersistedAssets()
             {
                 ThrowIfDisposed();
-                return _saved.Where(asset => !asset);
+                return _saved.Where(asset => asset);
             }
 
             private void ThrowIfDisposed()
@@ -270,7 +274,7 @@ namespace com.github.hkrn
                 for (var i = 0; i < numMaterials; i++)
                 {
                     var originalMaterial = materials[i];
-                    if (swappingMaterials.ContainsKey(originalMaterial))
+                    if (!originalMaterial || swappingMaterials.ContainsKey(originalMaterial))
                     {
                         continue;
                     }
