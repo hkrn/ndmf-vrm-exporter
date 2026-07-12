@@ -18,6 +18,9 @@ Unity を再生あるいは VRChat にアップロードする際にビルドと
 4. `Assets/NDMF VRM Exporter/${シーン名}` 内にアバター名のついた VRM ファイルが出力されていることを確認
   * シーンが未保存の状態で実行した場合はシーン名が `Untitled` になります
 
+> [!TIP]
+> NDMF VRM Exporter 1.4.0 からプレビュー機能が提供されました（要 UniVRM 導入）。プレビュー機能を利用することで出力前に VRM モデルの描画結果を確認できます。詳細は「[コンポーネントの説明](./component.md)」の `Preview` を確認してください
+
 NDMF VRM Exporter は出力した VRM ファイルを閲覧する機能を持っていません。そのため出力された VRM ファイルを手元環境で確認する場合は [VRoid Playground](https://hub.vroid.com/playground)（要 Pixiv アカウント）を利用するか、[VRMファイルが使えるアプリケーションは？](https://vrm.dev/showcase) から「ビューワー」を選択して適宜アプリケーションを導入して読み込んでください。その際は必ず VRM 1.0 対応のものを利用してください（VRM 0.x のみ対応の場合は読み込めません）。
 
 アップロードして確認する場合は [VRoid Hub](https://hub.vroid.com) の利用を推奨します。
