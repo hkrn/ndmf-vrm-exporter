@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MPL
 
 #nullable enable
-#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +11,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Animations;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
@@ -29,161 +27,16 @@ using VRC.SDKBase.Editor.Api;
 #if NVE_HAS_NDMF
 using nadena.dev.ndmf;
 using nadena.dev.ndmf.localization;
-using nadena.dev.ndmf.runtime;
 #if NVE_HAS_NDMF_PLATFORM_SUPPORT
 using nadena.dev.ndmf.ui;
 #endif // NVE_HAS_NDMF_PLATFORM_SUPPORT
+#endif // NVE_HAS_NDMF
 
 [assembly: ExportsPlugin(typeof(com.github.hkrn.NdmfVrmExporterPlugin))]
-[assembly: InternalsVisibleTo("com.github.hkrn.NDMFVRMExporterTests")]
-#endif
+[assembly: InternalsVisibleTo("com.github.hkrn.ndmf-vrm-exporter.tests")]
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
 {
-    [AddComponentMenu("NDMF VRM Exporter/VRM Export Description")]
-    [DisallowMultipleComponent]
-    [HelpURL("https://github.com/hkrn/ndmf-vrm-exporter")]
-    public sealed class NdmfVrmExporterComponent : MonoBehaviour, INDMFEditorOnly
-    {
-        [NotKeyable] [SerializeField] internal bool metadataFoldout = true;
-
-        [NotKeyable] [SerializeField] internal List<string> authors = new();
-
-        [NotKeyable] [SerializeField] internal string? version;
-
-        [NotKeyable] [SerializeField] internal string? copyrightInformation;
-
-        [NotKeyable] [SerializeField] internal string? contactInformation;
-
-        [NotKeyable] [SerializeField] internal List<string> references = new();
-
-        [NotKeyable] [SerializeField] internal bool enableContactInformationOnVRChatAutofill = true;
-
-        [NotKeyable] [SerializeField] internal string licenseUrl = vrm.core.Meta.DefaultLicenseUrl;
-
-        [NotKeyable] [SerializeField] internal string? thirdPartyLicenses;
-
-        [NotKeyable] [SerializeField] internal string? otherLicenseUrl;
-
-        [NotKeyable] [SerializeField] internal vrm.core.AvatarPermission avatarPermission;
-
-        [NotKeyable] [SerializeField] internal vrm.core.CommercialUsage commercialUsage;
-
-        [NotKeyable] [SerializeField] internal vrm.core.CreditNotation creditNotation;
-
-        [NotKeyable] [SerializeField] internal vrm.core.Modification modification;
-
-        [NotKeyable] [SerializeField] internal bool metadataAllowFoldout;
-
-        [NotKeyable] [SerializeField] internal VrmUsagePermission allowExcessivelyViolentUsage;
-
-        [NotKeyable] [SerializeField] internal VrmUsagePermission allowExcessivelySexualUsage;
-
-        [NotKeyable] [SerializeField] internal VrmUsagePermission allowPoliticalOrReligiousUsage;
-
-        [NotKeyable] [SerializeField] internal VrmUsagePermission allowAntisocialOrHateUsage;
-
-        [NotKeyable] [SerializeField] internal VrmUsagePermission allowRedistribution;
-
-        [NotKeyable] [SerializeField] internal Texture2D? thumbnail;
-
-        [NotKeyable] [SerializeField] internal bool expressionFoldout = true;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetHappyBlendShape = VrmExpressionProperty.Happy;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetAngryBlendShape = VrmExpressionProperty.Angry;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetSadBlendShape = VrmExpressionProperty.Sad;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetRelaxedBlendShape = VrmExpressionProperty.Relaxed;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetSurprisedBlendShape = VrmExpressionProperty.Surprised;
-
-        [NotKeyable] [SerializeField] internal bool expressionCustomBlendShapeNameFoldout;
-
-        [NotKeyable] [SerializeField] internal List<VrmExpressionProperty> expressionCustomBlendShapes = new();
-
-        [NotKeyable] [SerializeField] internal bool springBoneFoldout;
-
-        [NotKeyable] [SerializeField] internal List<Transform> excludedSpringBoneColliderTransforms = new();
-
-        [NotKeyable] [SerializeField] internal List<Transform> excludedSpringBoneTransforms = new();
-
-        [NotKeyable] [SerializeField] internal bool constraintFoldout;
-
-        [NotKeyable] [SerializeField] internal List<Transform> excludedConstraintTransforms = new();
-
-        [NotKeyable] [SerializeField] internal bool mtoonFoldout;
-
-        [NotKeyable] [SerializeField] internal bool enableMToonRimLight;
-
-        [NotKeyable] [SerializeField] internal bool enableMToonMatCap;
-
-        [NotKeyable] [SerializeField] internal bool enableMToonOutline = true;
-
-        [NotKeyable] [SerializeField] internal bool enableBakingAlphaMaskTexture = true;
-
-        [NotKeyable] [SerializeField] internal bool debugFoldout;
-
-        [NotKeyable] [SerializeField] internal bool makeAllNodeNamesUnique = true;
-
-        [NotKeyable] [SerializeField] internal bool enableVertexColorOutput = true;
-
-        [NotKeyable] [SerializeField] internal bool disableVertexColorOnLiltoon = true;
-
-        [NotKeyable] [SerializeField] internal bool enableGenerateJsonFile;
-
-        [NotKeyable] [SerializeField] internal bool deleteTemporaryObjects = true;
-
-        [NotKeyable] [SerializeField] internal string? ktxToolPath;
-
-        [NotKeyable] [SerializeField] internal int metadataModeSelection;
-
-        [NotKeyable] [SerializeField] internal int expressionModeSelection;
-
-        // from 1.1.0
-        [NotKeyable] [SerializeField] internal bool extensionFoldout;
-
-        [NotKeyable] [SerializeField] internal bool enableKhrMaterialsVariants = true;
-
-        // from 1.3.0
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetBlinkLeftBlendShape = VrmExpressionProperty.BlinkLeft;
-
-        [NotKeyable] [SerializeField]
-        internal VrmExpressionProperty expressionPresetBlinkRightBlendShape = VrmExpressionProperty.BlinkRight;
-
-        [NotKeyable] [SerializeField] internal bool animationFoldout;
-
-        [NotKeyable] [SerializeField] internal List<AnimationClip> humanoidAnimations = new();
-
-        [NotKeyable] [SerializeField] internal bool experimentalEnableSpringBoneLimit;
-
-        // from 1.4.0
-        [NotKeyable] [SerializeField] internal bool previewFoldout;
-        [NotKeyable] [SerializeField] internal bool enablePbrCompatibleConversion = true;
-
-        public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
-
-        public bool HasLicenseUrl =>
-            !string.IsNullOrWhiteSpace(licenseUrl) && Uri.TryCreate(licenseUrl, UriKind.Absolute, out _);
-
-        public bool HasAvatarRoot => RuntimeUtil.IsAvatarRoot(gameObject.transform);
-
-        public bool IsSpringBoneLimitEnabled => experimentalEnableSpringBoneLimit;
-
-        // ReSharper disable once Unity.RedundantEventFunction
-        private void Start()
-        {
-            /*  do nothing to show checkbox */
-        }
-    }
-
     [CustomEditor(typeof(NdmfVrmExporterComponent))]
     public sealed class NdmfVrmExporterComponentEditor : Editor
     {
@@ -817,7 +670,7 @@ namespace com.github.hkrn
                 void SetFromMmdExpression(string targetBlendShapeName, SerializedProperty prop)
                 {
                     var option = (VrmExpressionProperty)prop.boxedValue;
-                    option.SetFromMmdExpression(targetBlendShapeName);
+                    VrmExpressionPropertyUtil.SetFromMmdExpression(option, targetBlendShapeName);
                     prop.boxedValue = option;
                 }
 
@@ -1011,142 +864,8 @@ namespace com.github.hkrn
         }
     }
 
-    public enum VrmUsagePermission
+    internal static class VrmExpressionPropertyUtil
     {
-        Disallow,
-        Allow,
-    }
-
-    [Serializable]
-    public sealed class VrmExpressionProperty
-    {
-        internal static VrmExpressionProperty Happy => new()
-        {
-            expressionName = "Happy",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty Angry => new()
-        {
-            expressionName = "Angry",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty Sad => new()
-        {
-            expressionName = "Sad",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty Relaxed => new()
-        {
-            expressionName = "Relaxed",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty Surprised => new()
-        {
-            expressionName = "Surprised",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty BlinkLeft => new()
-        {
-            expressionName = "Blink (Left)",
-            isPreset = true,
-        };
-
-        internal static VrmExpressionProperty BlinkRight => new()
-        {
-            expressionName = "Blink (Right)",
-            isPreset = true,
-        };
-
-        [NotKeyable] [SerializeField] internal string? expressionName;
-        [NotKeyable] [SerializeField] internal BaseType baseType;
-        [NotKeyable] [SerializeField] internal GameObject? gameObject;
-        [NotKeyable] [SerializeField] internal string? blendShapeName;
-        [NotKeyable] [SerializeField] internal AnimationClip? blendShapeAnimationClip;
-        [NotKeyable] [SerializeField] internal bool optionsFoldout;
-        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideBlink;
-        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideLookAt;
-        [NotKeyable] [SerializeField] internal vrm.core.ExpressionOverrideType overrideMouth;
-        [NotKeyable] [SerializeField] internal bool isBinary;
-        [NotKeyable] [SerializeField] internal bool isPreset;
-
-        // from 1.3.0
-        [NotKeyable] [SerializeField] internal SkinnedMeshRenderer? skinnedMeshRenderer;
-
-        internal const string BlendShapeNamePrefix = "blendShape.";
-
-        internal enum BaseType
-        {
-            BlendShape,
-            AnimationClip,
-        };
-
-        internal List<string?> BlendShapeNames => baseType switch
-        {
-            BaseType.AnimationClip => ExtractAllBlendShapeNamesFromAnimationClip(),
-            BaseType.BlendShape => new List<string?> { blendShapeName },
-            _ => throw new ArgumentOutOfRangeException(),
-        };
-
-        internal string CanonicalExpressionName
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(expressionName))
-                {
-                    return expressionName!;
-                }
-
-                return baseType switch
-                {
-                    BaseType.AnimationClip => blendShapeAnimationClip!.name,
-                    BaseType.BlendShape => blendShapeName!,
-                    _ => throw new ArgumentOutOfRangeException(),
-                };
-            }
-        }
-
-        internal bool IsValid => baseType switch
-        {
-            BaseType.AnimationClip => blendShapeAnimationClip,
-            BaseType.BlendShape => !string.IsNullOrEmpty(blendShapeName),
-            _ => throw new ArgumentOutOfRangeException(),
-        };
-
-        internal void SetFromMmdExpression(string targetName)
-        {
-            if (!gameObject || !gameObject!.transform)
-            {
-                return;
-            }
-
-            var blendShapeNames = new List<string>();
-            SkinnedMeshRenderer? foundSkinnedMeshRenderer = null;
-            RetrieveAllBlendShapes(gameObject.transform, (name, innerSkinnedMeshRenderer, _) =>
-                {
-                    if (name == targetName)
-                    {
-                        foundSkinnedMeshRenderer = innerSkinnedMeshRenderer;
-                    }
-                },
-                ref blendShapeNames);
-            if (!foundSkinnedMeshRenderer)
-            {
-                return;
-            }
-
-            skinnedMeshRenderer = foundSkinnedMeshRenderer;
-            blendShapeName = targetName;
-            baseType = BaseType.BlendShape;
-            overrideBlink = vrm.core.ExpressionOverrideType.Block;
-            overrideLookAt = vrm.core.ExpressionOverrideType.Block;
-            overrideMouth = vrm.core.ExpressionOverrideType.Block;
-        }
-
         internal static void RetrieveAllBlendShapes(Transform transform, ref List<string> blendShapeNames)
         {
             RetrieveAllBlendShapes(transform, (name, _, blendShapeNames) => { blendShapeNames.Add(name); },
@@ -1181,14 +900,54 @@ namespace com.github.hkrn
             }
         }
 
-        private List<string?> ExtractAllBlendShapeNamesFromAnimationClip()
+        internal static List<string?> GetBlendShapeNames(VrmExpressionProperty property)
         {
-            if (!blendShapeAnimationClip)
+            return property.baseType switch
+            {
+                VrmExpressionProperty.BaseType.AnimationClip => ExtractAllBlendShapeNamesFromAnimationClip(property),
+                VrmExpressionProperty.BaseType.BlendShape => new List<string?> { property.blendShapeName },
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
+
+        internal static void SetFromMmdExpression(VrmExpressionProperty property, string targetName)
+        {
+            if (!property.gameObject || !property.gameObject!.transform)
+            {
+                return;
+            }
+
+            var blendShapeNames = new List<string>();
+            SkinnedMeshRenderer? foundSkinnedMeshRenderer = null;
+            RetrieveAllBlendShapes(property.gameObject.transform, (name, innerSkinnedMeshRenderer, _) =>
+                {
+                    if (name == targetName)
+                    {
+                        foundSkinnedMeshRenderer = innerSkinnedMeshRenderer;
+                    }
+                },
+                ref blendShapeNames);
+            if (!foundSkinnedMeshRenderer)
+            {
+                return;
+            }
+
+            property.skinnedMeshRenderer = foundSkinnedMeshRenderer;
+            property.blendShapeName = targetName;
+            property.baseType = VrmExpressionProperty.BaseType.BlendShape;
+            property.overrideBlink = vrm.core.ExpressionOverrideType.Block;
+            property.overrideLookAt = vrm.core.ExpressionOverrideType.Block;
+            property.overrideMouth = vrm.core.ExpressionOverrideType.Block;
+        }
+
+        private static List<string?> ExtractAllBlendShapeNamesFromAnimationClip(VrmExpressionProperty property)
+        {
+            if (!property.blendShapeAnimationClip)
                 return new List<string?>();
-            return (from binding in AnimationUtility.GetCurveBindings(blendShapeAnimationClip)
-                where binding.propertyName.StartsWith(BlendShapeNamePrefix, StringComparison.Ordinal)
-                let name = binding.propertyName[BlendShapeNamePrefix.Length..]
-                let curve = AnimationUtility.GetEditorCurve(blendShapeAnimationClip, binding)
+            return (from binding in AnimationUtility.GetCurveBindings(property.blendShapeAnimationClip)
+                where binding.propertyName.StartsWith(VrmExpressionProperty.BlendShapeNamePrefix, StringComparison.Ordinal)
+                let name = binding.propertyName[VrmExpressionProperty.BlendShapeNamePrefix.Length..]
+                let curve = AnimationUtility.GetEditorCurve(property.blendShapeAnimationClip, binding)
                 from keyframe in curve.keys
                 where !(keyframe.time > 0.0f) && !Mathf.Approximately(keyframe.value, 0.0f)
                 select name).ToList();
@@ -1238,7 +997,7 @@ namespace com.github.hkrn
                     StaleAllBlendShapeNamesIfChanged(transform);
                     if (_blendShapeNames.Count == 0 && transform)
                     {
-                        VrmExpressionProperty.RetrieveAllBlendShapes(transform, ref _blendShapeNames);
+                        VrmExpressionPropertyUtil.RetrieveAllBlendShapes(transform, ref _blendShapeNames);
                     }
 
                     EditorGUI.ObjectField(fieldRect, skinnedMeshRendererProp);
@@ -1407,5 +1166,3 @@ namespace com.github.hkrn
         public static string _(string key) => Instance.GetLocalizedString(key);
     }
 }
-
-#endif // NVE_HAS_NDMF

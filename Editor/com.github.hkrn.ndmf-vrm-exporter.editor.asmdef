@@ -1,5 +1,5 @@
 {
-    "name": "NDMFVRMExporter",
+    "name": "com.github.hkrn.ndmf-vrm-exporter.editor",
     "rootNamespace": "com.github.hkrn",
     "references": [
         "GUID:62ced99b048af7f4d8dfe4bed8373d76",
@@ -13,40 +13,22 @@
         "GUID:6e9c6119ac4eb334284fb7b4bc6d1f05",
         "GUID:0aaf403bd13871a44b7127aef2695ff8",
         "GUID:40f39bff7bc9be34182ebe488fcf8228",
-        "GUID:18d18f811ba286c49814567a3cfba688"
+        "GUID:18d18f811ba286c49814567a3cfba688",
+        "GUID:ae3639ea32c49446fa4dfcd3ad6fd805"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [
-        "Android",
-        "EmbeddedLinux",
-        "GameCoreScarlett",
-        "GameCoreXboxOne",
-        "iOS",
-        "LinuxStandalone64",
-        "CloudRendering",
-        "macOSStandalone",
-        "PS4",
-        "PS5",
-        "QNX",
-        "Stadia",
-        "Switch",
-        "tvOS",
-        "WSA",
-        "VisionOS",
-        "WebGL",
-        "WindowsStandalone32",
-        "WindowsStandalone64",
-        "XboxOne"
+    "includePlatforms": [
+        "Editor"
     ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
         "System.Collections.Immutable.dll",
         "Newtonsoft.Json.dll",
+        "VRCSDKBase.dll",
         "VRCCore-Editor.dll",
         "VRC.Dynamics.dll",
         "VRCSDK3A.dll",
-        "VRCSDKBase.dll",
         "VRC.SDK3.Dynamics.Constraint.dll",
         "VRC.SDK3.Dynamics.PhysBone.dll"
     ],

@@ -8,7 +8,7 @@ using UnityEngine;
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
 {
-    internal static class UnityExtensions
+    public static class UnityExtensions
     {
         public static System.Numerics.Vector2 ToVector2(this Vector2 self)
         {
@@ -128,13 +128,13 @@ namespace com.github.hkrn
             return material.HasColor(value) ? material.GetColor(value) : defaultValue;
         }
 
-        internal static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
+        public static Texture2D Blit(this Texture sourceTexture, TextureFormat textureFormat, ColorSpace cs,
             Material? material = null)
         {
             return Blit(sourceTexture, sourceTexture.width, sourceTexture.height, textureFormat, cs, material);
         }
 
-        internal static Texture2D Blit(this Texture sourceTexture, int width, int height, TextureFormat textureFormat,
+        public static Texture2D Blit(this Texture sourceTexture, int width, int height, TextureFormat textureFormat,
             ColorSpace cs, Material? material)
         {
             var rw = cs == ColorSpace.Gamma ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
