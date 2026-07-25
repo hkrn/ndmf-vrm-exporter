@@ -3,22 +3,12 @@
 
 using System;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
-
-#if !NET5_0_OR_GREATER
-namespace System.Runtime.CompilerServices
-{
-    internal sealed class IsExternalInit
-    {
-    }
-}
-#endif // NET5_0_OR_GREATER
 
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
 {
-    internal static class AssetPathUtils
+    public static class AssetPathUtils
     {
         private const string CloneSuffix = "(Clone)";
 
@@ -27,11 +17,6 @@ namespace com.github.hkrn
         public static string GetOutputPath(GameObject gameObject)
         {
             return GetBasePath(gameObject, BasePath);
-        }
-
-        public static string GetTempPath(GameObject gameObject)
-        {
-            return GetBasePath(gameObject, FileUtil.GetUniqueTempPathInProject());
         }
 
         public static string TrimCloneSuffix(string name)
@@ -44,7 +29,7 @@ namespace com.github.hkrn
             return name;
         }
 
-        private static string GetBasePath(GameObject gameObject, string basePath)
+        public static string GetBasePath(GameObject gameObject, string basePath)
         {
             var sceneName = !string.IsNullOrEmpty(gameObject.scene.name)
                 ? StripInvalidFileNameCharacters(gameObject.scene.name)
@@ -53,7 +38,7 @@ namespace com.github.hkrn
             return $"{basePath}/{sceneName}/{gameObjectName}";
         }
 
-        private static string StripInvalidFileNameCharacters(string name)
+        public static string StripInvalidFileNameCharacters(string name)
         {
             return string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         }

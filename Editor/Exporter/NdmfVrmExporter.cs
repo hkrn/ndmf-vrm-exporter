@@ -12,6 +12,7 @@ using nadena.dev.ndmf;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
 
@@ -668,7 +669,7 @@ namespace com.github.hkrn
         {
             using var _ = new ScopedProfile($"{nameof(ConvertAllTexturesToKtx)}");
             var builder = new KtxConverterBuilder(ktxToolPath);
-            var basePath = AssetPathUtils.GetTempPath(_gameObject);
+            var basePath = AssetPathUtils.GetBasePath(_gameObject, FileUtil.GetUniqueTempPathInProject());
             var textureIndex = 0;
             Directory.CreateDirectory(basePath);
             foreach (var texture in _root.Textures!)
