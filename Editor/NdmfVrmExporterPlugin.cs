@@ -532,7 +532,7 @@ namespace com.github.hkrn
                 ComponentMutationsCollector collector)
             {
                 var blendShapeNameToSmr = new Dictionary<string, SkinnedMeshRenderer>();
-                VrmExpressionProperty.RetrieveAllBlendShapes(component.transform, (name, smr, props) =>
+                VrmExpressionPropertyUtil.RetrieveAllBlendShapes(component.transform, (name, smr, props) =>
                 {
                     if (props.TryGetValue(name, out var foundSmr))
                     {
@@ -547,19 +547,16 @@ namespace com.github.hkrn
                     }
                 }, ref blendShapeNameToSmr);
                 var allExpressionUsedBlendShapeNames = new List<string?>();
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetHappyBlendShape.BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetAngryBlendShape.BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSadBlendShape.BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetRelaxedBlendShape.BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetSurprisedBlendShape
-                    .BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetBlinkLeftBlendShape
-                    .BlendShapeNames);
-                allExpressionUsedBlendShapeNames.AddRange(component.expressionPresetBlinkRightBlendShape
-                    .BlendShapeNames);
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetHappyBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetAngryBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetSadBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetRelaxedBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetSurprisedBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetBlinkLeftBlendShape));
+                allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(component.expressionPresetBlinkRightBlendShape));
                 foreach (var property in component.expressionCustomBlendShapes)
                 {
-                    allExpressionUsedBlendShapeNames.AddRange(property.BlendShapeNames);
+                    allExpressionUsedBlendShapeNames.AddRange(VrmExpressionPropertyUtil.GetBlendShapeNames(property));
                 }
 
                 var collectorProperties = new Dictionary<SkinnedMeshRenderer, IList<string>>();

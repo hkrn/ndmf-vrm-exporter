@@ -1,5 +1,5 @@
 {
-    "name": "com.github.hkrn.NDMFVRMExporterTests",
+    "name": "com.github.hkrn.ndmf-vrm-exporter.tests",
     "rootNamespace": "com.github.hkrn",
     "references": [
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
@@ -10,11 +10,12 @@
         "GUID:fc900867c0f47cd49b6e2ae4ef907300",
         "GUID:1361f424038d2644fa9897816cda865f",
         "GUID:e7f0f8dffe955d640bbc76d1d4f4986e",
-        "GUID:ae3639ea32c49446fa4dfcd3ad6fd805",
         "GUID:6e9c6119ac4eb334284fb7b4bc6d1f05",
         "GUID:3456780c4fb2d324ab9c633d6f1b0ddb",
         "GUID:b906909fcc54f634db50f2cad0f988d9",
-        "GUID:5718fb738711cd34ea54e9553040911d"
+        "GUID:5718fb738711cd34ea54e9553040911d",
+        "GUID:329048e82b320432ebfd2b67dcddfed0",
+        "GUID:ae3639ea32c49446fa4dfcd3ad6fd805"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,0 +1,26 @@
+{
+    "name": "com.github.hkrn.ndmf-vrm-exporter.runtime",
+    "rootNamespace": "com.github.hkrn",
+    "references": [
+        "GUID:fe747755f7b44e048820525b07f9b956"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Collections.Immutable.dll",
+        "Newtonsoft.Json.dll",
+        "VRCSDKBase.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "nadena.dev.ndmf",
+            "expression": "1.6",
+            "define": "NVE_HAS_NDMF"
+        }
+    ],
+    "noEngineReferences": false
+}
