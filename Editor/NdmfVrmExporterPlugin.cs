@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using nadena.dev.ndmf;
+using UnityEditor;
 using UnityEngine;
 
 #if NVE_HAS_MODULAR_AVATAR
@@ -23,6 +24,16 @@ using nadena.dev.ndmf.platform;
 #if NVE_HAS_LILYCAL_INVENTORY
 using jp.lilxyzw.lilycalinventory.runtime;
 #endif // NVE_HAS_LILYCAL_INVENTORY
+
+#if !NET5_0_OR_GREATER
+namespace System.Runtime.CompilerServices
+{
+    internal sealed class IsExternalInit
+    {
+    }
+}
+#endif
+/* NET5_0_OR_GREATER */
 
 // ReSharper disable once CheckNamespace
 namespace com.github.hkrn
@@ -442,7 +453,8 @@ namespace com.github.hkrn
                 return;
             }
 
-            foreach (var item in new[] { AssetPathUtils.GetTempPath(ro), workingDirectoryPath })
+            var tempPath = AssetPathUtils.GetBasePath(ro, FileUtil.GetUniqueTempPathInProject());
+            foreach (var item in new[] { tempPath, workingDirectoryPath })
             {
                 try
                 {

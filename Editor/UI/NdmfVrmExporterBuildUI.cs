@@ -103,7 +103,7 @@ namespace com.github.hkrn.ui
                 var outputDirectory = Path.GetDirectoryName(path) ?? string.Empty;
                 var outputFileNameWithoutExtension = Path.GetFileNameWithoutExtension(path) ?? string.Empty;
                 var baseOutputPath = Path.Join(outputDirectory, outputFileNameWithoutExtension);
-                var workingDirectoryPath = AssetPathUtils.GetTempPath(avatarRoot);
+                var workingDirectoryPath = AssetPathUtils.GetBasePath(avatarRoot, FileUtil.GetUniqueTempPathInProject());
                 try
                 {
                     NdmfVrmExporterPlugin.ExportVrmFile(component, buildContext, baseOutputPath,
