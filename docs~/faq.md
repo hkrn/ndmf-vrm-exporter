@@ -31,11 +31,20 @@
 
 NDMF VRM Exporter としてそのような機能を持っていませんが、0.x にダウングレードするツールとして [VrmDowngrader](https://github.com/saturday06/VrmDowngrader) と [VRMRemaker](https://fujisunflower.fanbox.cc/posts/7313957) がありますのでどちらかをお使いください。ただし 0.x に変換して 1.0 に戻す形の再変換を行った場合は原則としてサポート対象外となりますのでご注意ください。
 
+## パーフェクトシンクに対応していますか？
+
+> [!NOTE]
+> パーフェクトシンクとは何かについては [VMagic Mirror](https://malaybaku.github.io/VMagicMirror/tips/perfect_sync/) の解説をご確認ください。なおパーフェクトシンクは VRM とセットで使われる傾向から誤解しがちですが、VRM の仕様ではありません
+
+対応していません。
+
+パーフェクトシンク対応のために必要とするすべてのブレンドシェイプが変換元アバターにあることが前提 [^1] で AAO の最適化を抑制する形で今後対応する可能性はありますが、NDMF VRM Exporter 自体はパーフェクトシンク対応のために必要とするブレンドシェイプを作成する機能はありません。
+
 ## VRM Converter for VRChat の違いはなんですか？
 
 VRChat アバターを VRM に変換（またはその逆）するツールとして定番である [VRM Converter for VRChat](https://github.com/esperecyan/VRMConverterForVRChat) は VRM 0.x の仕様準拠で変換するのに対して NDMF VRM Exporter は VRM 1.0 の仕様準拠で変換するという点にあります。
 
-そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^1]。
+そのため VRM Converter for VRChat では対応する VRM 0.x の仕様上どうしても変換できないカプセルコライダーおよび拡張コライダーとコンストレイントが NDMF VRM Exporter では変換することができます。その他の違いとして以下の表にまとめています[^2]。
 
 |項目|VRM Converter for VRChat|NDMF VRM Exporter|
 |---|---|---|
@@ -108,7 +117,7 @@ XWear Packager と NDMF VRM Exporter は一緒に入れることができるた�
 
 もし VRoid Studio の XAvatar を利用している場合は 1.3.0 以上に引き上げてください。これは 1.3.0 より前のバージョンでは MToon を MToon として扱わず glTF の材質として扱っていたため、上記の問題に引っかかってしまうためです。
 
-材質にマットキャップが使われている場合は `MToon Options` の `Enable MatCap` を入れることで解決できる可能性はあります。ただし現状一律設定のため材質によってはライティングが強くなって白飛びする場合が発生します。[^2] また MToon のマットキャップのブレンドが加算のみであるため、lilToon 側のマットキャップのブレンドモードを加算以外の設定で利用している場合は正しく変換できません。
+材質にマットキャップが使われている場合は `MToon Options` の `Enable MatCap` を入れることで解決できる可能性はあります。ただし現状一律設定のため材質によってはライティングが強くなって白飛びする場合が発生します。[^3] また MToon のマットキャップのブレンドが加算のみであるため、lilToon 側のマットキャップのブレンドモードを加算以外の設定で利用している場合は正しく変換できません。
 
 これらでも解決しない場合は材質の非互換性に引っかかっている可能性があります。[出力の互換性](compatibility.md) の「材質（マテリアル）の変換」にもある通り、「光沢」「ラメ」「宝石」「屈折」「ファー」は直接 MToon に対応する項目がないため正しく変換できません。
 
@@ -119,7 +128,7 @@ XWear Packager と NDMF VRM Exporter は一緒に入れることができるた�
 
 [VRCQuestTools](https://kurotu.github.io/VRCQuestTools) を利用して Android/iOS 向けに同時出力している場合に特有の事情によってこの問題に該当する可能性があります。お手数ですが PC 向けの方で出力するか、NDMF Console からプラットフォーム指定による出力をお願いします。
 
-VRChat Android/iOS 版ではシェーダの制限により lilToon が利用できず、ToonLit もしくはその高機能版の ToonStandard が利用可能となっています。このため NDMF VRM Exporter に処理が渡される前 [^3] に VRCQuestTools によって lilToon から ToonLit または ToonStandard に自動的に変換されます。その結果 lilToon を検知できず MToon 変換が行われないため、見た目が一致しない状態で出力されます。
+VRChat Android/iOS 版ではシェーダの制限により lilToon が利用できず、ToonLit もしくはその高機能版の ToonStandard が利用可能となっています。このため NDMF VRM Exporter に処理が渡される前 [^4] に VRCQuestTools によって lilToon から ToonLit または ToonStandard に自動的に変換されます。その結果 lilToon を検知できず MToon 変換が行われないため、見た目が一致しない状態で出力されます。
 
 なお ToonLit への対応予定はなく、ToonStandard に対する変換の対応予定についても今のところありませんが、需要次第では対応する可能性があります。
 
@@ -164,6 +173,7 @@ Modular Avatar の [プラットフォームフィルター](https://modular-ava
 
 「[導入と使い方のその１](usage.md)」の方法だとプラットフォームフィルターが機能しないため、プラットフォームフィルターを利用する際は「その１」の方法で書き出さないようにしてください。これは NDMF VRM Exporter のアバターとしてではなく、VRChat のアバターとして書き出されるためです。
 
-[^1]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
-[^2]: MToon の実装はマットキャップがリムライトのサブセットという位置付けであり、また [仕様側の参照実装](https://github.com/vrm-c/vrm-specification/blob/b7ece9d9d9def99945bb0fc33804ed01bc2272a6/specification/VRMC_materials_mtoon-1.0/README.ja.md#implementation-2) としてもそれを肯定する形であるため、既定では無効な `Enable RimLight` を有効にしている場合はリムライトの設定と干渉する可能性がある点にも注意が必要
-[^3]: Avatar Optimizer 導入前提で NDMF VRM Exporter は Avatar Optimizer の「後」に実施するのに対して VRCQuestTools が Avatar Optimizer の「前」に実施するため。Avatar Optimizer 未導入の場合の扱いは未定義です
+[^1]: VRChat アバターがパーフェクトシンクに対応しているかどうかはアバターの商品説明に「パーフェクトシンク対応」が含まれていれば基本的に対応していると判断できます
+[^2]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
+[^3]: MToon の実装はマットキャップがリムライトのサブセットという位置付けであり、また [仕様側の参照実装](https://github.com/vrm-c/vrm-specification/blob/b7ece9d9d9def99945bb0fc33804ed01bc2272a6/specification/VRMC_materials_mtoon-1.0/README.ja.md#implementation-2) としてもそれを肯定する形であるため、既定では無効な `Enable RimLight` を有効にしている場合はリムライトの設定と干渉する可能性がある点にも注意が必要
+[^4]: Avatar Optimizer 導入前提で NDMF VRM Exporter は Avatar Optimizer の「後」に実施するのに対して VRCQuestTools が Avatar Optimizer の「前」に実施するため。Avatar Optimizer 未導入の場合の扱いは未定義です
