@@ -21,7 +21,7 @@ namespace com.github.hkrn
     public sealed class VrmPreview : IRenderFilter
     {
         internal static readonly TogglablePreviewNode EnableNode =
-            TogglablePreviewNode.Create(() => "VRM Preview", $"{NdmfVrmExporter.PackageJson.Name}/VrmPreview", false);
+            TogglablePreviewNode.Create(() => "VRM Preview", $"{PackageJson.Name}/VrmPreview", false);
 
         private static readonly int PropertyAlphaMode = Shader.PropertyToID("_AlphaMode");
         private static readonly int PropertyCutoff = Shader.PropertyToID("_Cutoff");
