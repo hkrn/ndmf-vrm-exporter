@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024-present hkrn
-// SPDX-License-Identifier: MPL
+// SPDX-License-Identifier: MPL-2.0
 
 #nullable enable
 #if NVE_HAS_UNIVRM

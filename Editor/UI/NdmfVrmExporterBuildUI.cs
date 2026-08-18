@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024-present hkrn
-// SPDX-License-Identifier: MPL
+// SPDX-License-Identifier: MPL-2.0
 
 #if NVE_HAS_NDMF_PLATFORM_SUPPORT
 using System.IO;
