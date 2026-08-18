@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2024-present hkrn
+# SPDX-License-Identifier: MPL-2.0
+
+version = 1
+
+[[annotations]]
+path = ["**/**.cs"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024-present hkrn"
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = [
+    ".github/**",
+    ".editorconfig",
+    ".gitignore",
+    "CHANGELOG.md",
+    "package.json",
+    "README.md",
+    "docs~/*.md",
+    "Editor/Localization/en-us.po",
+    "**/*.uxml",
+    "**/*.asmdef",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024-present hkrn"
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = [
+    "**/**.meta",
+    "Editor/Resources/README.md",
+    "Packages/**",
+    "ProjectSettings/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "CC0-1.0"
+
+# https://github.com/bdunderscore/modular-avatar
+[[annotations]]
+path = ["Editor/UI/BlendshapeSelectWindow.cs"]
+precedence = "override"
+SPDX-FileCopyrightText = "2022 bd_"
+SPDX-License-Identifier = "MIT"
+
+# https://github.com/KhronosGroup/UnityGLTF
+[[annotations]]
+path = ["Editor/Resources/*.shader"]
+precedence = "override"
+SPDX-FileCopyrightText = "2017 AltspaceVR, 2020-2023 prefrontal cortex, 2022-2023 Needle"
+SPDX-License-Identifier = "MIT"

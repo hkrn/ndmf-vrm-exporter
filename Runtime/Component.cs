@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024-present hkrn
-// SPDX-License-Identifier: MPL
+// SPDX-License-Identifier: MPL-2.0
 
 #nullable enable
 using System;
@@ -142,7 +142,7 @@ namespace com.github.hkrn
 
         // from 1.4.0
         [NotKeyable] [SerializeField] public bool previewFoldout;
-        [NotKeyable] [SerializeField] public bool enablePbrCompatibleConversion = true;
+        [NotKeyable] [SerializeField] public bool enablePbrCompatibleConversion;
 
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 

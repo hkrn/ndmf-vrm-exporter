@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024-present hkrn
+// SPDX-License-Identifier: MPL-2.0
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
