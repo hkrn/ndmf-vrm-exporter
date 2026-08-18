@@ -35,26 +35,6 @@ namespace com.github.hkrn
         private static readonly string VrmcNodeConstraint = "VRMC_node_constraint";
         private static readonly string VrmcMaterialsMtoon = "VRMC_materials_mtoon";
 
-        public sealed class PackageJson
-        {
-            public const string Name = "com.github.hkrn.ndmf-vrm-exporter";
-            public string DisplayName { get; set; } = null!;
-            public string Version { get; set; } = null!;
-
-            public static PackageJson LoadFromString(string json)
-            {
-                return JsonConvert.DeserializeObject<PackageJson>(json, new JsonSerializerSettings
-                {
-                    ContractResolver = new DefaultContractResolver
-                    {
-                        NamingStrategy = new CamelCaseNamingStrategy()
-                    },
-                    DefaultValueHandling = DefaultValueHandling.Include,
-                    NullValueHandling = NullValueHandling.Ignore,
-                })!;
-            }
-        }
-
         internal sealed class ScopedProfile : IDisposable
         {
             public ScopedProfile(string name)

@@ -518,8 +518,8 @@ namespace com.github.hkrn
                 async Task<VRChatAvatarToMetadata> RetrieveAvatarTask(string blueprintId, CancellationToken token)
                 {
                     var packageJsonFile =
-                        await File.ReadAllTextAsync($"Packages/{NdmfVrmExporter.PackageJson.Name}/package.json", token);
-                    var packageJson = NdmfVrmExporter.PackageJson.LoadFromString(packageJsonFile);
+                        await File.ReadAllTextAsync($"Packages/{PackageJson.Name}/package.json", token);
+                    var packageJson = PackageJson.LoadFromString(packageJsonFile);
                     var avatar = await VRCApi.GetAvatar(blueprintId, cancellationToken: token);
                     var client = new HttpClient();
                     client.DefaultRequestHeaders.UserAgent.ParseAdd($"{packageJson.DisplayName}/{packageJson.Version}");

@@ -73,8 +73,8 @@ namespace com.github.hkrn
 
         private static void ExportAnimation(GameObject avatarRoot, AnimationClip humanoidAnimationClip, string outputDirectoryPath)
         {
-            var packageJsonFile = File.ReadAllText($"Packages/{NdmfVrmExporter.PackageJson.Name}/package.json");
-            var packageJson = NdmfVrmExporter.PackageJson.LoadFromString(packageJsonFile);
+            var packageJsonFile = File.ReadAllText($"Packages/{PackageJson.Name}/package.json");
+            var packageJson = PackageJson.LoadFromString(packageJsonFile);
             var root = new gltf.Root
             {
                 Asset = new gltf.asset.Asset()
@@ -244,7 +244,7 @@ namespace com.github.hkrn
             };
             var extras = new Dictionary<string, object>
             {
-                { NdmfVrmExporter.PackageJson.Name, metadata }
+                { PackageJson.Name, metadata }
             };
             var vrma = new vrm.animation.Animation
             {

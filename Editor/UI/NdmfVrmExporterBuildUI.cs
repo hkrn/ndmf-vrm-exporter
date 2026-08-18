@@ -18,7 +18,7 @@ namespace com.github.hkrn.ui
         public NdmfVrmExporterBuildUI()
         {
             var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
-                $"Packages/{NdmfVrmExporter.PackageJson.Name}/Editor/UI/Resources/NDMFVRMExporter.uxml");
+                $"Packages/{PackageJson.Name}/Editor/UI/Resources/NDMFVRMExporter.uxml");
             var rootContainer = visualTree.CloneTree();
             Add(rootContainer);
             _exportButton = rootContainer.Q<Button>("export");

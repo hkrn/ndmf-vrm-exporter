@@ -40,7 +40,7 @@ namespace com.github.hkrn
 {
     internal sealed class NdmfVrmExporterPlugin : Plugin<NdmfVrmExporterPlugin>
     {
-        public override string QualifiedName => NdmfVrmExporter.PackageJson.Name;
+        public override string QualifiedName => PackageJson.Name;
 
         public override string DisplayName => "NDMF VRM Exporter";
 
