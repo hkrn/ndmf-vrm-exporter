@@ -3589,7 +3589,7 @@ namespace com.github.hkrn.vrm.sb
 
     public sealed class ExtendedCollider
     {
-        public string Spec { get; set; } = "1.0";
+        public string SpecVersion { get; set; } = "1.0";
         public ExtendedShape Shape { get; init; } = new();
         public IExtensions? Extensions { get; set; }
         public JToken? Extras { get; set; }
