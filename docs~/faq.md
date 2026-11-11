@@ -22,12 +22,12 @@
 
 ## VRM 0.x 形式のアバターとして書き出せますか？
 
-書き出せません。また設計方針上 VRM 0.x 形式で書き出す機能を実装する予定もないので「出力した VRM 1.0 アバターを 0.x にダウングレードできますか？」に従いダウングレードしてください。
+書き出せません。また設計方針上 VRM 0.x 形式で書き出す機能を実装する予定もないので「出力した VRM 1.0 アバターを 0.x にダウングレードできますか？」に従いダウングレードするか、後述の SoulFrame VRM Exporter を利用してください。
 
 ## 出力した VRM 1.0 形式のアバターを 0.x にダウングレードできますか？
 
 > [!NOTE]
-> 具体的には [Warudo](https://docs.warudo.app/jp/docs) と [バーチャルモーションキャプチャー](https://vmc.info) が 2026/3/1 時点で VRM 0.x 形式のみ対応のため、利用する際は VRM 0.x 形式へのダウングレードが必要です
+> [Warudo](https://docs.warudo.app/jp/docs) が 0.12.16 以降、[バーチャルモーションキャプチャー](https://vmc.info) が 0.61r1 以降で VRM 1.0 に対応していますが、それより前のバージョンを利用する際は VRM 0.x 形式へのダウングレードが必要です
 
 NDMF VRM Exporter としてそのような機能を持っていませんが、0.x にダウングレードするツールとして [VrmDowngrader](https://github.com/saturday06/VrmDowngrader) と [VRMRemaker](https://fujisunflower.fanbox.cc/posts/7313957) がありますのでどちらかをお使いください。ただし 0.x に変換して 1.0 に戻す形の再変換を行った場合は原則としてサポート対象外となりますのでご注意ください。
 
@@ -58,6 +58,26 @@ VRChat アバターを VRM に変換（またはその逆）するツールと�
 |UniVRM|必要|不要|
 
 NDMF VRM Exporter は他ツールとの干渉を避けるように設計されているため、VRM Converter for VRChat と一緒に入れて扱うことができます。NDMF VRM Exporter は VRM 0.x を扱えず、また Modular Avatar を利用していない着せ替えには対応せず VRM から VRChat 向けアバターに変換することもできないため、その場合は VRM Converter for VRChat が出番になります。必要に応じて使い分けてください。
+
+## SoulFrame VRM Exporter の違いはなんですか？
+
+[SoulFrame VRM Exporter](https://cucumberworks.booth.pm/items/9048624) は NDMF VRM Exporter と同様に NDMF プラグインとして動作できて VRM 1.0 アバターに書き出しができる点で同じです。違いについては「SoulFrame VRM Exporter のみができること」と「NDMF VRM Exporter のみができること」をそれぞれ確認してください。
+
+ただし SoulFrame VRM Exporter は UniVRM を利用している関係で他の UniVRM に依存しているパッケージ、具体的には上記の VRM Converter for VRChat を利用している場合は UniVRM のバージョン違いの影響で導入できない場合があります（SoulFrame VRM Exporter と NDMF VRM Exporter の併用は可能です）。
+
+### SoulFrame VRM Exporter のみができること
+
+> [!NOTE]
+> これらの機能は設計方針上 NDMF VRM Exporter での実装予定がないものとなります
+
+* VRM 0.x への書き出し
+  * VSeeFace 向け
+* Poiyomi Shader 対応
+* lilToon マテリアル設定の VRM への保持
+
+### NDMF VRM Exporter のみができること
+
+* Animation Clip から VRM Animation への変換
 
 ## VRoid Studio でも着せ替え機能を通じて VRM 1.0 出力を扱えますが、それとどう違いますか？
 
@@ -155,14 +175,16 @@ VRChat Android/iOS 版ではシェーダの制限により lilToon が利用で�
 
 利用制約は軽量化によって解決できることがあります。軽量化についての詳細は [VRChatアバター最適化・軽量化【脱Very Poor】](https://lilxyzw.github.io/matome/ja/avatar/optimization.html) を参照してください。
 
-## プラットフォームによる制限のためポリゴン数を減らしたいけど、どうすればよいですか？
+## プラットフォームによる制限のためポリゴン数またはアバターサイズを減らしたいけど、どうすればよいですか？
 
-NDMF VRM Exporter 自体はポリゴン数を減らす機能を持っていませんが、NDMF プラグインとしても提供されている [Meshia Mesh Simplification](https://github.com/RamType0/Meshia.MeshSimplification/)（詳細な使い方とコツは [こちらの記事](https://vrnavi.jp/meshia-mesh-simplification/) が詳しい）を併用することでポリゴン数を減らすことが可能です。
+NDMF VRM Exporter 自体はポリゴン数及びアバターサイズを減らす機能を持っていませんが、NDMF プラグインとしても提供されている [Meshia Mesh Simplification](https://github.com/RamType0/Meshia.MeshSimplification/)（詳細な使い方とコツは [こちらの記事](https://vrnavi.jp/meshia-mesh-simplification/) が詳しい）を併用することでポリゴン数を減らすことが可能です。
 
 > [!IMPORTANT]
 > ポリゴン数の削減はアバターの見た目に直接影響するため、まず Avatar Optimizer で削減を行った上でどうしてもそれだけで達成ができない場合にのみ Meshia Mesh Simplification を利用するようにしてください
 
 具体例として [Cluster](https://cluster.mu) での VRM 1.0 は全てのメッシュで [72000 ポリゴンの上限](https://help.cluster.mu/hc/ja/articles/360029465811-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%90%E3%82%BF%E3%83%BC%E3%81%AE%E5%88%B6%E9%99%90) がありますが、Meshia Mesh Simplification の `PC-Poor-Medium-Good` プリセットを使うことによりその制約を満たすことが可能です。
+
+アバターサイズを減らしたい場合はテクスチャサイズを小さくすることが最善策となります[^5]。NDMF プラグインの一つである [LAC Avatar Compressor](https://lac.limitex.dev/ja/) を利用することでそれを比較的簡単に行うことができます。
 
 ## NDMF VRM Exporter に出力するときだけ表示または非表示にしたいオブジェクトがあるけどどうすればよいですか？
 
@@ -177,3 +199,5 @@ Modular Avatar の [プラットフォームフィルター](https://modular-ava
 [^2]: 元々の開発の動機は VRM Converter for VRChat の VRM 1.0 への未対応によるものでした。しかし仮に対応できたとしても毎回手作業が必要になるのに対して極力自動化したい動機が別にあったのと VRChat のアバター着せ替えにおける一大勢力である Modular Avatar を中心とする NDMF 圏の恩恵を最大限受けられるようにするため NDMF プラグインとして実装した経緯があります。開発にあたって [lilycalInventory](https://lilxyzw.github.io/lilycalInventory/) の思想を設計上の参考にしています
 [^3]: MToon の実装はマットキャップがリムライトのサブセットという位置付けであり、また [仕様側の参照実装](https://github.com/vrm-c/vrm-specification/blob/b7ece9d9d9def99945bb0fc33804ed01bc2272a6/specification/VRMC_materials_mtoon-1.0/README.ja.md#implementation-2) としてもそれを肯定する形であるため、既定では無効な `Enable RimLight` を有効にしている場合はリムライトの設定と干渉する可能性がある点にも注意が必要
 [^4]: Avatar Optimizer 導入前提で NDMF VRM Exporter は Avatar Optimizer の「後」に実施するのに対して VRCQuestTools が Avatar Optimizer の「前」に実施するため。Avatar Optimizer 未導入の場合の扱いは未定義です
+[^5]: VRChat と違い VRM は基本的に VRAM 使用量を削減する手段であるテクスチャ圧縮を利用することができません[^6]。そのためテクスチャサイズを小さくすることが簡単かつ汎用的に利用可能な手段となります
+[^6]: VRChat における無圧縮と同じ扱い。ただしテクスチャ圧縮が全く利用できないわけでなく [glTF の拡張](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md) として利用可能ではあり、[UniVRM も実験的な機能提供](https://vrm.dev/api/runtime-import/import_basisu/) しているものの利用できるかどうかは実装依存であるため実質的には利用不可と見做すのが正しい
