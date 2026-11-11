@@ -21,3 +21,11 @@ NDMF VRM Exporter には以下の特徴を持っています。
 * [Modular Avatar](https://modular-avatar.nadena.dev/) 導入済みならそれ以外に必要なものはなし
 * [lilToon](https://lilxyzw.github.io/lilToon/ja_JP/) の設定を MToon の互換設定に自動的に変換
   * テクスチャの焼き込みも自動的に行います
+
+## サポート
+
+GitHub の Issues か Discord サーバ [Modular Avatar & NDMF](https://discord.gg/dV4cVpewmM) の「サポート」チャンネルに投稿してください
+
+## ライセンス
+
+[MPL-2.0](https://www.mozilla.org/en-US/MPL/2.0/)
