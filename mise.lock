@@ -7,6 +7,53 @@ version = "10.0.403"
 backend = "core:dotnet"
 specifiers = ["latest"]
 
+[[tools.editorconfig-checker]]
+version = "4.0.2"
+backend = "github:editorconfig-checker/editorconfig-checker"
+specifiers = ["latest"]
+
+[tools.editorconfig-checker."platforms.linux-arm64"]
+checksum = "sha256:abad76da8c9950fdc2a314bcd66969172aa823e9c595fa7e3a389a91e34d025e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675779"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.linux-arm64-musl"]
+checksum = "sha256:abad76da8c9950fdc2a314bcd66969172aa823e9c595fa7e3a389a91e34d025e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675779"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.linux-x64"]
+checksum = "sha256:44efaef3ed14c6ab52eb87481d78e5e5c204796dccf26e2f4598a61ba17f8003"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675771"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.linux-x64-musl"]
+checksum = "sha256:44efaef3ed14c6ab52eb87481d78e5e5c204796dccf26e2f4598a61ba17f8003"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675771"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.macos-arm64"]
+checksum = "sha256:ff59f57717d95fc62b8e372c8051dbbb766f7d660942409a85d027b0feb2422c"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-darwin-all.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675773"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.macos-x64"]
+checksum = "sha256:ff59f57717d95fc62b8e372c8051dbbb766f7d660942409a85d027b0feb2422c"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-darwin-all.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675773"
+provenance = "github-attestations"
+
+[tools.editorconfig-checker."platforms.windows-x64"]
+checksum = "sha256:857f8f74dfc259d73dac93573e37cf3ce01150787d7b139bf839549cc6b5beb9"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-windows-amd64.zip"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675794"
+provenance = "github-attestations"
+
 [[tools.jactionlint]]
 version = "2.5.0"
 backend = "packslip:github.com/jdx/jactionlint"
