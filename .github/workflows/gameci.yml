@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -22,7 +26,9 @@ jobs:
       UNITY_VERSION: 2022.3.22f1
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Moves packages
         run: |
           mkdir -p Packages/com.github.hkrn.ndmf-vrm-exporter
@@ -31,7 +37,7 @@ jobs:
           mv Tests* Packages/com.github.hkrn.ndmf-vrm-exporter
           mv package.json* Packages/com.github.hkrn.ndmf-vrm-exporter
       - name: Adds VPM registry
-        uses: anatawa12/sh-actions/resolve-vpm-packages@1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd
+        uses: anatawa12/sh-actions/resolve-vpm-packages@master
         with:
           repos: |
             https://vpm.anatawa12.com/vpm.json
@@ -44,7 +50,7 @@ jobs:
           vrc-get install -y jp.lilxyzw.lilycalinventory
           vrc-get install -y nadena.dev.modular-avatar
       - name: Retrieve cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: Library
           key: Library-unity-${{ env.UNITY_VERSION }}
@@ -54,7 +60,7 @@ jobs:
         id: runAllTests
         # https://github.com/orgs/community/discussions/26829
         if: ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name }}
-        uses: game-ci/unity-test-runner@32e57712352b500e17974b245a6dce9e11a73213 # v4.4.0
+        uses: game-ci/unity-test-runner@v4.4.0
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -66,7 +72,7 @@ jobs:
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+com.github.hkrn.*
           customParameters: -assemblyNames com.github.hkrn.NDMFVRMExporterTests
       - name: Uploads test run result
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
           name: Test results

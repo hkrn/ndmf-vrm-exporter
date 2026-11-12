@@ -1,0 +1,7 @@
+[settings]
+lockfile = true
+
+[tools]
+dotnet = "latest"
+jactionlint = "latest"
+zizmor = "latest"
