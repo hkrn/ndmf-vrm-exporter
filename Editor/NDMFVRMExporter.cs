@@ -166,7 +166,7 @@ namespace com.github.hkrn
 
         // from 1.4.0
         [NotKeyable] [SerializeField] internal bool previewFoldout;
-        [NotKeyable] [SerializeField] internal bool enablePbrCompatibleConversion = true;
+        [NotKeyable] [SerializeField] internal bool enablePbrCompatibleConversion;
 
         public bool HasAuthor => authors.Count > 0 && !string.IsNullOrWhiteSpace(authors.First());
 
