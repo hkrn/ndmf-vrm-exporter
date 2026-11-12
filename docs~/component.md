@@ -4,13 +4,17 @@
 
 NDMF VRM Exporter が提供するコンポーネントは `VRM Export Description` のひとつのみです。
 
+# VRM Export Description
+
+NDMF VRM Exporter の中核となるコンポーネントです。当該コンポーネントが付与されたアバターが VRM に変換できます。
+
+> [!TIP]
+> 処理の性質上 VRM ファイルの生成は最低でも数秒、場合によっては数分と時間がかかるため、時間がかかる場合はコンポーネントを無効化して NDMF Console 経由でファイル書き出しをしてください
+
 * コンポーネントを有効にした状態（コンポーネント名の横にチェックボックス ✅ がついてる状態）で再生
 * コンポーネントの有効無効にかかわらず NDMF Console からプラットフォーム選択で `NDMF VRM Exporter` を選び Export した場合
 
 上記のいずれかによって VRM ファイルが生成される仕組みとなっています。
-
-> [!TIP]
-> 処理の性質上 VRM ファイルの生成は最低でも数秒、場合によっては数分と時間がかかるため、時間がかかる場合はコンポーネントを無効化して NDMF Console 経由でファイル書き出しをしてください
 
 ## Preview
 
@@ -194,7 +198,10 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 ただしマットキャップが「有効」かつリムライトが「無効」の場合は MToon の実装の関係でリムライトのパラメータを上書きします。詳細は「出力互換性の情報」の「材質（マテリアル）の変換」を確認してください。
 
-`Enable PBR Compatible Conversion` は 1.4.0 から追加された設定で、lilToon の光沢設定がリアル (物理ベースレンダリング、通称 PBR) の場合に lilToon から PBR を持たない MToon のかわりに glTF に寄せる変換を行います。NDMF VRM Exporter 1.3.0 以前の変換の挙動に戻す場合に利用します。
+> [!IMPORTANT]
+> `Enable PBR Compatible Conversion` は導入時の 1.4.0 で既定で有効になっていましたが、変換後の表示上の問題があると判断されたため 1.5.0 から既定で無効となりました。1.4.0 で作成されたものについては有効のままなので、お手数ですが変換後の表示上の問題がある場合は無効にしてください
+
+`Enable PBR Compatible Conversion` は 1.4.0 から追加された設定で、lilToon の光沢設定がリアル (物理ベースレンダリング、通称 PBR) の場合に lilToon から PBR を持たない MToon のかわりに glTF に寄せる変換を行います。
 
 ## Spring Bone Options
 
