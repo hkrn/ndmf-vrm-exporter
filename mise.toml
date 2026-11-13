@@ -1,0 +1,10 @@
+[settings]
+lockfile = true
+minimum_release_age = "3d"
+
+[tools]
+dotnet = "latest"
+editorconfig-checker = "latest"
+jactionlint = "latest"
+rumdl = "latest"
+zizmor = "latest"

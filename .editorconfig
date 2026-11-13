@@ -9,5 +9,15 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
-[*.{json,yml}]
+[*.cs]
+indent_size = unset
+
+[*.{md,json,yml}]
 indent_size = 2
+
+[*.{asmdef,meta,shader,MPL}]
+charset = unset
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset

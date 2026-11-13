@@ -1,0 +1,13 @@
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
+
+local linters = new Mapping {
+    ["editorconfig-checker"] = Builtins.editorconfig_checker
+    ["jactionlint"] = Builtins.jactionlint
+    ["mise"] = Builtins.mise
+    ["rumdl"] = Builtins.rumdl
+    ["rumdl-format"] = Builtins.rumdl_format
+    ["zizmor"] = Builtins.zizmor
+}
+
+steps = linters

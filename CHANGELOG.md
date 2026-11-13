@@ -194,8 +194,6 @@
 - [exporter] Add vertex index corruption detection processing ([#42](https://github.com/hkrn/ndmf-vrm-exporter/pull/42))
 - [exporter] Change NDMF compatible version to 1.6 or higher but less than 2.0 ([#41](https://github.com/hkrn/ndmf-vrm-exporter/pull/41))
 
-### Fixed
-
 ## [1.0.6] - 2025-02-15
 
 ### Fixed

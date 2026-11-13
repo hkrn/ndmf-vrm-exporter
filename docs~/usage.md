@@ -49,4 +49,4 @@ NDMF に組み込まれているアバタープラットフォーム機能を利
 * 必要なタイミングで任意の場所に対して VRM ファイルの出力が可能
 * Modular Avatar を利用している場合は [プラットフォームフィルター](https://modular-avatar.nadena.dev/ja/docs/reference/platform-filter) コンポーネントによる表示の切り替えが利用可能
 
-[^1]: https://github.com/anatawa12/AvatarOptimizer/issues/1699
+[^1]: <https://github.com/anatawa12/AvatarOptimizer/issues/1699>

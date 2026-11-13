@@ -1,0 +1,9 @@
+[global]
+editorconfig = true
+
+[MD013]
+line-length = 1000
+code-blocks = true
+tables = false
+headings = true
+reflow = true
