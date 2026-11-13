@@ -8,6 +8,7 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
         - 'anatawa12/sh-actions@master'
+        - 'fsfe/reuse-action@v6.0.0'
         - 'game-ci/unity-test-runner@v4.4.0'
     '.github/workflows/release.yml':
         - 'actions/checkout@v7.0.1'
@@ -36,6 +37,11 @@ dependencies:
         commit: 'sha1-1d155c7a26bcd0a54ffd9cb38fd66ab0d32d23cd'
         owner_id: 22656849
         repo_id: 581039210
+    'fsfe/reuse-action@v6.0.0':
+        ref: 'v6.0.0'
+        commit: 'sha1-676e2d560c9a403aa252096d99fcab3e1132b0f5'
+        owner_id: 27927890
+        repo_id: 244390200
     'game-ci/unity-test-runner@v4.4.0':
         ref: 'v4.4.0'
         commit: 'sha1-32e57712352b500e17974b245a6dce9e11a73213'
