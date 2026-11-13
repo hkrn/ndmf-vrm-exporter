@@ -4,7 +4,7 @@
 
 NDMF VRM Exporter が提供するコンポーネントは `VRM Export Description` のひとつのみです。
 
-# VRM Export Description
+## VRM Export Description
 
 NDMF VRM Exporter の中核となるコンポーネントです。当該コンポーネントが付与されたアバターが VRM に変換できます。
 
@@ -16,7 +16,7 @@ NDMF VRM Exporter の中核となるコンポーネントです。当該コン�
 
 上記のいずれかによって VRM ファイルが生成される仕組みとなっています。
 
-## Preview
+### Preview
 
 出力前に VRM モデルの描画結果を確認できるプレビュー機能を管理します。現状は有効化するかどうかのみです。
 
@@ -30,13 +30,13 @@ NDMF VRM Exporter の中核となるコンポーネントです。当該コン�
 
 これにより VRM 1.0 対応アプリケーションに読み込ませる手間なしに MToon による見え方の結果を即座に確認できるようになります。ただし最終的な確認は VRM 1.0 対応の読み込み先アプリケーションで行ってください。
 
-## Metadata
+### Metadata
 
 VRM のメタデータに直接対応しています。詳細な情報は [モデル情報](https://vrm.dev/univrm/meta/univrm_meta/) および [VRoid Hubの利用条件とVRMライセンスについて](https://vroid.pixiv.help/hc/ja/articles/360016417013-VRoid-Hub%E3%81%AE%E5%88%A9%E7%94%A8%E6%9D%A1%E4%BB%B6%E3%81%A8VRM%E3%83%A9%E3%82%A4%E3%82%BB%E3%83%B3%E3%82%B9%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6) を参照してください。
 
 Metadata のうち Authors と License URL が必須項目となっています。また Author は最初の要素が空文字のみで構成されないように、License URL は URL として正しい形式で設定する必要があります。
 
-### Information
+#### Information
 
 メタデータのうち基本情報を設定します。
 
@@ -71,7 +71,7 @@ Metadata のうち Authors と License URL が必須項目となっています�
 
 処理の取り消しが可能でその場合は設定されません。また処理の過程でエラーが発生した場合も同様に設定されません。エラーが発生した場合はコンソールに詳細なエラーメッセージが表示されます。ただし VRChat の認証失敗のみボタンの下にメッセージが表示されます。
 
-### Licenses
+#### Licenses
 
 メタデータのうちアバターに対するライセンス部分を設定します。
 
@@ -80,13 +80,13 @@ Metadata のうち Authors と License URL が必須項目となっています�
 
 |名前|説明|必須|備考|
 |---|---|---|---|
-|License URL|ライセンスのURL|✅|初期値は https://vrm.dev/licenses/1.0/|
+|License URL|ライセンスのURL|✅|初期値は <https://vrm.dev/licenses/1.0/>|
 |ThirdParty Licenses|第三者のライセンス情報|||
 |Other License URL|その他のライセンスのURL|||
 
 `Uses VRM Public License` ボタンを押すと `License URL` を初期設定である VRM Public License 1.0 の URL に戻すことができます。それ以外の値は変更されません。
 
-### Permissions
+#### Permissions
 
 メタデータのうちアバターに対する利用許諾の部分を設定します。
 
@@ -105,7 +105,7 @@ Metadata のうち Authors と License URL が必須項目となっています�
 |Allow Political or Religious Usage|政治または宗教用途に対する利用の許可設定||
 |Allow Antisocial or Hate Usage|反社会もしくはヘイトに対する利用の許可設定||
 
-## Expressions
+### Expressions
 
 VRM の表情設定を行います。
 
@@ -115,7 +115,7 @@ VRM の表情設定を行います。
 > [!NOTE]
 > 両目のまばたきとリップシンクの表情は VRC Avatar Descriptor コンポーネントから情報を取得して自動的に設定されます。また [Avatar Optimizer](https://vpm.anatawa12.com/avatar-optimizer/ja/) を利用している場合は表情に指定されたブレンドシェイプが最適化対象から外す処理を行う関係で除去されずに残ります
 
-### Preset
+#### Preset
 
 VRM のプリセットである以下の項目を設定することが可能です。
 
@@ -162,7 +162,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 プリセット表情の設定を全てリセットする場合は `Reset All Preset Expressions` でリセットすることができます。
 
-### Custom
+#### Custom
 
 ユーザ独自の表情を設定します。
 
@@ -174,7 +174,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 複数個指定可能なため追加削除と表情名の指定を行う必要はありますが、基本的な設定方法はプリセット表情と同じです。表情名をプリセット名と同じ名前で定義することも可能ですが仕様上許容されておらず、実装依存ではあるものの原則としてプリセット表情が優先されます。
 
-## MToon Options
+### MToon Options
 
 以下の設定が可能です。lilToon シェーダからの変換時に利用されます。
 
@@ -203,7 +203,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 `Enable PBR Compatible Conversion` は 1.4.0 から追加された設定で、lilToon の光沢設定がリアル (物理ベースレンダリング、通称 PBR) の場合に lilToon から PBR を持たない MToon のかわりに glTF に寄せる変換を行います。
 
-## Spring Bone Options
+### Spring Bone Options
 
 ビルド時にのみ除外する VRC PhysBone Collider コンポーネント及び VRC PhysBone コンポーネントを設定します。
 
@@ -218,7 +218,7 @@ MMD 互換のブレンドシェイプが存在する場合は `Set Preset Expres
 
 UniVRM 0.130 以降で利用可能ですが、実装時点 (2026/5/31) ではまだ仕様が正式のものではなくあくまで草稿のため既定では無効となっています。
 
-## Constraint Options
+### Constraint Options
 
 ビルド時にのみ除外する VRC PhysBone Constraint コンポーネントを設定します。
 
@@ -226,7 +226,7 @@ UniVRM 0.130 以降で利用可能ですが、実装時点 (2026/5/31) ではま
 
 利用目的は `Spring Bone Options` の `Excluded Spring Bone Colliders` および `Excluded Spring Bones` と同じです。
 
-## Animations
+### Animations
 
 [VRM Animation](https://vrm.dev/vrma/) (VRMA 形式) に変換するヒューマノイドに対応する Animation Clip を指定します。設定自体は 1.3.0 から導入されました。
 
@@ -235,7 +235,7 @@ UniVRM 0.130 以降で利用可能ですが、実装時点 (2026/5/31) ではま
 
 VRMA 形式の書き出し自体は VRM 出力とは別に `Animations` 内の `Export` ボタンによってのみ行われ、ビルドや NDMF Console によるタイミングでは行われません。出力の詳細については「[出力の互換性](compatibility.md)」の「アニメーションの変換」の章を参照してください。
 
-## glTF Extension Options
+### glTF Extension Options
 
 以下の設定が可能です。設定自体は 1.1.0 から導入されました。
 
@@ -243,7 +243,7 @@ VRMA 形式の書き出し自体は VRM 出力とは別に `Animations` 内の `
   * マテリアルを動的に切り替えられるようにする公式の拡張である [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md) 拡張を有効にするかどうかを設定します
   * 詳細は「材質（マテリアル）の切り替え」の章を確認してください
 
-## Debug Options
+### Debug Options
 
 以下の設定が可能です。
 

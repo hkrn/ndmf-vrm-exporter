@@ -196,6 +196,6 @@ Menu Installer または Menu Item コンポーネントを無効化すること
 * 表情のアニメーションは含まれない
 
 [^1]: 1.0.5 以前は枝分かれに考慮されていなかったため、枝分かれも繋がったひとつのスプリングボーンとして出力されていました
-[^2]: Position Constraint (実質的に Parent Constraint も同様) は未対応ですが https://github.com/vrm-c/vrm-specification/issues/468 で要望があがっています
+[^2]: Position Constraint (実質的に Parent Constraint も同様) は未対応ですが <https://github.com/vrm-c/vrm-specification/issues/468> で要望があがっています
 [^3]: VRM Constraint が glTF のノードの拡張として実装されており、ひとつのノード（＝ゲームオブジェクト）につきひとつの VRM Constraint しか持つことができないためです
 [^4]: MToon が UV0 以外のテクスチャ座標に対応していないためです

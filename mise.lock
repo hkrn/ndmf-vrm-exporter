@@ -101,6 +101,53 @@ url = "https://github.com/jdx/jactionlint/releases/download/v2.5.0/jactionlint_2
 signer = "sigstore-oidc:https://github.com/jdx/jactionlint/.github/workflows/release.yaml"
 repository_ids = { repository = "1404951382" }
 
+[[tools.rumdl]]
+version = "0.3.3"
+backend = "aqua:rvben/rumdl"
+specifiers = ["latest"]
+
+[tools.rumdl."platforms.linux-arm64"]
+checksum = "sha256:c9233ea9233f9cf23dc9b063363d32fb55d28f9b0bdcf472288fc29c305c5bc2"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166607"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.linux-arm64-musl"]
+checksum = "sha256:84e5ecb564dc55483b480aa3287751e133771caeb5bb92d349105fe20e2b234d"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166613"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.linux-x64"]
+checksum = "sha256:2e82399d566b4663625405bad6c36427477a81c7ff726a4986c4d9947e3a51ef"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166611"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.linux-x64-musl"]
+checksum = "sha256:225291d073d46654030cb2c256ce98252965e1f475b77fee4f28a3dbb3632cfd"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166615"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.macos-arm64"]
+checksum = "sha256:8c60fbfc8064acda1e40856bfdbc7cc5f51a477920de1bae9426482d08916424"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166609"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.macos-x64"]
+checksum = "sha256:180cfc7b647561b8b93a8df897ccb33aaadeca989ff4593bc51b6967ff753b9a"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166612"
+provenance = "github-attestations"
+
+[tools.rumdl."platforms.windows-x64"]
+checksum = "sha256:75c080c3ee3456ac1d2a59cce194f46122f85b0e47c025ec66f3fbbd1e8181fa"
+url = "https://github.com/rvben/rumdl/releases/download/v0.3.3/rumdl-v0.3.3-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/rvben/rumdl/releases/assets/733166617"
+provenance = "github-attestations"
+
 [[tools.zizmor]]
 version = "1.32.0"
 backend = "aqua:zizmorcore/zizmor"
