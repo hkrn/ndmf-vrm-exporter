@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-15
+
+### Changed
+
+- [exporter] Disable enablePbrCompatibleConversion by default ([#178](https://github.com/hkrn/ndmf-vrm-exporter/pull/178))
+
+### Fixed
+
+- [exporter] Fix VRMC_springBone_extended_collider specVersion field name ([#175](https://github.com/hkrn/ndmf-vrm-exporter/pull/175))
+
 ## [1.4.0] - 2026-07-12
 
 ### Added
@@ -248,7 +258,8 @@
 
 - Initial release
 
-[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.4.0...HEAD
+[unreleased]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.5.0...HEAD
+[1.5.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.4.0...1.5.0
 [1.4.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.3.1...1.4.0
 [1.3.1]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/hkrn/ndmf-vrm-exporter/compare/1.2.9...1.3.0
