@@ -1,0 +1,10 @@
+[settings]
+lockfile = true
+minimum_release_age = "3d"
+
+[tasks.archive]
+usage = 'arg "<file>" help="archive to path"'
+run = 'zip -x \*.git\* .config\* .rumdl_cache\* .vscode\* .editorconfig hk.pkl mise.\* -r "${usage_file?}" .'
+
+[tools]
+jq = "latest"

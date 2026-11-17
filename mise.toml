@@ -3,6 +3,7 @@ lockfile = true
 minimum_release_age = "3d"
 
 [tools]
+act = "latest"
 dotnet = "latest"
 editorconfig-checker = "latest"
 hk = "latest"

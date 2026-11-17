@@ -2,6 +2,53 @@
 
 lockfile_version = 4
 
+[[tools.act]]
+version = "0.2.97"
+backend = "aqua:nektos/act"
+specifiers = ["latest"]
+
+[tools.act."platforms.linux-arm64"]
+checksum = "sha256:44d48e3d4a6409053fdec6fc6518322467d79a2d5be8f72c021b0421e2ac113d"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157495"
+
+[tools.act."platforms.linux-arm64-musl"]
+checksum = "sha256:44d48e3d4a6409053fdec6fc6518322467d79a2d5be8f72c021b0421e2ac113d"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157495"
+
+[tools.act."platforms.linux-x64"]
+checksum = "sha256:67b4976a56f33ea7870b798912e738ec44eef38e7578ae7b532f2def1c73a5ad"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Linux_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157441"
+
+[tools.act."platforms.linux-x64-musl"]
+checksum = "sha256:67b4976a56f33ea7870b798912e738ec44eef38e7578ae7b532f2def1c73a5ad"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Linux_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157441"
+
+[tools.act."platforms.macos-arm64"]
+checksum = "sha256:6dbb1ef34a7e34bb1ee0db188d1682ea35b82d9d9012626497f6c659e55a7cb5"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157431"
+
+[tools.act."platforms.macos-x64"]
+checksum = "sha256:cba9cf071f69c47b2fef60a4c735002b6cbd416533920406f72eac0cf7ffec3a"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Darwin_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157430"
+
+[tools.act."platforms.windows-x64"]
+checksum = "sha256:07cb9bbecc5604452dc50e2a485e17e02e38c3735c47ce8adc8ac550ab968a8a"
+checksum_source = "mise-versions"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Windows_x86_64.zip"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157515"
+
 [[tools.dotnet]]
 version = "10.0.403"
 backend = "core:dotnet"

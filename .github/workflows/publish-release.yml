@@ -1,0 +1,55 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # Validate Repository Configuration
+  config:
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    outputs:
+      config_package: ${{ steps.config_package.outputs.configPackage }}
+    steps:
+      # Ensure that required repository variable has been created for the Package
+      - name: Validate Package Config
+        id: config_package
+        run: |
+          if [ "${VARS_PACKAGE_NAME}" != "" ]; then
+            echo "configPackage=true" >> "$GITHUB_OUTPUT";
+          else
+            echo "configPackage=false" >> "$GITHUB_OUTPUT";
+          fi
+        env:
+          VARS_PACKAGE_NAME: ${{ vars.PACKAGE_NAME }}
+  build:
+    needs: config
+    if: needs.config.outputs.config_package == 'true'
+    permissions:
+      artifact-metadata: write
+      attestations: write
+      contents: read
+      id-token: write
+    uses: $/.github/workflows/build-release.yml
+    with:
+      package_name: ${{ vars.PACKAGE_NAME }}
+  publish:
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      contents: write
+    if: ${{ needs.build.outputs.version != '' }}
+    steps:
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: release-${{ needs.build.outputs.version }}
+          path: release
+      - name: Publish GitHub release
+        run: gh release create "$RELEASE_TAG" release/* --repo "$GITHUB_REPOSITORY" --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.version }}

@@ -1,0 +1,102 @@
+name: Build Release
+
+on:
+  workflow_call:
+    inputs:
+      package_name:
+        type: string
+        required: true
+      skip_tag:
+        type: boolean
+        default: false
+      skip_attestation:
+        type: boolean
+        default: false
+    outputs:
+      version:
+        value: ${{ jobs.build.outputs.version }}
+
+jobs:
+  # Build and release the Package
+  # If the repository is not configured properly, this job will be skipped
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+    env:
+      MISE_ENV: ci
+    permissions:
+      artifact-metadata: write
+      attestations: write
+      contents: read
+      id-token: write
+    steps:
+      # Checkout Local Repository
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@v5.2.8
+
+      - name: Retrieve Package Version
+        run: |
+          echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_ENV"
+
+      # Configure the Environment Variables needed for releasing the Package
+      - name: Set Environment Variables
+        id: variables
+        run: |
+          {
+            echo "zipFile=${VARS_PACKAGE_NAME}-${version}.zip";
+            echo "unityPackage=${VARS_PACKAGE_NAME}-${version}.unitypackage";
+          }  >> "$GITHUB_ENV"
+        env:
+          VARS_PACKAGE_NAME: ${{ inputs.package_name }}
+
+      - name: Removes Directories before Archiving
+        run: |
+          rm -rf Assets* Packages* ProjectSettings* Tests*
+
+      # Make a UnityPackage version of the Package for release
+      - name: Create UnityPackage
+        uses: anatawa12/sh-actions/create-unitypackage@master
+        with:
+          output-path: ${{ env.unityPackage }}
+          package-path: ${{ github.workspace }}
+
+      - name: Archive Release
+        run: mise run archive "${zipFile}"
+
+      - name: Prints SHA256 checksum
+        run: sha256sum "${zipFile}"
+
+      # Make a release tag of the version from the package.json file
+      - name: Create Tag
+        if: ${{ !inputs.skip_tag }}
+        id: tag_version
+        uses: rickstaa/action-create-tag@v1.7.2
+        with:
+          tag: "${{ env.version }}"
+
+      - name: Perform Attestation
+        if: ${{ !inputs.skip_attestation }}
+        uses: actions/attest@v4.2.2
+        with:
+          subject-path: |
+            ${{ env.zipFile }}
+            ${{ env.unityPackage }}
+            package.json
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: "release-${{ env.version }}"
+          path: |
+            ${{ env.zipFile }}
+            ${{ env.unityPackage }}
+            package.json
+          if-no-files-found: error
+          retention-days: 1
